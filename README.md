@@ -115,6 +115,13 @@ To use this dashboard as a standalone mobile app without a browser URL bar:
 
 ---
 
+## 📝 License
+
+This project is licensed under the [MIT License](./LICENSE).
+
+
+---
+
 ## 🤝 Contributing
 Contributions, issues, and feature requests are welcome! Feel free to check the [issues page](https://github.com/aquaimmortal7/Task-Planner/issues).
 
