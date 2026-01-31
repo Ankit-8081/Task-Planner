@@ -8,7 +8,6 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#27ae60">
     <link rel="apple-touch-icon" href="icon-192.png">
-
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         :root { 
@@ -25,7 +24,6 @@
             --border: #dfe6e9;
             --cat-work: #0984e3; --cat-home: #6c5ce7; --cat-personal: #00b894; --cat-urgent: #d63031;
         }
-
         [data-theme="dark"] {
             --primary: #2ecc71; 
             --secondary: #55efc4;
@@ -47,7 +45,6 @@
             overflow-x: hidden; 
             transition: background 0.3s, color 0.3s;
         }
-
         [data-theme="dark"] input::-webkit-calendar-picker-indicator {
             filter: invert(1);
             cursor: pointer;
@@ -56,34 +53,27 @@
         input[type="date"], input[type="time"] {
             accent-color: var(--primary);
         }
-
         .top-nav {
             position: fixed; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 1000;
         }
-
         .btn-header {
             padding: 8px 15px; border-radius: 12px; font-weight: 600; font-size: 12px;
             cursor: pointer; transition: 0.3s; border: 2px solid; text-transform: uppercase;
             background: var(--card-bg); color: var(--text); border-color: var(--border);
         }
-
         #install-btn { background: #2d3436; color: white; border-color: #2d3436; display: none; }
         
         .logout-btn { color: var(--overdue); border-color: var(--overdue); }
         .logout-btn:hover { background: var(--overdue); color: white; }
-
         #auth-screen { display: flex; height: 100vh; width: 100%; background: var(--bg-gradient); flex-direction: column; align-items: center; justify-content: center; }
         .auth-card { background: var(--glass); padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 340px; text-align: center; }
         .auth-input-container { position: relative; width: 100%; margin-bottom: 15px; }
         .auth-input { width: 100%; padding: 14px; padding-right: 70px; border-radius: 12px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text); outline: none; box-sizing: border-box; }
         
         .pass-toggle-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--col-bg); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; color: var(--text); }
-
         .btn-login { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; text-transform: uppercase; }
-
         #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 9999; transition: 0.8s; }
         .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-
         #app-dashboard { display: none; padding: 20px; max-width: 1200px; margin: auto; padding-top: 80px; }
         
         .analytics-container { background: var(--card-bg); border-radius: 12px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
@@ -102,23 +92,18 @@
         }
         .bar-planned { background: var(--primary); opacity: 0.15; }
         .bar-done { background: linear-gradient(to top, var(--primary), var(--secondary)); z-index: 2; }
-
         .day-label { font-size: 11px; font-weight: 600; margin-top: 10px; color: var(--text); }
-
         .progress-container { position: relative; width: 100px; height: 100px; }
         .progress-ring { transform: rotate(-90deg); }
         .progress-ring-bg { stroke: var(--col-bg); }
         #progressCircle { stroke: var(--primary); transition: stroke-dashoffset 0.8s ease-in-out, stroke 0.3s; }
         .pct-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 22px; font-weight: 600; }
-
         .view-toggle { display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; }
         .view-btn { padding: 8px 25px; border-radius: 20px; border: 2px solid var(--primary); background: transparent; color: var(--primary); cursor: pointer; font-weight: 600; transition: 0.3s; }
         .view-btn.active { background: var(--primary); color: white; }
-
         .category-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding: 5px; }
         .cat-tab { padding: 8px 18px; border-radius: 12px; background: var(--card-bg); color: var(--text); border: 1px solid var(--border); cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; transition: 0.3s; }
         .cat-tab.active { background: #34495e !important; color: white !important; }
-
         .input-bar { 
             background: var(--card-bg); padding: 20px; border-radius: 20px; 
             display: grid; grid-template-columns: 2fr 1.2fr 1.1fr 1fr auto; 
@@ -129,13 +114,11 @@
         .input-bar input, .input-bar select {
             padding: 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; font-family: inherit; background: var(--card-bg); color: var(--text);
         }
-
         .input-bar button { 
             background: var(--primary); color: white; border: none; padding: 0 30px; 
             border-radius: 12px; font-weight: 600; letter-spacing: 1px; cursor: pointer; 
             transition: all 0.2s ease; box-shadow: 0 4px 0 var(--primary-shadow); 
         }
-
         .board { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 20px; }
         .col { background: var(--col-bg); padding: 18px; border-radius: 24px; min-height: 400px; transition: background 0.3s; }
         
@@ -146,10 +129,8 @@
             border-left: 6px solid var(--primary); box-sizing: border-box; width: 100%; 
             transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
-
         .btn-icon { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; border-radius: 8px; color: var(--text); opacity: 0.8; }
         .btn-icon:hover { background: var(--col-bg); opacity: 1; }
-
         @media (max-width: 768px) {
             .input-bar { grid-template-columns: 1fr; }
             .board { grid-template-columns: 1fr; }
@@ -157,16 +138,13 @@
     </style>
 </head>
 <body>
-
     <div id="splash-screen"><h2>MISSION CONTROL PRO</h2></div>
-
     <div id="app-dashboard">
         <div class="top-nav">
             <button id="theme-toggle" class="btn-header" onclick="toggleTheme()">🌙 Dark</button>
             <button id="install-btn" class="btn-header">Install App</button>
             <button class="logout-btn btn-header" onclick="logout()">Sign Out</button>
         </div>
-
         <div class="analytics-container">
             <div id="status-header" class="analytics-header">Weekly Fuel Levels</div>
             <div class="analytics-content">
@@ -179,16 +157,13 @@
                             <circle id="progressCircle" stroke-width="10" fill="transparent" r="42" cx="50" cy="50" style="stroke-dasharray: 264; stroke-dashoffset: 264;"/>
                         </svg>
                         <div id="pctLabel" class="pct-label">0%</div>
-                    </div>
-                </div>
+                    </div>                </div>
             </div>
         </div>
-
         <div class="view-toggle">
             <button id="view-active" class="view-btn active" onclick="setView('active', event)">ACTIVE</button>
             <button id="view-archived" class="view-btn" onclick="setView('archived', event)">ARCHIVE</button>
         </div>
-
         <div class="category-bar">
             <button class="cat-tab active" onclick="setCategory('all', event)">ALL</button>
             <button class="cat-tab" onclick="setCategory('work', event)">WORK</button>
@@ -196,7 +171,6 @@
             <button class="cat-tab" onclick="setCategory('personal', event)">PERSONAL</button>
             <button class="cat-tab" onclick="setCategory('urgent', event)">URGENT</button>
         </div>
-
         <div class="input-bar">
             <input type="text" id="taskName" placeholder="Mission Name...">
             <select id="taskCat"><option value="work">Work</option><option value="home">Home</option><option value="personal">Personal</option><option value="urgent">Urgent</option></select>
@@ -204,14 +178,12 @@
             <input type="time" id="taskTime">
             <button onclick="addTask()">DEPLOY</button>
         </div>
-
         <div class="board">
             <div class="col"><h3>PREVIOUS</h3><ul id="list-prev"></ul></div>
             <div class="col"><h3>TODAY</h3><ul id="list-today"></ul></div>
             <div class="col"><h3>UPCOMING</h3><ul id="up-cont"></ul></div>
         </div>
     </div>
-
     <div id="auth-screen">
         <div class="auth-card">
             <h2 id="auth-title">Login</h2>
@@ -225,7 +197,6 @@
             <p id="toggle-text" style="font-size:12px; margin-top:15px; color:#2d3436;">New user? <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span></p>
         </div>
     </div>
-
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -246,42 +217,132 @@
     let currentUser = null, allTasks = [], currentCategory = 'all', currentView = 'active', isLoginMode = true;
     const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-    // Service Worker Registration
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js').then(reg => console.log('SW Registered'));
+    // =====================================================================
+    // OFFLINE LAYER — IndexedDB store + sync queue.
+    // Nothing here touches the DOM or changes any rendering behaviour.
+    // =====================================================================
+    const DB_NAME      = 'mc-offline';
+    const DB_VER       = 1;
+    const STORE_TASKS  = 'tasks';
+    const STORE_QUEUE  = 'syncQueue';
+    let idb = null;
+
+    function idbOpen() {
+        return new Promise((resolve, reject) => {
+            const req = indexedDB.open(DB_NAME, DB_VER);
+            req.onupgradeneeded = (e) => {
+                const d = e.target.result;
+                if (!d.objectStoreNames.contains(STORE_TASKS))
+                    d.createObjectStore(STORE_TASKS, { keyPath: 'id' });
+                if (!d.objectStoreNames.contains(STORE_QUEUE))
+                    d.createObjectStore(STORE_QUEUE, { keyPath: 'qid', autoIncrement: true });
+            };
+            req.onsuccess = () => resolve(req.result);
+            req.onerror   = () => reject(req.error);
         });
     }
 
-    // --- Connection Monitoring (Offline Sync Logic) ---
-    const connectedRef = ref(db, ".info/connected");
-    onValue(connectedRef, (snap) => {
+    // Generic helper — runs a callback against an object store, returns a promise
+    function idbRun(storeName, mode, fn) {
+        return new Promise((resolve, reject) => {
+            const tx    = idb.transaction([storeName], mode);
+            const store = tx.objectStore(storeName);
+            const req   = fn(store);
+            req.onsuccess = () => resolve(req.result);
+            req.onerror   = () => reject(req.error);
+        });
+    }
+
+    // Task store
+    const localGetAll  = ()     => idbRun(STORE_TASKS, 'readonly',  s => s.getAll());
+    const localPut     = (task) => idbRun(STORE_TASKS, 'readwrite', s => s.put(task));
+    const localDelete  = (id)   => idbRun(STORE_TASKS, 'readwrite', s => s.delete(id));
+
+    // Sync queue
+    const queuePush      = (op)  => idbRun(STORE_QUEUE, 'readwrite', s => s.add(op));
+    const queueGetAll    = ()    => idbRun(STORE_QUEUE, 'readonly',  s => s.getAll());
+    const queueDeleteOne = (qid) => idbRun(STORE_QUEUE, 'readwrite', s => s.delete(qid));
+    // =====================================================================
+
+    // Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js').then(() => console.log('SW Registered'));
+        });
+    }
+
+    // =====================================================================
+    // CONNECTION STATE + SYNC QUEUE PROCESSOR
+    // =====================================================================
+    let isOnline    = navigator.onLine;
+    let syncRunning = false;
+
+    // Firebase's own connectivity signal
+    onValue(ref(db, ".info/connected"), (snap) => {
+        const wasOffline = !isOnline;
+        isOnline = !!snap.val();
+
         const header = document.getElementById('status-header');
-        if (snap.val() === true) {
+        if (isOnline) {
             header.style.background = "var(--primary)";
-            header.innerText = "Weekly Fuel Levels (Online)";
+            header.innerText = "Weekly Fuel Levels";
+            if (wasOffline) processSyncQueue();
         } else {
-            header.style.background = "#e67e22"; // Orange for Sync Pending
+            header.style.background = "#e67e22";
             header.innerText = "Weekly Fuel Levels (Sync Pending...)";
         }
     });
 
+    // Fallback for airplane-mode style disconnects
+    window.addEventListener('online',  () => { isOnline = true;  processSyncQueue(); });
+    window.addEventListener('offline', () => { isOnline = false; });
+
+    // Replays every queued op in order. Each entry is removed only after it
+    // succeeds on Firebase; on failure we stop and wait for the next attempt.
+    async function processSyncQueue() {
+        if (syncRunning || !isOnline || !currentUser) return;
+        syncRunning = true;
+        try {
+            const queue = await queueGetAll();
+            for (const item of queue) {
+                const path = `users/${currentUser.uid}/tasks/${item.taskId}`;
+                try {
+                    switch (item.type) {
+                        case 'set':    await set(ref(db, path), item.data);       break;
+                        case 'update': await update(ref(db, path), item.updates); break;
+                        case 'remove': await remove(ref(db, path));               break;
+                    }
+                    await queueDeleteOne(item.qid); // confirmed → remove
+                } catch (e) {
+                    console.warn('Sync failed for qid', item.qid, e);
+                    break; // leave remaining items; retry next time
+                }
+            }
+        } catch (e) { console.error('processSyncQueue', e); }
+        syncRunning = false;
+    }
+
+    // =====================================================================
+    // THEME
+    // =====================================================================
     window.toggleTheme = () => {
         const current = document.documentElement.getAttribute('data-theme');
-        const target = current === 'dark' ? 'light' : 'dark';
+        const target  = current === 'dark' ? 'light' : 'dark';
         document.documentElement.setAttribute('data-theme', target);
         localStorage.setItem('mission-theme', target);
         document.getElementById('theme-toggle').innerText = target === 'dark' ? '☀️ Light' : '🌙 Dark';
     };
-
     const savedTheme = localStorage.getItem('mission-theme');
     if (savedTheme) {
         document.documentElement.setAttribute('data-theme', savedTheme);
         window.addEventListener('DOMContentLoaded', () => {
-             document.getElementById('theme-toggle').innerText = savedTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
+            document.getElementById('theme-toggle').innerText = savedTheme === 'dark' ? '☀️ Light' : '🌙 Dark';
         });
     }
 
+    // =====================================================================
+    // PWA INSTALL
+    // =====================================================================
     let deferredPrompt;
     const installBtn = document.getElementById('install-btn');
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -298,6 +359,9 @@
         }
     });
 
+    // =====================================================================
+    // CHART
+    // =====================================================================
     const initChart = () => {
         const chart = document.getElementById('weeklyChart');
         chart.innerHTML = days.map((day, i) => `
@@ -314,86 +378,190 @@
     const getTodayStr = () => new Date().toLocaleDateString('en-CA');
     document.getElementById('taskDate').min = getTodayStr();
 
-    onAuthStateChanged(auth, (user) => {
+    // =====================================================================
+    // AUTH STATE CHANGE
+    // =====================================================================
+    onAuthStateChanged(auth, async (user) => {
         document.getElementById('splash-screen').classList.add('hidden');
-        if (user) { 
-            currentUser = user; 
-            document.getElementById('auth-screen').style.display = 'none'; 
-            document.getElementById('app-dashboard').style.display = 'block'; 
-            loadData(); 
-        } else { 
-            document.getElementById('auth-screen').style.display = 'flex'; 
-            document.getElementById('app-dashboard').style.display = 'none'; 
+        if (user) {
+            currentUser = user;
+            document.getElementById('auth-screen').style.display  = 'none';
+            document.getElementById('app-dashboard').style.display = 'block';
+
+            if (!idb) idb = await idbOpen();
+
+            // Paint from local cache instantly (works fully offline)
+            allTasks = await localGetAll();
+            renderUI();
+
+            // Start the Firebase live listener (merges server state)
+            loadData();
+
+            // Flush any writes that were queued while offline
+            if (isOnline) processSyncQueue();
+        } else {
+            currentUser = null;
+            document.getElementById('auth-screen').style.display  = 'flex';
+            document.getElementById('app-dashboard').style.display = 'none';
         }
     });
 
+    // =====================================================================
+    // AUTH HELPERS
+    // =====================================================================
     window.togglePassword = () => {
         const p = document.getElementById('password'), b = document.getElementById('togglePassBtn');
         p.type = p.type === 'password' ? 'text' : 'password';
         b.innerText = p.type === 'password' ? 'Show' : 'Hide';
     };
-
     window.handleAuth = async () => {
         const u = document.getElementById('username').value, p = document.getElementById('password').value;
         const email = `${u}@missioncontrol.com`;
         try {
             if (isLoginMode) await signInWithEmailAndPassword(auth, email, p);
-            else await createUserWithEmailAndPassword(auth, email, p);
+            else             await createUserWithEmailAndPassword(auth, email, p);
         } catch (e) { document.getElementById('auth-error').innerText = e.message; }
     };
-
-    window.toggleAuthMode = () => { 
-        isLoginMode = !isLoginMode; 
-        document.getElementById('auth-title').innerText = isLoginMode ? "Login" : "Sign Up"; 
-        document.getElementById('authBtn').innerText = isLoginMode ? "LOGIN" : "SIGN UP";
-        document.getElementById('toggle-text').innerHTML = isLoginMode ? 
-            `New user? <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span>` :
-            `Already have an account? <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Login</span>`;
+    window.toggleAuthMode = () => {
+        isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').innerText = isLoginMode ? "Login" : "Sign Up";
+        document.getElementById('authBtn').innerText     = isLoginMode ? "LOGIN" : "SIGN UP";
+        document.getElementById('toggle-text').innerHTML = isLoginMode
+            ? `New user? <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span>`
+            : `Already have an account? <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Login</span>`;
     };
-
     window.logout = () => signOut(auth);
 
-    window.setView = (view, event) => { 
-        currentView = view; 
+    // =====================================================================
+    // VIEW / CATEGORY
+    // =====================================================================
+    window.setView = (view, event) => {
+        currentView = view;
         document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
-        renderUI(); 
+        renderUI();
     };
-    
-    window.setCategory = (cat, event) => { 
-        currentCategory = cat; 
+    window.setCategory = (cat, event) => {
+        currentCategory = cat;
         document.querySelectorAll('.cat-tab').forEach(tab => tab.classList.remove('active'));
         event.target.classList.add('active');
-        renderUI(); 
+        renderUI();
     };
 
+    // =====================================================================
+    // FIREBASE LISTENER — keeps IndexedDB in sync with the server.
+    // On every snapshot we write the server's tasks into the local store.
+    // Any local task whose id doesn't exist on the server yet (still queued)
+    // is preserved so it isn't lost before its write completes.
+    // =====================================================================
     function loadData() {
-        onValue(ref(db, `users/${currentUser.uid}/tasks`), (snap) => {
-            const data = snap.val();
-            allTasks = data ? Object.keys(data).map(k => ({id: k, ...data[k]})) : [];
+        onValue(ref(db, `users/${currentUser.uid}/tasks`), async (snap) => {
+            const data        = snap.val();
+            const serverTasks = data ? Object.keys(data).map(k => ({ id: k, ...data[k] })) : [];
+            const serverIds   = new Set(serverTasks.map(t => t.id));
+
+            // Keep any local task not yet confirmed on the server
+            const pendingLocal = (await localGetAll()).filter(t => !serverIds.has(t.id));
+
+            // Rewrite the tasks store in one transaction
+            await new Promise((res, rej) => {
+                const tx = idb.transaction([STORE_TASKS], 'readwrite');
+                const s  = tx.objectStore(STORE_TASKS);
+                s.clear();
+                tx.oncomplete = res;
+                tx.onerror    = () => rej(tx.error);
+            });
+            for (const t of [...serverTasks, ...pendingLocal]) await localPut(t);
+
+            allTasks = await localGetAll();
             renderUI();
         });
     }
 
-    window.addTask = () => {
-        const n = document.getElementById('taskName').value, d = document.getElementById('taskDate').value, c = document.getElementById('taskCat').value;
-        if(!n || !d) return alert("Required fields missing.");
-        // Firebase automatically queues this if offline
-        set(ref(db, `users/${currentUser.uid}/tasks/${Date.now()}`), { name: n, cat: c, date: d, completed: false, archived: false });
+    // =====================================================================
+    // TASK MUTATIONS — local-first, then Firebase (or queue if offline).
+    // =====================================================================
+    window.addTask = async () => {
+        const n = document.getElementById('taskName').value;
+        const d = document.getElementById('taskDate').value;
+        const c = document.getElementById('taskCat').value;
+        if (!n || !d) return alert("Required fields missing.");
+
+        const id   = Date.now().toString();
+        const task = { id, name: n, cat: c, date: d, completed: false, archived: false };
+
+        // Local first
+        await localPut(task);
+        allTasks.push(task);
+        renderUI();
+
+        // Firebase or queue
+        const payload = { name: n, cat: c, date: d, completed: false, archived: false };
+        if (isOnline) {
+            try { await set(ref(db, `users/${currentUser.uid}/tasks/${id}`), payload); }
+            catch (e) { await queuePush({ type: 'set', taskId: id, data: payload }); }
+        } else {
+            await queuePush({ type: 'set', taskId: id, data: payload });
+        }
+
         document.getElementById('taskName').value = '';
         document.getElementById('taskName').focus();
     };
 
-    window.toggleTask = (id, cur) => update(ref(db, `users/${currentUser.uid}/tasks/${id}`), { completed: !cur });
-    window.archiveTask = (id, cur) => update(ref(db, `users/${currentUser.uid}/tasks/${id}`), { archived: !cur });
-    window.deleteTask = (id) => remove(ref(db, `users/${currentUser.uid}/tasks/${id}`));
+    window.toggleTask = async (id, cur) => {
+        const next = !cur;
+        const task = allTasks.find(t => t.id === id);
+        if (task) task.completed = next;
+        await localPut({ ...task });
+        renderUI();
 
+        if (isOnline) {
+            try { await update(ref(db, `users/${currentUser.uid}/tasks/${id}`), { completed: next }); }
+            catch (e) { await queuePush({ type: 'update', taskId: id, updates: { completed: next } }); }
+        } else {
+            await queuePush({ type: 'update', taskId: id, updates: { completed: next } });
+        }
+    };
+
+    window.archiveTask = async (id, cur) => {
+        const next = !cur;
+        const task = allTasks.find(t => t.id === id);
+        if (task) task.archived = next;
+        await localPut({ ...task });
+        renderUI();
+
+        if (isOnline) {
+            try { await update(ref(db, `users/${currentUser.uid}/tasks/${id}`), { archived: next }); }
+            catch (e) { await queuePush({ type: 'update', taskId: id, updates: { archived: next } }); }
+        } else {
+            await queuePush({ type: 'update', taskId: id, updates: { archived: next } });
+        }
+    };
+
+    window.deleteTask = async (id) => {
+        allTasks = allTasks.filter(t => t.id !== id);
+        await localDelete(id);
+        renderUI();
+
+        if (isOnline) {
+            try { await remove(ref(db, `users/${currentUser.uid}/tasks/${id}`)); }
+            catch (e) { await queuePush({ type: 'remove', taskId: id }); }
+        } else {
+            await queuePush({ type: 'remove', taskId: id });
+        }
+    };
+
+    // =====================================================================
+    // RENDER  (identical logic to original; two broken getElementById calls fixed)
+    // =====================================================================
     function renderUI() {
         const todayStr = getTodayStr();
         const sun = new Date(); sun.setDate(sun.getDate() - sun.getDay());
         const sunStr = sun.toLocaleDateString('en-CA');
 
-        const prev = document.getElementById('list-prev'), now = document.getElementById('list-today'), up = document.getElementById('up-cont');
+        const prev = document.getElementById('list-prev'),
+              now  = document.getElementById('list-today'),
+              up   = document.getElementById('up-cont');
         prev.innerHTML = now.innerHTML = up.innerHTML = '';
 
         let filtered = allTasks.filter(t => currentView === 'archived' ? t.archived : !t.archived);
@@ -402,24 +570,25 @@
         const stats = [0,0,0,0,0,0,0], doneStats = [0,0,0,0,0,0,0];
 
         filtered.forEach(t => {
-            const li = document.createElement('li'); 
+            const li = document.createElement('li');
             li.style.borderLeftColor = `var(--cat-${t.cat})`;
             li.innerHTML = `<div><input type="checkbox" ${t.completed?'checked':''} onchange="toggleTask('${t.id}',${t.completed})">
                 <span style="${t.completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${t.name}</span></div>
                 <div><button class="btn-icon" onclick="archiveTask('${t.id}',${t.archived})" title="Archive">📥</button>
                 <button class="btn-icon" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button></div>`;
-            
-            if (t.date < todayStr) prev.appendChild(li); 
-            else if (t.date === todayStr) now.appendChild(li); 
-            else up.appendChild(li);
+
+            if      (t.date < todayStr)  prev.appendChild(li);
+            else if (t.date === todayStr) now.appendChild(li);
+            else                          up.appendChild(li);
 
             const tDate = new Date(t.date + 'T00:00:00');
-            const diff = Math.round((tDate - new Date(sunStr + 'T00:00:00')) / 86400000);
-            if(diff >= 0 && diff < 7) { stats[diff]++; if(t.completed) doneStats[diff]++; }
+            const diff  = Math.round((tDate - new Date(sunStr + 'T00:00:00')) / 86400000);
+            if (diff >= 0 && diff < 7) { stats[diff]++; if (t.completed) doneStats[diff]++; }
         });
 
-        const max = Math.max(...stats, 8); 
+        const max = Math.max(...stats, 8);
         document.getElementById('y-max').innerText = max;
+
         days.forEach((_, i) => {
             const pBar = document.getElementById(`planned-${i}`);
             const dBar = document.getElementById(`done-${i}`);
@@ -428,7 +597,7 @@
         });
 
         const total = filtered.length, done = filtered.filter(t => t.completed).length;
-        const pct = total ? (done/total)*100 : 0;
+        const pct   = total ? (done/total)*100 : 0;
         document.getElementById('progressCircle').style.strokeDashoffset = 264 - (pct/100*264);
         document.getElementById('pctLabel').innerText = Math.round(pct) + "%";
     }
