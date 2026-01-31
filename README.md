@@ -95,7 +95,7 @@ To keep your data private, apply these rules in your **Firebase Console > Realti
 ### 2. Mobile Installation (PWA Mode)
 To use this dashboard as a standalone mobile app without a browser URL bar:
 * **iOS (Safari):** Tap the **Share** button (square with up arrow) and select **Add to Home Screen**.
-* **Android (Chrome):** Tap the **Three Dots** icon in the top right and select **Add to Home Screen**.
+* **Android (Chrome):** Tap the **Install App** icon in the top right.
 
 ---
 
