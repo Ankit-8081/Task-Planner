@@ -691,6 +691,20 @@
 
         const stats = [0,0,0,0,0,0,0], doneStats = [0,0,0,0,0,0,0];
 
+        // Calculate stats from ALL tasks (not just filtered) for accurate bar graph and completion meter
+        let allTasksForStats = allTasks;
+        if (currentCategory !== 'all') allTasksForStats = allTasksForStats.filter(t => t.cat === currentCategory);
+
+        allTasksForStats.forEach(t => {
+            const tDate = new Date(t.date + 'T00:00:00');
+            const diff  = Math.round((tDate - new Date(sunStr + 'T00:00:00')) / 86400000);
+            if (diff >= 0 && diff < 7) { 
+                stats[diff]++; 
+                if (t.completed) doneStats[diff]++;
+            }
+        });
+
+        // Render only the filtered tasks in the columns
         filtered.forEach(t => {
             const li = document.createElement('li');
             li.style.borderLeftColor = `var(--cat-${t.cat})`;
@@ -716,10 +730,6 @@
             } else {
                 up.appendChild(li);
             }
-
-            const tDate = new Date(t.date + 'T00:00:00');
-            const diff  = Math.round((tDate - new Date(sunStr + 'T00:00:00')) / 86400000);
-            if (diff >= 0 && diff < 7) { stats[diff]++; if (t.completed) doneStats[diff]++; }
         });
 
         const max = Math.max(...stats, 8);
@@ -732,7 +742,8 @@
             if (dBar) dBar.style.height = `${(doneStats[i]/max)*100}%`;
         });
 
-        const total = filtered.length, done = filtered.filter(t => t.completed).length;
+        // Calculate completion percentage from ALL tasks (not just filtered) for accurate completion meter
+        const total = allTasksForStats.length, done = allTasksForStats.filter(t => t.completed).length;
         const pct   = total ? (done/total)*100 : 0;
         document.getElementById('progressCircle').style.strokeDashoffset = 264 - (pct/100*264);
         document.getElementById('pctLabel').innerText = Math.round(pct) + "%";
