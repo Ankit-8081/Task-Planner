@@ -136,6 +136,90 @@
             .board { grid-template-columns: 1fr; }
         }
     </style>
+    <style>
+        .calendar-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+        .calendar-modal-overlay.show {
+            display: flex;
+        }
+        .calendar-modal {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+        }
+        .modal-close {
+            background: var(--col-bg);
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            border-radius: 8px;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text);
+        }
+        .completed-group {
+            margin-bottom: 25px;
+        }
+        .completed-date-header {
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .calendar-icon-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 10px;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+        .calendar-icon-btn:hover {
+            background: var(--primary-shadow);
+            transform: translateY(-2px);
+        }
+        @media (max-width: 768px) {
+            .calendar-modal {
+                padding: 20px;
+                width: 95%;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="splash-screen"><h2>MISSION CONTROL PRO</h2></div>
@@ -162,7 +246,7 @@
         </div>
         <div class="view-toggle">
             <button id="view-active" class="view-btn active" onclick="setView('active', event)">ACTIVE</button>
-            <button id="view-archived" class="view-btn" onclick="setView('archived', event)">ARCHIVE</button>
+            <button id="view-completed" class="view-btn" onclick="setView('completed', event)">COMPLETED</button>
         </div>
         <div class="category-bar">
             <button class="cat-tab active" onclick="setCategory('all', event)">ALL</button>
@@ -180,10 +264,28 @@
         </div>
         <div class="board">
             <div class="col"><h3>PREVIOUS</h3><ul id="list-prev"></ul></div>
-            <div class="col"><h3>TODAY</h3><ul id="list-today"></ul></div>
+            <div class="col">
+                <h3 style="display: inline-block;">IN PROGRESS</h3>
+                <button class="calendar-icon-btn" onclick="showCompletedHistory()" title="View Completed History">
+                    📅 History
+                </button>
+                <ul id="list-today"></ul>
+            </div>
             <div class="col"><h3>UPCOMING</h3><ul id="up-cont"></ul></div>
         </div>
     </div>
+
+    <!-- Completed History Modal -->
+    <div class="calendar-modal-overlay" id="completedModal" onclick="closeModalOnOverlay(event)">
+        <div class="calendar-modal">
+            <div class="modal-header">
+                <h3 style="margin: 0;">Completed Tasks History</h3>
+                <button class="modal-close" onclick="closeCompletedModal()">×</button>
+            </div>
+            <div id="completedHistoryContent"></div>
+        </div>
+    </div>
+
     <div id="auth-screen">
         <div class="auth-card">
             <h2 id="auth-title">Login</h2>
@@ -511,15 +613,35 @@
     window.toggleTask = async (id, cur) => {
         const next = !cur;
         const task = allTasks.find(t => t.id === id);
-        if (task) task.completed = next;
+        if (task) {
+            task.completed = next;
+            // Auto-archive when completed and add completion timestamp
+            if (next) {
+                task.archived = true;
+                task.completedAt = new Date().toISOString();
+            } else {
+                // Unarchive when unticked (revert to active)
+                task.archived = false;
+                task.completedAt = null;
+            }
+        }
         await localPut({ ...task });
         renderUI();
 
-        if (isOnline) {
-            try { await update(ref(db, `users/${currentUser.uid}/tasks/${id}`), { completed: next }); }
-            catch (e) { await queuePush({ type: 'update', taskId: id, updates: { completed: next } }); }
+        const updates = { completed: next };
+        if (next) {
+            updates.archived = true;
+            updates.completedAt = new Date().toISOString();
         } else {
-            await queuePush({ type: 'update', taskId: id, updates: { completed: next } });
+            updates.archived = false;
+            updates.completedAt = null;
+        }
+
+        if (isOnline) {
+            try { await update(ref(db, `users/${currentUser.uid}/tasks/${id}`), updates); }
+            catch (e) { await queuePush({ type: 'update', taskId: id, updates }); }
+        } else {
+            await queuePush({ type: 'update', taskId: id, updates });
         }
     };
 
@@ -564,7 +686,7 @@
               up   = document.getElementById('up-cont');
         prev.innerHTML = now.innerHTML = up.innerHTML = '';
 
-        let filtered = allTasks.filter(t => currentView === 'archived' ? t.archived : !t.archived);
+        let filtered = allTasks.filter(t => currentView === 'completed' ? t.completed : !t.completed);
         if (currentCategory !== 'all') filtered = filtered.filter(t => t.cat === currentCategory);
 
         const stats = [0,0,0,0,0,0,0], doneStats = [0,0,0,0,0,0,0];
@@ -574,12 +696,26 @@
             li.style.borderLeftColor = `var(--cat-${t.cat})`;
             li.innerHTML = `<div><input type="checkbox" ${t.completed?'checked':''} onchange="toggleTask('${t.id}',${t.completed})">
                 <span style="${t.completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${t.name}</span></div>
-                <div><button class="btn-icon" onclick="archiveTask('${t.id}',${t.archived})" title="Archive">📥</button>
-                <button class="btn-icon" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button></div>`;
+                <div><button class="btn-icon" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button></div>`;
 
-            if      (t.date < todayStr)  prev.appendChild(li);
-            else if (t.date === todayStr) now.appendChild(li);
-            else                          up.appendChild(li);
+            // For IN PROGRESS column (now), only show today's completed tasks
+            if (t.date === todayStr) {
+                // Show all non-completed tasks
+                if (!t.completed) {
+                    now.appendChild(li);
+                } else {
+                    // Only show completed tasks that were completed today
+                    const completedToday = t.completedAt && 
+                        new Date(t.completedAt).toLocaleDateString('en-CA') === todayStr;
+                    if (completedToday) {
+                        now.appendChild(li);
+                    }
+                }
+            } else if (t.date < todayStr) {
+                prev.appendChild(li);
+            } else {
+                up.appendChild(li);
+            }
 
             const tDate = new Date(t.date + 'T00:00:00');
             const diff  = Math.round((tDate - new Date(sunStr + 'T00:00:00')) / 86400000);
@@ -601,6 +737,91 @@
         document.getElementById('progressCircle').style.strokeDashoffset = 264 - (pct/100*264);
         document.getElementById('pctLabel').innerText = Math.round(pct) + "%";
     }
+
+    // =====================================================================
+    // COMPLETED HISTORY MODAL
+    // =====================================================================
+    window.showCompletedHistory = function() {
+        const modal = document.getElementById('completedModal');
+        const content = document.getElementById('completedHistoryContent');
+        
+        // Get all completed tasks
+        const completedTasks = allTasks.filter(t => t.completed && t.completedAt);
+        
+        if (completedTasks.length === 0) {
+            content.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px;">No completed tasks yet.</p>';
+            modal.classList.add('show');
+            return;
+        }
+        
+        // Group by completion date
+        const groupedByDate = {};
+        completedTasks.forEach(task => {
+            const completedDate = new Date(task.completedAt).toLocaleDateString('en-CA');
+            if (!groupedByDate[completedDate]) {
+                groupedByDate[completedDate] = [];
+            }
+            groupedByDate[completedDate].push(task);
+        });
+        
+        // Sort dates in descending order
+        const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
+        
+        // Build HTML
+        let html = '';
+        sortedDates.forEach(date => {
+            const dateObj = new Date(date + 'T00:00:00');
+            const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            const isToday = date === getTodayStr();
+            const dateLabel = isToday ? `Today - ${formattedDate}` : formattedDate;
+            
+            html += `<div class="completed-group">`;
+            html += `<div class="completed-date-header">${dateLabel}</div>`;
+            html += `<ul style="list-style: none; padding: 0;">`;
+            
+            groupedByDate[date].forEach(task => {
+                const completedTime = new Date(task.completedAt).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                
+                html += `<li style="background: var(--card-bg); color: var(--text); padding: 12px 15px; 
+                         border-radius: 10px; margin-bottom: 8px; display: flex; 
+                         justify-content: space-between; align-items: center; 
+                         border-left: 4px solid var(--cat-${task.cat});">
+                    <div>
+                        <span style="text-decoration: line-through; opacity: 0.7;">${task.name}</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+                            Completed at ${completedTime}
+                        </div>
+                    </div>
+                    <button class="btn-icon" onclick="deleteTask('${task.id}')" title="Delete">🗑️</button>
+                </li>`;
+            });
+            
+            html += `</ul></div>`;
+        });
+        
+        content.innerHTML = html;
+        modal.classList.add('show');
+    };
+    
+    window.closeCompletedModal = function() {
+        document.getElementById('completedModal').classList.remove('show');
+    };
+    
+    window.closeModalOnOverlay = function(event) {
+        if (event.target.id === 'completedModal') {
+            closeCompletedModal();
+        }
+    };
 </script>
 </body>
 </html>
