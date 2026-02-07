@@ -131,6 +131,84 @@
         }
         .btn-icon { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; border-radius: 8px; color: var(--text); opacity: 0.8; }
         .btn-icon:hover { background: var(--col-bg); opacity: 1; }
+        
+        /* Edit Modal Styles */
+        .edit-modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2001;
+            align-items: center;
+            justify-content: center;
+        }
+        .edit-modal-overlay.show {
+            display: flex;
+        }
+        .edit-modal {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+        .edit-modal h2 {
+            margin-top: 0;
+            color: var(--text);
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .edit-form-group {
+            margin-bottom: 15px;
+        }
+        .edit-form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--text);
+        }
+        .edit-form-group input,
+        .edit-form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: var(--card-bg);
+            color: var(--text);
+            box-sizing: border-box;
+        }
+        .edit-modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .edit-modal-buttons button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-save {
+            background: var(--primary);
+            color: white;
+        }
+        .btn-save:hover {
+            background: var(--primary-shadow);
+        }
+        .btn-cancel {
+            background: var(--col-bg);
+            color: var(--text);
+        }
+        .btn-cancel:hover {
+            background: var(--border);
+        }
         @media (max-width: 768px) {
             .input-bar { grid-template-columns: 1fr; }
             .board { grid-template-columns: 1fr; }
@@ -299,6 +377,38 @@
             <p id="toggle-text" style="font-size:12px; margin-top:15px; color:#2d3436;">New user? <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span></p>
         </div>
     </div>
+    <!-- Edit Task Modal -->
+    <div id="editModal" class="edit-modal-overlay" onclick="closeEditModalOnOverlay(event)">
+        <div class="edit-modal">
+            <h2>✏️ Edit Task</h2>
+            <div class="edit-form-group">
+                <label>Task Name</label>
+                <input type="text" id="editTaskName">
+            </div>
+            <div class="edit-form-group">
+                <label>Date</label>
+                <input type="date" id="editTaskDate">
+            </div>
+            <div class="edit-form-group">
+                <label>Time</label>
+                <input type="time" id="editTaskTime">
+            </div>
+            <div class="edit-form-group">
+                <label>Category</label>
+                <select id="editTaskCategory">
+                    <option value="work">💼 Work</option>
+                    <option value="home">🏠 Home</option>
+                    <option value="personal">✨ Personal</option>
+                    <option value="urgent">🔥 Urgent</option>
+                </select>
+            </div>
+            <div class="edit-modal-buttons">
+                <button class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                <button class="btn-save" onclick="saveEditTask()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -672,6 +782,70 @@
             await queuePush({ type: 'remove', taskId: id });
         }
     };
+    // =====================================================================
+    // EDIT TASK FUNCTIONS
+    // =====================================================================
+    let currentEditTaskId = null;
+
+    window.editTask = function(id) {
+        const task = allTasks.find(t => t.id === id);
+        if (!task) return;
+        
+        currentEditTaskId = id;
+        document.getElementById("editTaskName").value = task.name;
+        document.getElementById("editTaskDate").value = task.date;
+        document.getElementById("editTaskTime").value = task.time || "";
+        document.getElementById("editTaskCategory").value = task.cat;
+        
+        document.getElementById("editModal").classList.add("show");
+    };
+
+    window.closeEditModal = function() {
+        document.getElementById("editModal").classList.remove("show");
+        currentEditTaskId = null;
+    };
+
+    window.saveEditTask = async function() {
+        if (!currentEditTaskId) return;
+        
+        const task = allTasks.find(t => t.id === currentEditTaskId);
+        if (!task) return;
+        
+        const newName = document.getElementById("editTaskName").value.trim();
+        const newDate = document.getElementById("editTaskDate").value;
+        const newTime = document.getElementById("editTaskTime").value;
+        const newCat = document.getElementById("editTaskCategory").value;
+        
+        if (!newName || !newDate) {
+            alert("⚠️ Name & Date required!");
+            return;
+        }
+        
+        task.name = newName;
+        task.date = newDate;
+        task.time = newTime;
+        task.cat = newCat;
+        
+        await localPut({ ...task });
+        renderUI();
+        
+        const updates = { name: newName, date: newDate, time: newTime, cat: newCat };
+        if (isOnline) {
+            try { await update(ref(db, `users/${currentUser.uid}/tasks/${currentEditTaskId}`), updates); }
+            catch (e) { await queuePush({ type: "update", taskId: currentEditTaskId, data: updates }); }
+        } else {
+            await queuePush({ type: "update", taskId: currentEditTaskId, data: updates });
+        }
+        
+        closeEditModal();
+    };
+
+    window.closeEditModalOnOverlay = function(event) {
+        if (event.target.id === "editModal") {
+            closeEditModal();
+        }
+    };
+
 
     // =====================================================================
     // RENDER  (identical logic to original; two broken getElementById calls fixed)
@@ -710,7 +884,7 @@
             li.style.borderLeftColor = `var(--cat-${t.cat})`;
             li.innerHTML = `<div><input type="checkbox" ${t.completed?'checked':''} onchange="toggleTask('${t.id}',${t.completed})">
                 <span style="${t.completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${t.name}</span></div>
-                <div><button class="btn-icon" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button></div>`;
+                <div><button class="btn-icon" onclick="editTask('${t.id}')" title="Edit">✏️</button><button class="btn-icon" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button></div>`;
 
             // For IN PROGRESS column (now), only show today's completed tasks
             if (t.date === todayStr) {
@@ -813,7 +987,7 @@
                             Completed at ${completedTime}
                         </div>
                     </div>
-                    <button class="btn-icon" onclick="deleteTask('${task.id}')" title="Delete">🗑️</button>
+                    <button class="btn-icon" onclick="editTask('${task.id}')" title="Edit">✏️</button><button class="btn-icon" onclick="deleteTask('${task.id}')" title="Delete">🗑️</button>
                 </li>`;
             });
             
