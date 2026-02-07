@@ -374,7 +374,7 @@
             </div>
             <button id="authBtn" class="btn-login" onclick="handleAuth()">LOGIN</button>
             <p id="auth-error" style="color:var(--overdue); margin-top:10px; font-size:12px;"></p>
-            <p id="toggle-text" style="font-size:12px; margin-top:15px; color:#2d3436;">New user? <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span></p>
+            <p id="toggle-text" style="font-size:12px; margin-top:15px; color:var(--text);"><span style='color:var(--text);'>New user?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span></p>
         </div>
     </div>
     <!-- Edit Task Modal -->
@@ -639,8 +639,8 @@
         document.getElementById('auth-title').innerText = isLoginMode ? "Login" : "Sign Up";
         document.getElementById('authBtn').innerText     = isLoginMode ? "LOGIN" : "SIGN UP";
         document.getElementById('toggle-text').innerHTML = isLoginMode
-            ? `New user? <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span>`
-            : `Already have an account? <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Login</span>`;
+            ? `<span style='color:var(--text);'>New user?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span>`
+            : `<span style='color:var(--text);'>Already have an account?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Login</span>`;
     };
     window.logout = () => signOut(auth);
 
