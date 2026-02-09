@@ -757,38 +757,58 @@ function scheduleAllTaskNotifications() {
 }
 
 // Show notification
-function showNotification(title, body, tag) {
+async function showNotification(title, body, tag) {
     console.log(`[Notification] Attempting to show: ${title} - ${body}`);
     
     // ALWAYS show visual in-app notification
     showToast(title, body);
     
-    // Also try browser notification if permission granted
+    // Also try system notification if permission granted
     if (Notification.permission === 'granted') {
         try {
-            console.log('[Notification] Showing browser notification');
-            const notification = new Notification(title, {
-                body: body,
-                icon: '/icon-192.png',
-                badge: '/icon-192.png',
-                tag: tag,
-                requireInteraction: true,
-                vibrate: [200, 100, 200],
-                silent: false
-            });
-            
-            // Auto-close after 30 seconds
-            setTimeout(() => {
-                notification.close();
-            }, 30000);
-            
-            // Click handler
-            notification.onclick = function() {
-                window.focus();
-                this.close();
-            };
+            // Use Service Worker notification for mobile compatibility (shows in notification bar)
+            if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+                const registration = await navigator.serviceWorker.ready;
+                console.log('[Notification] Using Service Worker notification');
+                
+                await registration.showNotification(title, {
+                    body: body,
+                    icon: '/icon-192.png',
+                    badge: '/icon-192.png',
+                    tag: tag,
+                    requireInteraction: false,
+                    vibrate: [200, 100, 200],
+                    silent: false,
+                    data: {
+                        url: window.location.href
+                    }
+                });
+            } else {
+                // Fallback to regular notification for desktop
+                console.log('[Notification] Using regular notification');
+                const notification = new Notification(title, {
+                    body: body,
+                    icon: '/icon-192.png',
+                    badge: '/icon-192.png',
+                    tag: tag,
+                    requireInteraction: true,
+                    vibrate: [200, 100, 200],
+                    silent: false
+                });
+                
+                // Auto-close after 30 seconds
+                setTimeout(() => {
+                    notification.close();
+                }, 30000);
+                
+                // Click handler
+                notification.onclick = function() {
+                    window.focus();
+                    this.close();
+                };
+            }
         } catch (error) {
-            console.error('[Notification] Browser notification error:', error);
+            console.error('[Notification] System notification error:', error);
         }
     }
 }
