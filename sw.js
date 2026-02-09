@@ -44,6 +44,11 @@ self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
 
+  // Only cache GET requests
+  if (request.method !== 'GET') {
+    return;
+  }
+
   // Skip Firebase Realtime Database calls (Firebase handles its own long-polling/websockets)
   if (url.hostname.includes('firebasedatabase.app') || 
       url.hostname.includes('googleapis.com') && url.pathname.includes('/identitytoolkit')) {
@@ -117,6 +122,93 @@ self.addEventListener('fetch', (event) => {
   );
 });
 
+// =====================================================================
+// NOTIFICATION HANDLING
+// =====================================================================
+
+// Show notification from the service worker
+self.addEventListener('message', (event) => {
+  console.log('[SW] Message received:', event.data);
+  
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'CACHE_URLS') {
+    event.waitUntil(
+      caches.open(CACHE_NAME).then((cache) => {
+        return cache.addAll(event.data.urls);
+      })
+    );
+  }
+  
+  // Handle notification requests from the app
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const { title, body, tag } = event.data;
+    
+    event.waitUntil(
+      self.registration.showNotification(title, {
+        body: body,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        tag: tag,
+        requireInteraction: false,
+        vibrate: [200, 100, 200],
+        data: {
+          dateOfArrival: Date.now(),
+          primaryKey: tag
+        },
+        actions: [
+          {
+            action: 'view',
+            title: 'View Task'
+          },
+          {
+            action: 'dismiss',
+            title: 'Dismiss'
+          }
+        ]
+      })
+    );
+  }
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  console.log('[SW] Notification clicked:', event.action);
+  
+  event.notification.close();
+  
+  if (event.action === 'view' || !event.action) {
+    // Open or focus the app
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then((clientList) => {
+          // Check if there's already a window open
+          for (let i = 0; i < clientList.length; i++) {
+            const client = clientList[i];
+            if (client.url.includes(self.registration.scope) && 'focus' in client) {
+              return client.focus();
+            }
+          }
+          // If no window is open, open a new one
+          if (clients.openWindow) {
+            return clients.openWindow('/');
+          }
+        })
+        .then((client) => {
+          // Send message to the client
+          if (client) {
+            client.postMessage({
+              type: 'NOTIFICATION_CLICKED',
+              tag: event.notification.tag
+            });
+          }
+        })
+    );
+  }
+});
+
 // Background Sync (for future enhancement)
 self.addEventListener('sync', (event) => {
   console.log('[SW] Background sync triggered:', event.tag);
@@ -132,19 +224,24 @@ self.addEventListener('sync', (event) => {
   }
 });
 
-// Listen for messages from the app
-self.addEventListener('message', (event) => {
-  console.log('[SW] Message received:', event.data);
+// Handle push notifications (if using Firebase Cloud Messaging in the future)
+self.addEventListener('push', (event) => {
+  console.log('[SW] Push received:', event);
   
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  
-  if (event.data && event.data.type === 'CACHE_URLS') {
+  if (event.data) {
+    const data = event.data.json();
+    const title = data.title || 'Mission Control';
+    const options = {
+      body: data.body || 'You have a new notification',
+      icon: data.icon || '/icon-192.png',
+      badge: '/icon-192.png',
+      vibrate: [200, 100, 200],
+      data: data.data || {},
+      tag: data.tag || 'notification-' + Date.now()
+    };
+    
     event.waitUntil(
-      caches.open(CACHE_NAME).then((cache) => {
-        return cache.addAll(event.data.urls);
-      })
+      self.registration.showNotification(title, options)
     );
   }
 });
