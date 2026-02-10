@@ -416,6 +416,148 @@
             .chart-area {
                 width: 100%;
             }
+            .weekly-dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        /* Weekly Visual Dashboard */
+        .weekly-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .day-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 2px solid var(--border);
+            transition: var(--transition);
+        }
+        
+        .day-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+        
+        .day-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .day-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        
+        .day-date {
+            font-size: 12px;
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+        
+        .day-progress {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 20px auto;
+        }
+        
+        .day-progress svg {
+            transform: rotate(-90deg);
+        }
+        
+        .day-progress-bg {
+            stroke: var(--col-bg);
+        }
+        
+        .day-progress-fill {
+            stroke: var(--primary);
+            transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .day-progress-text {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInScale {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        
+        .day-progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        
+        .day-tasks-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 15px;
+        }
+        
+        .day-task-item {
+            padding: 10px;
+            background: var(--col-bg);
+            border-radius: 10px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .day-task-item.completed {
+            opacity: 0.5;
+            text-decoration: line-through;
+        }
+        
+        .day-stats {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+            margin-top: 15px;
+        }
+        
+        .day-stat {
+            text-align: center;
+        }
+        
+        .day-stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .day-stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
         }
     </style>
 </head>
@@ -490,8 +632,8 @@
         </div>
 
         <div class="view-toggle">
-            <button class="view-btn active" onclick="switchView('week')">Week View</button>
-            <button class="view-btn" onclick="switchView('today')">Today View</button>
+            <button class="view-btn" id="view-week" onclick="switchView('week')">Week View</button>
+            <button class="view-btn active" id="view-today" onclick="switchView('today')">Today View</button>
             <button class="view-btn" onclick="showCompletedHistory()">Completed</button>
         </div>
 
@@ -516,7 +658,10 @@
             <button onclick="addTask()">ADD</button>
         </div>
 
-        <div class="board">
+        <!-- Weekly Visual Dashboard -->
+        <div id="weeklyDashboard" class="weekly-dashboard" style="display: none;"></div>
+
+        <div class="board" id="kanbanBoard">
             <div class="col">
                 <h3>🔴 Overdue</h3>
                 <ul id="prev"></ul>
@@ -583,7 +728,7 @@ const auth = getAuth(app);
 const db = getDatabase(app);
 
 let allTasks = [];
-let currentView = 'week';
+let currentView = 'today';
 let currentCategory = 'all';
 let currentUserId = null;
 let currentEditingTaskId = null;
@@ -981,11 +1126,31 @@ function loadTasks() {
     
     const tasksRef = ref(db, `users/${currentUserId}/tasks`);
     onValue(tasksRef, (snapshot) => {
+        const previousTasks = [...allTasks];
         allTasks = [];
         snapshot.forEach((child) => {
             allTasks.push({ id: child.key, ...child.val() });
         });
-        renderTasks();
+        
+        // Only do full re-render if tasks were added/deleted, or if switching views
+        const tasksCountChanged = previousTasks.length !== allTasks.length;
+        
+        if (tasksCountChanged || previousTasks.length === 0) {
+            // Full render needed
+            if (currentView === 'week') {
+                renderWeeklyDashboard();
+            } else {
+                renderTasks();
+            }
+        } else {
+            // Just update existing elements (for toggles)
+            if (currentView === 'week') {
+                updateWeeklyDashboardProgress();
+            } else {
+                renderTasks();
+            }
+        }
+        
         console.log(`[Tasks] Loaded ${allTasks.length} tasks, scheduling notifications...`);
         scheduleAllTaskNotifications(); // Reschedule notifications when tasks change
     });
@@ -1106,18 +1271,218 @@ window.switchView = function(view) {
     currentView = view;
     document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
     event.target.classList.add('active');
-    renderTasks();
+    
+    const weeklyDashboard = document.getElementById('weeklyDashboard');
+    const kanbanBoard = document.getElementById('kanbanBoard');
+    const analyticsContainer = document.querySelector('.analytics-container');
+    const categoryBar = document.querySelector('.category-bar');
+    const inputBar = document.querySelector('.input-bar');
+    
+    if (view === 'week') {
+        // Show weekly visual dashboard only
+        weeklyDashboard.style.display = 'grid';
+        kanbanBoard.style.display = 'none';
+        analyticsContainer.style.display = 'none';
+        categoryBar.style.display = 'none';
+        inputBar.style.display = 'none';
+        renderWeeklyDashboard();
+    } else {
+        // Show kanban board with all controls
+        weeklyDashboard.style.display = 'none';
+        kanbanBoard.style.display = 'grid';
+        analyticsContainer.style.display = 'block';
+        categoryBar.style.display = 'flex';
+        inputBar.style.display = 'grid';
+        renderTasks();
+    }
 };
 
 window.filterCategory = function(cat) {
     currentCategory = cat;
     document.querySelectorAll('.cat-tab').forEach(tab => tab.classList.remove('active'));
     event.target.classList.add('active');
-    renderTasks();
+    
+    // Refresh based on current view
+    if (currentView === 'week') {
+        renderWeeklyDashboard();
+    } else {
+        renderTasks();
+    }
 };
 
 // =====================================================================
 // RENDER
+// =====================================================================
+// =====================================================================
+// WEEKLY VISUAL DASHBOARD
+// =====================================================================
+function updateWeeklyDashboardProgress() {
+    // Update progress circles and stats without full re-render
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+    
+    const cards = document.querySelectorAll('.day-card');
+    
+    for (let i = 0; i < 7; i++) {
+        const currentDay = new Date(startOfWeek);
+        currentDay.setDate(startOfWeek.getDate() + i);
+        const dateStr = currentDay.toLocaleDateString('en-CA');
+        
+        const dayTasks = allTasks.filter(t => t.date === dateStr);
+        const filteredTasks = currentCategory === 'all' 
+            ? dayTasks 
+            : dayTasks.filter(t => t.cat === currentCategory);
+        
+        const totalTasks = filteredTasks.length;
+        const completedTasks = filteredTasks.filter(t => t.completed).length;
+        const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        
+        if (cards[i]) {
+            // Update progress circle smoothly
+            const progressCircle = cards[i].querySelector('.day-progress-fill');
+            const progressText = cards[i].querySelector('.day-progress-text');
+            const targetOffset = 326.7 - (percentage / 100 * 326.7);
+            
+            if (progressCircle) {
+                progressCircle.style.strokeDashoffset = targetOffset;
+            }
+            if (progressText) {
+                progressText.textContent = percentage + '%';
+            }
+            
+            // Update stats
+            const statValues = cards[i].querySelectorAll('.day-stat-value');
+            if (statValues[0]) statValues[0].textContent = totalTasks;
+            if (statValues[1]) statValues[1].textContent = completedTasks;
+            
+            // Update task list checkboxes
+            const taskItems = cards[i].querySelectorAll('.day-task-item');
+            filteredTasks.forEach((task, idx) => {
+                if (taskItems[idx]) {
+                    const checkbox = taskItems[idx].querySelector('input[type="checkbox"]');
+                    if (checkbox) {
+                        checkbox.checked = task.completed;
+                    }
+                    if (task.completed) {
+                        taskItems[idx].classList.add('completed');
+                    } else {
+                        taskItems[idx].classList.remove('completed');
+                    }
+                }
+            });
+        }
+    }
+}
+
+function renderWeeklyDashboard() {
+    const container = document.getElementById('weeklyDashboard');
+    container.innerHTML = '';
+    
+    const today = new Date();
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
+    
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    
+    for (let i = 0; i < 7; i++) {
+        const currentDay = new Date(startOfWeek);
+        currentDay.setDate(startOfWeek.getDate() + i);
+        const dateStr = currentDay.toLocaleDateString('en-CA');
+        
+        // Get tasks for this day
+        const dayTasks = allTasks.filter(t => t.date === dateStr);
+        const totalTasks = dayTasks.length;
+        const completedTasks = dayTasks.filter(t => t.completed).length;
+        const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+        
+        // Filter by category if needed
+        const filteredTasks = currentCategory === 'all' 
+            ? dayTasks 
+            : dayTasks.filter(t => t.cat === currentCategory);
+        
+        const card = document.createElement('div');
+        card.className = 'day-card';
+        
+        // Format date as DD/MM/YYYY
+        const day = String(currentDay.getDate()).padStart(2, '0');
+        const month = String(currentDay.getMonth() + 1).padStart(2, '0');
+        const year = currentDay.getFullYear();
+        const formattedDate = `${day}/${month}/${year}`;
+        
+        const targetOffset = 326.7 - (percentage / 100 * 326.7);
+        
+        card.innerHTML = `
+            <div class="day-card-header">
+                <div>
+                    <div class="day-name">${days[i]}</div>
+                    <div class="day-date">${formattedDate}</div>
+                </div>
+            </div>
+            
+            <div class="day-progress">
+                <svg width="120" height="120">
+                    <circle class="day-progress-bg" cx="60" cy="60" r="52" stroke-width="12" fill="transparent"></circle>
+                    <circle class="day-progress-fill" cx="60" cy="60" r="52" stroke-width="12" fill="transparent" 
+                            stroke-dasharray="326.7" stroke-dashoffset="326.7" stroke-linecap="round" data-target="${targetOffset}"></circle>
+                </svg>
+                <div class="day-progress-text" style="opacity: 0;">${percentage}%</div>
+            </div>
+            
+            <div class="day-stats" style="opacity: 0;">
+                <div class="day-stat">
+                    <div class="day-stat-value">${totalTasks}</div>
+                    <div class="day-stat-label">Tasks</div>
+                </div>
+                <div class="day-stat">
+                    <div class="day-stat-value">${completedTasks}</div>
+                    <div class="day-stat-label">Done</div>
+                </div>
+            </div>
+            
+            <div class="day-tasks-list" style="opacity: 0;">
+                ${filteredTasks.length === 0 
+                    ? '<div style="text-align: center; padding: 20px; opacity: 0.5; font-size: 13px;">No tasks</div>' 
+                    : filteredTasks.map(task => `
+                        <div class="day-task-item ${task.completed ? 'completed' : ''}">
+                            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" style="accent-color: var(--primary);">
+                            <span>${task.name}</span>
+                            ${task.time ? `<span style="margin-left: auto; opacity: 0.6; font-size: 11px;">${task.time}</span>` : ''}
+                        </div>
+                    `).join('')}
+            </div>
+        `;
+        
+        container.appendChild(card);
+        
+        // Trigger animations after DOM update
+        setTimeout(() => {
+            const circle = card.querySelector('.day-progress-fill');
+            const progressText = card.querySelector('.day-progress-text');
+            const stats = card.querySelector('.day-stats');
+            const tasksList = card.querySelector('.day-tasks-list');
+            
+            if (circle) {
+                circle.style.strokeDashoffset = targetOffset;
+            }
+            if (progressText) {
+                progressText.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                progressText.style.opacity = '1';
+            }
+            if (stats) {
+                stats.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                stats.style.opacity = '1';
+            }
+            if (tasksList) {
+                tasksList.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                tasksList.style.opacity = '1';
+            }
+        }, i * 100 + 50);
+    }
+}
+
+// =====================================================================
+// RENDERING & UI
 // =====================================================================
 function renderTasks() {
     const prev = document.getElementById('prev');
