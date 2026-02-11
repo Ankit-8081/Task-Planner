@@ -1503,7 +1503,8 @@ function renderTasks() {
     let stats = [0,0,0,0,0,0,0], doneStats = [0,0,0,0,0,0,0];
     
     let filtered = [...allTasks];
-    if (currentView === 'today') filtered = filtered.filter(t => t.date === todayStr);
+    // In "today" view, show today's tasks + overdue tasks (not future tasks)
+    if (currentView === 'today') filtered = filtered.filter(t => t.date <= todayStr);
     if (currentCategory !== 'all') filtered = filtered.filter(t => t.cat === currentCategory);
 
     // Calculate stats from ALL tasks (not just filtered) for accurate bar graph and completion meter
@@ -1531,24 +1532,19 @@ function renderTasks() {
             <span style="${t.completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${t.name}${timeDisplay}</span></div>
             <div><button class="btn-icon" onclick="editTask('${t.id}')" title="Edit">✏️</button><button class="btn-icon" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button></div>`;
 
-        // For IN PROGRESS column (now), only show today's completed tasks
+        // For IN PROGRESS column (now), show today's tasks
         if (t.date === todayStr) {
-            // Show all non-completed tasks
-            if (!t.completed) {
-                now.appendChild(li);
-            } else {
-                // Only show completed tasks that were completed today
-                const completedToday = t.completedAt && 
-                    new Date(t.completedAt).toLocaleDateString('en-CA') === todayStr;
-                if (completedToday) {
-                    now.appendChild(li);
-                }
-            }
-        } else if (t.date < todayStr) {
+            now.appendChild(li);
+        } 
+        // For OVERDUE column (prev), show past incomplete tasks
+        else if (t.date < todayStr && !t.completed) {
             prev.appendChild(li);
-        } else {
+        } 
+        // For INCOMING column (up), show future tasks
+        else if (t.date > todayStr && !t.completed) {
             up.appendChild(li);
         }
+        // Completed tasks from the past are hidden (already done)
     });
 
     const max = Math.max(...stats, 8);
