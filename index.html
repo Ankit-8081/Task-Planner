@@ -751,6 +751,9 @@ window.requestNotificationPermission = async function() {
             dismissNotificationBanner();
             localStorage.setItem('notificationPermission', 'granted');
             
+            // Subscribe to push notifications
+            await subscribeToPushNotifications();
+            
             // Show a test notification
             showNotification(
                 '🎉 Notifications Enabled!', 
@@ -767,6 +770,51 @@ window.requestNotificationPermission = async function() {
         console.error('Error requesting notification permission:', error);
     }
 };
+
+// Subscribe to push notifications for backend notifications
+async function subscribeToPushNotifications() {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.log('[Push] Push notifications not supported');
+        return;
+    }
+    
+    try {
+        const registration = await navigator.serviceWorker.ready;
+        
+        // Your public VAPID key
+        const publicVapidKey = 'BBWQoWPP9JfvgGAwRRJ2LOiZ4OY2Ngex1piUh-Ocs9jo8IGkuxJ0NkER3s_wPqDTpU3n53zINRWEyWLrqxZuAXA';
+        
+        // Subscribe to push notifications
+        const subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+        });
+        
+        console.log('[Push] Subscription created:', subscription);
+        
+        // Save subscription to Firebase
+        const subscriptionId = btoa(subscription.endpoint).replace(/[^a-zA-Z0-9]/g, '');
+        await set(ref(db, `users/${currentUserId}/pushSubscriptions/${subscriptionId}`), 
+            JSON.parse(JSON.stringify(subscription))
+        );
+        
+        console.log('[Push] Subscription saved to Firebase!');
+    } catch (error) {
+        console.error('[Push] Subscription failed:', error);
+    }
+}
+
+// Helper function to convert VAPID key
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
 
 window.dismissNotificationBanner = function() {
     document.getElementById('notificationBanner').style.display = 'none';
@@ -896,9 +944,41 @@ function scheduleAllTaskNotifications() {
     });
     scheduledNotifications.clear();
     
+    // Check for missed notifications first
+    checkMissedNotifications();
+    
     // Schedule for all non-completed tasks
     allTasks.filter(t => !t.completed).forEach(task => {
         scheduleTaskNotifications(task);
+    });
+}
+
+// Check and fire notifications that should have already triggered
+function checkMissedNotifications() {
+    const now = new Date();
+    const todayStr = getTodayStr();
+    
+    allTasks.filter(t => !t.completed && t.date === todayStr && t.time).forEach(task => {
+        const [hours, minutes] = task.time.split(':').map(Number);
+        const taskDateTime = new Date();
+        taskDateTime.setHours(hours, minutes, 0, 0);
+        
+        const oneHourBefore = new Date(taskDateTime.getTime() - 60 * 60 * 1000);
+        const tenMinsBefore = new Date(taskDateTime.getTime() - 10 * 60 * 1000);
+        
+        // Check if we missed the 1 hour notification (within last 5 minutes)
+        const timeSinceOneHour = now.getTime() - oneHourBefore.getTime();
+        if (timeSinceOneHour > 0 && timeSinceOneHour < 5 * 60 * 1000) {
+            console.log(`[Missed Notification] Firing missed 1-hour notification for: ${task.name}`);
+            showNotification('⏰ Task Due Soon', `"${task.name}" is due at ${task.time}`, `missed-1h-${task.id}`);
+        }
+        
+        // Check if we missed the 10 minute notification (within last 2 minutes)
+        const timeSinceTenMins = now.getTime() - tenMinsBefore.getTime();
+        if (timeSinceTenMins > 0 && timeSinceTenMins < 2 * 60 * 1000) {
+            console.log(`[Missed Notification] Firing missed 10-min notification for: ${task.name}`);
+            showNotification('⚡ Task Due Very Soon', `"${task.name}" is due at ${task.time}`, `missed-10m-${task.id}`);
+        }
     });
 }
 
@@ -1011,6 +1091,14 @@ if ('serviceWorker' in navigator) {
         })
         .catch(err => console.error('Service Worker registration failed:', err));
 }
+
+// Check for missed notifications when app becomes visible again
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden && Notification.permission === 'granted') {
+        console.log('[App] App became visible, checking for missed notifications...');
+        checkMissedNotifications();
+    }
+});
 
 // =====================================================================
 // PWA INSTALL PROMPT
@@ -1532,9 +1620,27 @@ function renderTasks() {
             <span style="${t.completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${t.name}${timeDisplay}</span></div>
             <div><button class="btn-icon" onclick="editTask('${t.id}')" title="Edit">✏️</button><button class="btn-icon" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button></div>`;
 
-        // For IN PROGRESS column (now), show today's tasks
+        // Determine where to place the task based on date and time
+        const isOverdue = () => {
+            if (t.date < todayStr) return true; // Past date
+            if (t.date === todayStr && t.time) {
+                // Today with time - check if time has passed
+                const now = new Date();
+                const [hours, minutes] = t.time.split(':').map(Number);
+                const taskDateTime = new Date();
+                taskDateTime.setHours(hours, minutes, 0, 0);
+                return now > taskDateTime;
+            }
+            return false;
+        };
+        
+        // For TODAY'S tasks, check if time has passed
         if (t.date === todayStr) {
-            now.appendChild(li);
+            if (isOverdue() && !t.completed) {
+                prev.appendChild(li); // Overdue (time passed)
+            } else {
+                now.appendChild(li); // Current (still time or no specific time)
+            }
         } 
         // For OVERDUE column (prev), show past incomplete tasks
         else if (t.date < todayStr && !t.completed) {
