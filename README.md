@@ -191,7 +191,7 @@ const firebaseConfig = {
 
 #### Android (Chrome)
 1. Open the site in Chrome
-2. Tap the button in upper right corner (⋮) → **Install App**
+2. Tap the button in upper right corner → **Install App**
 
 ---
 
