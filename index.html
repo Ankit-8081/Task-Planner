@@ -778,11 +778,45 @@ async function subscribeToPushNotifications() {
         return;
     }
     
+    if (!currentUserId) {
+        console.log('[Push] No user logged in, skipping subscription');
+        return;
+    }
+    
     try {
         const registration = await navigator.serviceWorker.ready;
         
+        // Check if already subscribed
+        const existingSubscription = await registration.pushManager.getSubscription();
+        if (existingSubscription) {
+            console.log('[Push] Already subscribed, updating Firebase...');
+            const subscriptionId = btoa(existingSubscription.endpoint).replace(/[^a-zA-Z0-9]/g, '');
+            
+            // Use inline module script to access Firebase imports
+            const script = document.createElement('script');
+            script.type = 'module';
+            script.textContent = `
+                import { getDatabase, ref, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+                const db = getDatabase();
+                const subscriptionData = ${JSON.stringify(JSON.parse(JSON.stringify(existingSubscription)))};
+                const userId = '${currentUserId}';
+                const subscriptionId = '${subscriptionId}';
+                
+                try {
+                    await set(ref(db, 'users/' + userId + '/pushSubscriptions/' + subscriptionId), subscriptionData);
+                    console.log('[Push] ✅ Existing subscription saved to Firebase!');
+                } catch (error) {
+                    console.error('[Push] ❌ Failed to save:', error);
+                }
+            `;
+            document.head.appendChild(script);
+            return;
+        }
+        
         // Your public VAPID key
         const publicVapidKey = 'BBWQoWPP9JfvgGAwRRJ2LOiZ4OY2Ngex1piUh-Ocs9jo8IGkuxJ0NkER3s_wPqDTpU3n53zINRWEyWLrqxZuAXA';
+        
+        console.log('[Push] Creating new subscription...');
         
         // Subscribe to push notifications
         const subscription = await registration.pushManager.subscribe({
@@ -790,15 +824,30 @@ async function subscribeToPushNotifications() {
             applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
         });
         
-        console.log('[Push] Subscription created:', subscription);
+        console.log('[Push] ✅ Subscription created:', subscription);
         
-        // Save subscription to Firebase
+        // Save subscription to Firebase using inline module script
         const subscriptionId = btoa(subscription.endpoint).replace(/[^a-zA-Z0-9]/g, '');
-        await set(ref(db, `users/${currentUserId}/pushSubscriptions/${subscriptionId}`), 
-            JSON.parse(JSON.stringify(subscription))
-        );
+        const subscriptionData = JSON.parse(JSON.stringify(subscription));
         
-        console.log('[Push] Subscription saved to Firebase!');
+        const script = document.createElement('script');
+        script.type = 'module';
+        script.textContent = `
+            import { getDatabase, ref, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+            const db = getDatabase();
+            const subscriptionData = ${JSON.stringify(subscriptionData)};
+            const userId = '${currentUserId}';
+            const subscriptionId = '${subscriptionId}';
+            
+            try {
+                await set(ref(db, 'users/' + userId + '/pushSubscriptions/' + subscriptionId), subscriptionData);
+                console.log('[Push] ✅ Subscription saved to Firebase!');
+            } catch (error) {
+                console.error('[Push] ❌ Failed to save:', error);
+            }
+        `;
+        document.head.appendChild(script);
+        
     } catch (error) {
         console.error('[Push] Subscription failed:', error);
     }
@@ -1194,6 +1243,13 @@ onAuthStateChanged(auth, (user) => {
         
         loadTasks();
         checkNotificationBanner();
+        
+        // Auto-subscribe to push notifications if permission already granted
+        if (Notification.permission === 'granted') {
+            subscribeToPushNotifications().catch(err => {
+                console.error('[Push] Auto-subscribe failed:', err);
+            });
+        }
     } else {
         currentUserId = null;
         document.getElementById('auth-screen').style.display = 'flex';
