@@ -1,1815 +1,1895 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Mission Control Pro</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#27ae60">
-    <link rel="apple-touch-icon" href="icon-192.png">
-    <link rel="icon" href="icon-192.png" type="image/png">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        :root { 
-            --primary: #27ae60; 
-            --secondary: #2ecc71;
-            --primary-shadow: #219150;
-            --overdue: #e74c3c;
-            --bg-gradient: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
-            --glass: rgba(255, 255, 255, 0.95);
-            --text: #2d3436; 
-            --bg-main: #f0f2f5;
-            --card-bg: #ffffff;
-            --col-bg: #ebedef;
-            --border: #dfe6e9;
-            --cat-work: #0984e3; --cat-home: #6c5ce7; --cat-personal: #00b894; --cat-urgent: #d63031;
-        }
-        [data-theme="dark"] {
-            --primary: #2ecc71; 
-            --secondary: #55efc4;
-            --primary-shadow: #1b9e53;
-            --bg-gradient: linear-gradient(135deg, #1b9e53 0%, #2ecc71 100%);
-            --bg-main: #121212;
-            --card-bg: #1e1e1e;
-            --text: #f5f6fa;
-            --glass: rgba(30, 30, 30, 0.95);
-            --col-bg: #252525;
-            --border: #333333;
-        }
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+        <title>Mission Control Pro</title>
         
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background: var(--bg-main); 
-            margin: 0; 
-            color: var(--text); 
-            overflow-x: hidden; 
-            transition: background 0.3s, color 0.3s;
-        }
-        [data-theme="dark"] input::-webkit-calendar-picker-indicator {
-            filter: invert(1);
-            cursor: pointer;
-        }
-        
-        input[type="date"], input[type="time"] {
-            accent-color: var(--primary);
-        }
-        .top-nav {
-            position: fixed; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 1000;
-        }
-        .btn-header {
-            padding: 8px 15px; border-radius: 12px; font-weight: 600; font-size: 12px;
-            cursor: pointer; transition: 0.3s; border: 2px solid; text-transform: uppercase;
-            background: var(--card-bg); color: var(--text); border-color: var(--border);
-        }
-        .btn-header:hover {
-            transform: translateY(-2px);
-            border-color: var(--primary);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.1);
-        }
-        #install-btn { background: #2d3436; color: white; border-color: #2d3436; display: none; }
-        
-        .logout-btn { color: var(--overdue); border-color: var(--overdue); }
-        .logout-btn:hover { background: var(--overdue); color: white; }
-        #auth-screen { display: flex; height: 100vh; width: 100%; background: var(--bg-gradient); flex-direction: column; align-items: center; justify-content: center; }
-        .auth-card { background: var(--glass); padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 340px; text-align: center; }
-        .auth-input-container { position: relative; width: 100%; margin-bottom: 15px; }
-        .auth-input { width: 100%; padding: 14px; padding-right: 70px; border-radius: 12px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text); outline: none; box-sizing: border-box; }
-        
-        .pass-toggle-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--col-bg); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; color: var(--text); }
-        .btn-login { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; text-transform: uppercase; }
-        .btn-login:hover { background: var(--primary-shadow); transform: scale(1.02); }
-        #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 9999; transition: 0.8s; }
-        #splash-screen h1 { font-size: 3rem; animation: pulse 1.5s infinite; }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 0.7; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        
-        .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
-        #app-dashboard { display: none; padding: 20px; max-width: 1200px; margin: auto; padding-top: 80px; }
-        
-        .analytics-container { background: var(--card-bg); border-radius: 12px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
-        .analytics-header { background: var(--primary); color: white; padding: 10px 20px; font-weight: 600; text-align: center; font-size: 18px; transition: background 0.3s; }
-        .analytics-content { display: flex; padding: 25px; align-items: flex-end; gap: 30px; }
-        
-        .y-axis { display: flex; flex-direction: column; justify-content: space-between; height: 150px; padding-bottom: 25px; color: var(--text); opacity: 0.7; font-size: 11px; width: 30px; }
-        .chart-area { flex-grow: 1; display: flex; justify-content: space-between; align-items: flex-end; height: 150px; border-bottom: 2px solid var(--border); padding: 0 10px; position: relative; }
-        
-        .bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; z-index: 1; max-width: 50px; }
-        .bar-track { width: 30px; background: var(--col-bg); border-radius: 15px 15px 0 0; position: relative; height: 150px; overflow: hidden; }
-        
-        .bar-planned, .bar-done { 
-            width: 100%; position: absolute; bottom: 0; border-radius: 12px 12px 0 0; height: 0; 
-            transition: height 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
-        }
-        .bar-planned { background: var(--primary); opacity: 0.15; }
-        .bar-done { background: linear-gradient(to top, var(--primary), var(--secondary)); z-index: 2; }
-        .day-label { font-size: 11px; font-weight: 600; margin-top: 10px; color: var(--text); }
-        .progress-container { position: relative; width: 100px; height: 100px; }
-        .progress-ring { transform: rotate(-90deg); }
-        .progress-ring-bg { stroke: var(--col-bg); }
-        #progressCircle { stroke: var(--primary); transition: stroke-dashoffset 0.8s ease-in-out, stroke 0.3s; }
-        .pct-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 22px; font-weight: 600; }
-        .view-toggle { display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; }
-        .view-btn { padding: 8px 25px; border-radius: 20px; border: 2px solid var(--primary); background: transparent; color: var(--primary); cursor: pointer; font-weight: 600; transition: 0.3s; }
-        .view-btn.active { background: var(--primary); color: white; }
-        .category-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding: 5px; }
-        .cat-tab { padding: 8px 18px; border-radius: 12px; background: var(--card-bg); color: var(--text); border: 1px solid var(--border); cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; transition: 0.3s; }
-        .cat-tab.active { background: #34495e !important; color: white !important; }
-        .input-bar { 
-            background: var(--card-bg); padding: 20px; border-radius: 20px; 
-            display: grid; grid-template-columns: 2fr 1.2fr 1.1fr 1fr auto; 
-            gap: 12px; margin-bottom: 25px; border-bottom: 4px solid var(--primary); 
-            box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: border-bottom 0.3s;
-        }
-        
-        .input-bar input, .input-bar select {
-            padding: 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; font-family: inherit; background: var(--card-bg); color: var(--text);
-        }
-        .input-bar button { 
-            background: var(--primary); color: white; border: none; padding: 0 30px; 
-            border-radius: 12px; font-weight: 600; letter-spacing: 1px; cursor: pointer; 
-            transition: all 0.2s ease; box-shadow: 0 4px 0 var(--primary-shadow); 
-        }
-        .input-bar button:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--primary-shadow); }
-        .board { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 20px; }
-        .col { background: var(--col-bg); padding: 18px; border-radius: 24px; min-height: 400px; transition: background 0.3s; }
-        
-        ul { list-style: none; padding: 0; margin: 0; width: 100%; }
-        li { 
-            background: var(--card-bg); color: var(--text); padding: 15px; border-radius: 12px; margin-bottom: 12px; 
-            display: flex; justify-content: space-between; align-items: center; 
-            border-left: 6px solid var(--primary); box-sizing: border-box; width: 100%; 
-            transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            animation: slideIn 0.3s ease-out;
-        }
-        
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        li:hover { transform: translateX(5px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); }
-        .btn-icon { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; border-radius: 8px; color: var(--text); opacity: 0.8; }
-        .btn-icon:hover { background: var(--col-bg); opacity: 1; transform: scale(1.1); }
-        
-        /* Notification permission banner */
-        .notification-banner {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--primary);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            display: none;
-            z-index: 1000;
-            max-width: 400px;
-            text-align: center;
-            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        
-        @keyframes bounceIn {
-            0% { transform: translate(-50%, 100px); opacity: 0; }
-            100% { transform: translate(-50%, 0); opacity: 1; }
-        }
-        
-        .notification-banner button {
-            margin: 10px 5px 0;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-        }
-        .notification-banner .btn-allow {
-            background: white;
-            color: var(--primary);
-        }
-        .notification-banner .btn-dismiss {
-            background: transparent;
-            color: white;
-            border: 1px solid white;
-        }
-        
-        /* In-app visual notification popup */
-        .toast-notification {
-            position: fixed;
-            top: 80px;
-            right: 20px;
-            background: white;
-            color: #2d3436;
-            padding: 20px 25px;
-            border-radius: 16px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            z-index: 10000;
-            min-width: 320px;
-            max-width: 400px;
-            display: none;
-            animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border-left: 6px solid var(--primary);
-        }
-        
-        .toast-notification.show {
-            display: block;
-        }
-        
-        [data-theme="dark"] .toast-notification {
-            background: #1e1e1e;
-            color: #f5f6fa;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-        }
-        
-        @keyframes slideInRight {
-            0% { transform: translateX(400px); opacity: 0; }
-            100% { transform: translateX(0); opacity: 1; }
-        }
-        
-        .toast-notification .toast-title {
-            font-weight: 700;
-            font-size: 16px;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .toast-notification .toast-body {
-            font-size: 14px;
-            opacity: 0.9;
-            line-height: 1.4;
-        }
-        
-        .toast-notification .toast-close {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            opacity: 0.5;
-            color: inherit;
-        }
-        
-        .toast-notification .toast-close:hover {
-            opacity: 1;
-        }
-        
-        .toast-notification.warning {
-            border-left-color: #f39c12;
-        }
-        
-        .toast-notification.error {
-            border-left-color: #e74c3c;
-        }
-        
-        .toast-notification.success {
-            border-left-color: #27ae60;
-        }
-        
-        .toast-notification.info {
-            border-left-color: #3498db;
-        }
-        
-        /* Edit Modal Styles */
-        .edit-modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2001;
-            align-items: center;
-            justify-content: center;
-        }
-        .edit-modal-overlay.show {
-            display: flex;
-        }
-        .edit-modal {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        }
-        .edit-modal-header {
-            font-size: 20px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: var(--text);
-        }
-        .edit-form {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        .edit-form input, .edit-form select {
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            outline: none;
-            font-family: inherit;
-            background: var(--card-bg);
-            color: var(--text);
-        }
-        .edit-form-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        .edit-form-actions button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-        .btn-save {
-            background: var(--primary);
-            color: white;
-        }
-        .btn-cancel {
-            background: var(--col-bg);
-            color: var(--text);
-        }
-        
-        /* Completed History Modal */
-        .completed-modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-        .completed-modal-overlay.show {
-            display: flex;
-        }
-        .completed-modal {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 30px;
-            width: 90%;
-            max-width: 700px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
-        }
-        .completed-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .completed-modal-header h2 {
-            margin: 0;
-            color: var(--text);
-            font-size: 24px;
-        }
-        .close-modal-btn {
-            background: var(--col-bg);
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 5px 12px;
-            border-radius: 8px;
-            color: var(--text);
-        }
-        .completed-group {
-            margin-bottom: 25px;
-        }
-        .completed-date-header {
-            background: var(--primary);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 10px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-        
-        @media (max-width: 768px) {
+        <link rel="manifest" href="manifest.json">
+        <meta name="theme-color" content="#27ae60">
+        <link rel="apple-touch-icon" href="icon-192.png">
+        <link rel="icon" href="icon-192.png" type="image/png">
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+        <style>
+            :root { 
+                --primary: #27ae60; 
+                --secondary: #2ecc71;
+                --primary-shadow: #219150;
+                --overdue: #e74c3c;
+                --bg-gradient: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+                --glass: rgba(255, 255, 255, 0.95);
+                --text: #2d3436; 
+                --bg-main: #f0f2f5;
+                --card-bg: #ffffff;
+                --col-bg: #ebedef;
+                --border: #dfe6e9;
+                --cat-work: #0984e3; --cat-home: #6c5ce7; --cat-personal: #00b894; --cat-urgent: #d63031;
+            }
+            [data-theme="dark"] {
+                --primary: #2ecc71; 
+                --secondary: #55efc4;
+                --primary-shadow: #1b9e53;
+                --bg-gradient: linear-gradient(135deg, #1b9e53 0%, #2ecc71 100%);
+                --bg-main: #121212;
+                --card-bg: #1e1e1e;
+                --text: #f5f6fa;
+                --glass: rgba(30, 30, 30, 0.95);
+                --col-bg: #252525;
+                --border: #333333;
+            }
+            
+            body { 
+                font-family: 'Poppins', sans-serif; 
+                background: var(--bg-main); 
+                margin: 0; 
+                color: var(--text); 
+                overflow-x: hidden; 
+                transition: background 0.3s, color 0.3s;
+            }
+            [data-theme="dark"] input::-webkit-calendar-picker-indicator {
+                filter: invert(1);
+                cursor: pointer;
+            }
+            
+            input[type="date"], input[type="time"] {
+                accent-color: var(--primary);
+            }
+            .top-nav {
+                position: fixed; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 1000;
+            }
+            .btn-header {
+                padding: 8px 15px; border-radius: 12px; font-weight: 600; font-size: 12px;
+                cursor: pointer; transition: 0.3s; border: 2px solid; text-transform: uppercase;
+                background: var(--card-bg); color: var(--text); border-color: var(--border);
+            }
+            .btn-header:hover {
+                transform: translateY(-2px);
+                border-color: var(--primary);
+                box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+            }
+            #install-btn { background: #2d3436; color: white; border-color: #2d3436; display: none; }
+            
+            .logout-btn { color: var(--overdue); border-color: var(--overdue); }
+            .logout-btn:hover { background: var(--overdue); color: white; }
+            #auth-screen { display: flex; height: 100vh; width: 100%; background: var(--bg-gradient); flex-direction: column; align-items: center; justify-content: center; }
+            .auth-card { background: var(--glass); padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 340px; text-align: center; }
+            .auth-input-container { position: relative; width: 100%; margin-bottom: 15px; }
+            .auth-input { width: 100%; padding: 14px; padding-right: 70px; border-radius: 12px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text); outline: none; box-sizing: border-box; }
+            
+            .pass-toggle-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--col-bg); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; color: var(--text); }
+            .btn-login { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; text-transform: uppercase; }
+            .btn-login:hover { background: var(--primary-shadow); transform: scale(1.02); }
+            #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; align-items: center; justify-content: center; z-index: 9999; transition: 0.8s; }
+            #splash-screen h1 { font-size: 3rem; animation: pulse 1.5s infinite; }
+            
+            @keyframes pulse {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.1); opacity: 0.7; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+            
+            .hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+            #app-dashboard { display: none; padding: 20px; max-width: 1200px; margin: auto; padding-top: 80px; }
+            
+            .analytics-container { background: var(--card-bg); border-radius: 12px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
+            .analytics-header { background: var(--primary); color: white; padding: 10px 20px; font-weight: 600; text-align: center; font-size: 18px; transition: background 0.3s; }
+            .analytics-content { display: flex; padding: 25px; align-items: flex-end; gap: 30px; }
+            
+            .y-axis { display: flex; flex-direction: column; justify-content: space-between; height: 150px; padding-bottom: 25px; color: var(--text); opacity: 0.7; font-size: 11px; width: 30px; }
+            .chart-area { flex-grow: 1; display: flex; justify-content: space-between; align-items: flex-end; height: 150px; border-bottom: 2px solid var(--border); padding: 0 10px; position: relative; }
+            
+            .bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; z-index: 1; max-width: 50px; }
+            .bar-track { width: 30px; background: var(--col-bg); border-radius: 15px 15px 0 0; position: relative; height: 150px; overflow: hidden; }
+            
+            .bar-planned, .bar-done { 
+                width: 100%; position: absolute; bottom: 0; border-radius: 12px 12px 0 0; height: 0; 
+                transition: height 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            }
+            .bar-planned { background: var(--primary); opacity: 0.15; }
+            .bar-done { background: linear-gradient(to top, var(--primary), var(--secondary)); z-index: 2; }
+            .day-label { font-size: 11px; font-weight: 600; margin-top: 10px; color: var(--text); }
+            .progress-container { position: relative; width: 100px; height: 100px; }
+            .progress-ring { transform: rotate(-90deg); }
+            .progress-ring-bg { stroke: var(--col-bg); }
+            #progressCircle { stroke: var(--primary); transition: stroke-dashoffset 0.8s ease-in-out, stroke 0.3s; }
+            .pct-label { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 22px; font-weight: 600; }
+            .view-toggle { display: flex; justify-content: center; gap: 15px; margin-bottom: 15px; }
+            .view-btn { padding: 8px 25px; border-radius: 20px; border: 2px solid var(--primary); background: transparent; color: var(--primary); cursor: pointer; font-weight: 600; transition: 0.3s; }
+            .view-btn.active { background: var(--primary); color: white; }
+            .category-bar { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding: 5px; }
+            .cat-tab { padding: 8px 18px; border-radius: 12px; background: var(--card-bg); color: var(--text); border: 1px solid var(--border); cursor: pointer; font-weight: 600; font-size: 12px; white-space: nowrap; transition: 0.3s; }
+            .cat-tab.active { background: #34495e !important; color: white !important; }
             .input-bar { 
-                grid-template-columns: 1fr; 
+                background: var(--card-bg); padding: 20px; border-radius: 20px; 
+                display: grid; grid-template-columns: 2fr 1.2fr 1.1fr 1fr auto; 
+                gap: 12px; margin-bottom: 25px; border-bottom: 4px solid var(--primary); 
+                box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: border-bottom 0.3s;
             }
-            .board { 
-                grid-template-columns: 1fr; 
+            
+            .input-bar input, .input-bar select {
+                padding: 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; font-family: inherit; background: var(--card-bg); color: var(--text);
             }
-            .analytics-content {
-                flex-direction: column;
-                gap: 20px;
+            .input-bar button { 
+                background: var(--primary); color: white; border: none; padding: 0 30px; 
+                border-radius: 12px; font-weight: 600; letter-spacing: 1px; cursor: pointer; 
+                transition: all 0.2s ease; box-shadow: 0 4px 0 var(--primary-shadow); 
             }
-            .chart-area {
+            .input-bar button:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--primary-shadow); }
+            .board { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 20px; }
+            .col { background: var(--col-bg); padding: 18px; border-radius: 24px; min-height: 400px; transition: background 0.3s; }
+            
+            ul { list-style: none; padding: 0; margin: 0; width: 100%; }
+            li { 
+                background: var(--card-bg); color: var(--text); padding: 15px; border-radius: 12px; margin-bottom: 12px; 
+                display: flex; justify-content: space-between; align-items: center; 
+                border-left: 6px solid var(--primary); box-sizing: border-box; width: 100%; 
+                transition: 0.3s; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+                animation: slideIn 0.3s ease-out;
+            }
+            
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateY(10px); }
+                to { opacity: 1; transform: translateY(0); }
+            }
+            
+            li:hover { transform: translateX(5px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); }
+            .btn-icon { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 5px; border-radius: 8px; color: var(--text); opacity: 0.8; }
+            .btn-icon:hover { background: var(--col-bg); opacity: 1; transform: scale(1.1); }
+            
+            /* Notification permission banner */
+            .notification-banner {
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--primary);
+                color: white;
+                padding: 15px 25px;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                display: none;
+                z-index: 1000;
+                max-width: 400px;
+                text-align: center;
+                animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            
+            @keyframes bounceIn {
+                0% { transform: translate(-50%, 100px); opacity: 0; }
+                100% { transform: translate(-50%, 0); opacity: 1; }
+            }
+            
+            .notification-banner button {
+                margin: 10px 5px 0;
+                padding: 8px 16px;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+            }
+            .notification-banner .btn-allow {
+                background: white;
+                color: var(--primary);
+            }
+            .notification-banner .btn-dismiss {
+                background: transparent;
+                color: white;
+                border: 1px solid white;
+            }
+            
+            /* In-app visual notification popup */
+            .toast-notification {
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                background: white;
+                color: #2d3436;
+                padding: 20px 25px;
+                border-radius: 16px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+                z-index: 10000;
+                min-width: 320px;
+                max-width: 400px;
+                display: none;
+                animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                border-left: 6px solid var(--primary);
+            }
+            
+            .toast-notification.show {
+                display: block;
+            }
+            
+            [data-theme="dark"] .toast-notification {
+                background: #1e1e1e;
+                color: #f5f6fa;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            }
+            
+            @keyframes slideInRight {
+                0% { transform: translateX(400px); opacity: 0; }
+                100% { transform: translateX(0); opacity: 1; }
+            }
+            
+            .toast-notification .toast-title {
+                font-weight: 700;
+                font-size: 16px;
+                margin-bottom: 8px;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            }
+            
+            .toast-notification .toast-body {
+                font-size: 14px;
+                opacity: 0.9;
+                line-height: 1.4;
+            }
+            
+            .toast-notification .toast-close {
+                position: absolute;
+                top: 10px;
+                right: 10px;
+                background: none;
+                border: none;
+                font-size: 20px;
+                cursor: pointer;
+                opacity: 0.5;
+                color: inherit;
+            }
+            
+            .toast-notification .toast-close:hover {
+                opacity: 1;
+            }
+            
+            .toast-notification.warning {
+                border-left-color: #f39c12;
+            }
+            
+            .toast-notification.error {
+                border-left-color: #e74c3c;
+            }
+            
+            .toast-notification.success {
+                border-left-color: #27ae60;
+            }
+            
+            .toast-notification.info {
+                border-left-color: #3498db;
+            }
+            
+            /* Edit Modal Styles */
+            .edit-modal-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
                 width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 2001;
+                align-items: center;
+                justify-content: center;
             }
+            .edit-modal-overlay.show {
+                display: flex;
+            }
+            .edit-modal {
+                background: var(--card-bg);
+                border-radius: 20px;
+                padding: 30px;
+                width: 90%;
+                max-width: 500px;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            }
+            .edit-modal-header {
+                font-size: 20px;
+                font-weight: 600;
+                margin-bottom: 20px;
+                color: var(--text);
+            }
+            .edit-form {
+                display: flex;
+                flex-direction: column;
+                gap: 15px;
+            }
+            .edit-form input, .edit-form select {
+                padding: 12px;
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                outline: none;
+                font-family: inherit;
+                background: var(--card-bg);
+                color: var(--text);
+            }
+            .edit-form-actions {
+                display: flex;
+                gap: 10px;
+                margin-top: 10px;
+            }
+            .edit-form-actions button {
+                flex: 1;
+                padding: 12px;
+                border: none;
+                border-radius: 10px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: 0.3s;
+            }
+            .btn-save {
+                background: var(--primary);
+                color: white;
+            }
+            .btn-cancel {
+                background: var(--col-bg);
+                color: var(--text);
+            }
+            
+            /* Completed History Modal */
+            .completed-modal-overlay {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 2000;
+                align-items: center;
+                justify-content: center;
+            }
+            .completed-modal-overlay.show {
+                display: flex;
+            }
+            .completed-modal {
+                background: var(--card-bg);
+                border-radius: 20px;
+                padding: 30px;
+                width: 90%;
+                max-width: 700px;
+                max-height: 80vh;
+                overflow-y: auto;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            }
+            .completed-modal-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+            .completed-modal-header h2 {
+                margin: 0;
+                color: var(--text);
+                font-size: 24px;
+            }
+            .close-modal-btn {
+                background: var(--col-bg);
+                border: none;
+                font-size: 24px;
+                cursor: pointer;
+                padding: 5px 12px;
+                border-radius: 8px;
+                color: var(--text);
+            }
+            .completed-group {
+                margin-bottom: 25px;
+            }
+            .completed-date-header {
+                background: var(--primary);
+                color: white;
+                padding: 10px 15px;
+                border-radius: 10px;
+                font-weight: 600;
+                margin-bottom: 10px;
+            }
+            
+            @media (max-width: 768px) {
+                .input-bar { 
+                    grid-template-columns: 1fr; 
+                }
+                .board { 
+                    grid-template-columns: 1fr; 
+                }
+                .analytics-content {
+                    flex-direction: column;
+                    gap: 20px;
+                }
+                .chart-area {
+                    width: 100%;
+                }
+                .weekly-dashboard {
+                    grid-template-columns: 1fr;
+                }
+            }
+            
+            /* Weekly Visual Dashboard */
             .weekly-dashboard {
-                grid-template-columns: 1fr;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 20px;
+                margin-bottom: 30px;
             }
-        }
-        
-        /* Weekly Visual Dashboard */
-        .weekly-dashboard {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .day-card {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
-            border: 2px solid var(--border);
-            transition: var(--transition);
-        }
-        
-        .day-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-        }
-        
-        .day-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-        
-        .day-name {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text);
-        }
-        
-        .day-date {
-            font-size: 12px;
-            color: var(--text-secondary);
-            opacity: 0.7;
-        }
-        
-        .day-progress {
-            position: relative;
-            width: 120px;
-            height: 120px;
-            margin: 20px auto;
-        }
-        
-        .day-progress svg {
-            transform: rotate(-90deg);
-        }
-        
-        .day-progress-bg {
-            stroke: var(--col-bg);
-        }
-        
-        .day-progress-fill {
-            stroke: var(--primary);
-            transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        .day-progress-text {
-            0% {
-                opacity: 0;
-                transform: translateY(20px);
+            
+            .day-card {
+                background: var(--card-bg);
+                border-radius: 20px;
+                padding: 20px;
+                box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+                border: 2px solid var(--border);
+                transition: var(--transition);
             }
-            100% {
-                opacity: 1;
-                transform: translateY(0);
+            
+            .day-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 8px 25px rgba(0,0,0,0.12);
             }
-        }
-        
-        @keyframes fadeInScale {
-            0% {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0);
+            
+            .day-card-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 15px;
             }
-            100% {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
+            
+            .day-name {
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--text);
             }
-        }
-        
-        .day-progress-text {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 28px;
-            font-weight: 700;
-            color: var(--text);
-        }
-        
-        .day-tasks-list {
-            max-height: 200px;
-            overflow-y: auto;
-            margin-top: 15px;
-        }
-        
-        .day-task-item {
-            padding: 10px;
-            background: var(--col-bg);
-            border-radius: 10px;
-            margin-bottom: 8px;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .day-task-item.completed {
-            opacity: 0.5;
-            text-decoration: line-through;
-        }
-        
-        .day-stats {
-            display: flex;
-            justify-content: space-around;
-            padding-top: 15px;
-            border-top: 1px solid var(--border);
-            margin-top: 15px;
-        }
-        
-        .day-stat {
-            text-align: center;
-        }
-        
-        .day-stat-value {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .day-stat-label {
-            font-size: 11px;
-            color: var(--text-secondary);
-            text-transform: uppercase;
-        }
-    </style>
-</head>
-<body data-theme="light">
-    <div id="splash-screen">
-        <h1>🚀 Mission Control</h1>
-    </div>
+            
+            .day-date {
+                font-size: 12px;
+                color: var(--text-secondary);
+                opacity: 0.7;
+            }
+            
+            .day-progress {
+                position: relative;
+                width: 120px;
+                height: 120px;
+                margin: 20px auto;
+            }
+            
+            .day-progress svg {
+                transform: rotate(-90deg);
+            }
+            
+            .day-progress-bg {
+                stroke: var(--col-bg);
+            }
+            
+            .day-progress-fill {
+                stroke: var(--primary);
+                transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            .day-progress-text {
+                0% {
+                    opacity: 0;
+                    transform: translateY(20px);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            @keyframes fadeInScale {
+                0% {
+                    opacity: 0;
+                    transform: translate(-50%, -50%) scale(0);
+                }
+                100% {
+                    opacity: 1;
+                    transform: translate(-50%, -50%) scale(1);
+                }
+            }
+            
+            .day-progress-text {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                font-size: 28px;
+                font-weight: 700;
+                color: var(--text);
+            }
+            
+            .day-tasks-list {
+                max-height: 200px;
+                overflow-y: auto;
+                margin-top: 15px;
+            }
+            
+            .day-task-item {
+                padding: 10px;
+                background: var(--col-bg);
+                border-radius: 10px;
+                margin-bottom: 8px;
+                font-size: 13px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            
+            .day-task-item.completed {
+                opacity: 0.5;
+                text-decoration: line-through;
+            }
+            
+            .day-stats {
+                display: flex;
+                justify-content: space-around;
+                padding-top: 15px;
+                border-top: 1px solid var(--border);
+                margin-top: 15px;
+            }
+            
+            .day-stat {
+                text-align: center;
+            }
+            
+            .day-stat-value {
+                font-size: 20px;
+                font-weight: 700;
+                color: var(--primary);
+            }
+            
+            .day-stat-label {
+                font-size: 11px;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+            }
+        </style>
+    </head>
+    <body data-theme="light">
+        <div id="splash-screen">
+            <h1>🚀 Mission Control</h1>
+        </div>
 
-    <div id="auth-screen">
-        <div class="auth-card">
-            <h2 id="auth-title">Login</h2>
-            <div class="auth-input-container"><input type="text" id="username" class="auth-input" placeholder="Username"></div>
-            <div class="auth-input-container">
-                <input type="password" id="password" class="auth-input" placeholder="Password">
-                <button type="button" class="pass-toggle-btn" id="togglePassBtn" onclick="togglePassword()">Show</button>
+        <div id="auth-screen">
+            <div class="auth-card">
+                <h2 id="auth-title">Login</h2>
+                <div class="auth-input-container"><input type="text" id="username" class="auth-input" placeholder="Username"></div>
+                <div class="auth-input-container">
+                    <input type="password" id="password" class="auth-input" placeholder="Password">
+                    <button type="button" class="pass-toggle-btn" id="togglePassBtn" onclick="togglePassword()">Show</button>
+                </div>
+                <button id="authBtn" class="btn-login" onclick="handleAuth()">LOGIN</button>
+                <p id="auth-error" style="color:var(--overdue); margin-top:10px; font-size:12px;"></p>
+                <p id="toggle-text" style="font-size:12px; margin-top:15px; color:var(--text);"><span style='color:var(--text);'>New user?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span></p>
             </div>
-            <button id="authBtn" class="btn-login" onclick="handleAuth()">LOGIN</button>
-            <p id="auth-error" style="color:var(--overdue); margin-top:10px; font-size:12px;"></p>
-            <p id="toggle-text" style="font-size:12px; margin-top:15px; color:var(--text);"><span style='color:var(--text);'>New user?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span></p>
-        </div>
-    </div>
-
-    <div id="app-dashboard">
-        <div class="top-nav">
-            <button id="install-btn" class="btn-header">Install App</button>
-            <button class="btn-header" onclick="toggleTheme()" id="themeBtn">
-                <span id="themeIcon">🌙</span> <span id="themeText">Dark</span>
-            </button>
-            <button class="btn-header logout-btn" onclick="logout()">Logout</button>
         </div>
 
-        <!-- Notification Permission Banner -->
-        <div id="notificationBanner" class="notification-banner">
-            <div>Get notified about your tasks!</div>
-            <div style="font-size: 12px; margin-top: 5px;">Receive reminders at midnight, 1 hour before, and 10 minutes before tasks are due</div>
-            <button class="btn-allow" onclick="requestNotificationPermission()">Enable Notifications</button>
-            <button class="btn-dismiss" onclick="dismissNotificationBanner()">Maybe Later</button>
-        </div>
+        <div id="app-dashboard">
+            <div class="top-nav">
+                <button id="install-btn" class="btn-header">Install App</button>
+                <button class="btn-header" onclick="toggleTheme()" id="themeBtn">
+                    <span id="themeIcon">🌙</span> <span id="themeText">Dark</span>
+                </button>
+                <button class="btn-header logout-btn" onclick="logout()">Logout</button>
+            </div>
 
-        <!-- Toast Notification Popup -->
-        <div id="toastNotification" class="toast-notification">
-            <button class="toast-close" onclick="hideToast()">×</button>
-            <div class="toast-title" id="toastTitle"></div>
-            <div class="toast-body" id="toastBody"></div>
-        </div>
+            <!-- Notification Permission Banner -->
+            <div id="notificationBanner" class="notification-banner">
+                <div>Get notified about your tasks!</div>
+                <div style="font-size: 12px; margin-top: 5px;">Receive reminders at midnight, 1 hour before, and 10 minutes before tasks are due</div>
+                <button class="btn-allow" onclick="requestNotificationPermission()">Enable Notifications</button>
+                <button class="btn-dismiss" onclick="dismissNotificationBanner()">Maybe Later</button>
+            </div>
 
-        <div class="analytics-container">
-            <div class="analytics-header">Weekly Progress</div>
-            <div class="analytics-content">
-                <div class="y-axis">
-                    <span id="y-max">8</span>
-                    <span>4</span>
-                    <span>0</span>
-                </div>
-                <div class="chart-area">
-                    <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-0"></div><div class="bar-done" id="done-0"></div></div><span class="day-label">Sun</span></div>
-                    <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-1"></div><div class="bar-done" id="done-1"></div></div><span class="day-label">Mon</span></div>
-                    <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-2"></div><div class="bar-done" id="done-2"></div></div><span class="day-label">Tue</span></div>
-                    <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-3"></div><div class="bar-done" id="done-3"></div></div><span class="day-label">Wed</span></div>
-                    <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-4"></div><div class="bar-done" id="done-4"></div></div><span class="day-label">Thu</span></div>
-                    <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-5"></div><div class="bar-done" id="done-5"></div></div><span class="day-label">Fri</span></div>
-                    <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-6"></div><div class="bar-done" id="done-6"></div></div><span class="day-label">Sat</span></div>
-                </div>
-                <div class="progress-container">
-                    <svg class="progress-ring" width="100" height="100">
-                        <circle class="progress-ring-bg" cx="50" cy="50" r="42" stroke-width="10" fill="transparent"></circle>
-                        <circle id="progressCircle" cx="50" cy="50" r="42" stroke-width="10" fill="transparent" stroke-dasharray="264" stroke-dashoffset="264"></circle>
-                    </svg>
-                    <div id="pctLabel" class="pct-label">0%</div>
+            <!-- Toast Notification Popup -->
+            <div id="toastNotification" class="toast-notification">
+                <button class="toast-close" onclick="hideToast()">×</button>
+                <div class="toast-title" id="toastTitle"></div>
+                <div class="toast-body" id="toastBody"></div>
+            </div>
+
+            <div class="analytics-container">
+                <div class="analytics-header">Weekly Progress</div>
+                <div class="analytics-content">
+                    <div class="y-axis">
+                        <span id="y-max">8</span>
+                        <span>4</span>
+                        <span>0</span>
+                    </div>
+                    <div class="chart-area">
+                        <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-0"></div><div class="bar-done" id="done-0"></div></div><span class="day-label">Sun</span></div>
+                        <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-1"></div><div class="bar-done" id="done-1"></div></div><span class="day-label">Mon</span></div>
+                        <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-2"></div><div class="bar-done" id="done-2"></div></div><span class="day-label">Tue</span></div>
+                        <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-3"></div><div class="bar-done" id="done-3"></div></div><span class="day-label">Wed</span></div>
+                        <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-4"></div><div class="bar-done" id="done-4"></div></div><span class="day-label">Thu</span></div>
+                        <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-5"></div><div class="bar-done" id="done-5"></div></div><span class="day-label">Fri</span></div>
+                        <div class="bar-wrapper"><div class="bar-track"><div class="bar-planned" id="planned-6"></div><div class="bar-done" id="done-6"></div></div><span class="day-label">Sat</span></div>
+                    </div>
+                    <div class="progress-container">
+                        <svg class="progress-ring" width="100" height="100">
+                            <circle class="progress-ring-bg" cx="50" cy="50" r="42" stroke-width="10" fill="transparent"></circle>
+                            <circle id="progressCircle" cx="50" cy="50" r="42" stroke-width="10" fill="transparent" stroke-dasharray="264" stroke-dashoffset="264"></circle>
+                        </svg>
+                        <div id="pctLabel" class="pct-label">0%</div>
+                    </div>
                 </div>
             </div>
-        </div>
 
-        <div class="view-toggle">
-            <button class="view-btn" id="view-week" onclick="switchView('week')">Week View</button>
-            <button class="view-btn active" id="view-today" onclick="switchView('today')">Today View</button>
-            <button class="view-btn" onclick="showCompletedHistory()">Completed</button>
-        </div>
-
-        <div class="category-bar" id="categoryBar">
-            <div class="cat-tab active" style="background:#34495e;color:white;" onclick="filterCategory('all')">All</div>
-            <div class="cat-tab" style="background:var(--cat-work);color:white;" onclick="filterCategory('work')">Work</div>
-            <div class="cat-tab" style="background:var(--cat-home);color:white;" onclick="filterCategory('home')">Home</div>
-            <div class="cat-tab" style="background:var(--cat-personal);color:white;" onclick="filterCategory('personal')">Personal</div>
-            <div class="cat-tab" style="background:var(--cat-urgent);color:white;" onclick="filterCategory('urgent')">Urgent</div>
-        </div>
-
-        <div class="input-bar">
-            <input type="text" id="taskName" placeholder="Task Name" />
-            <input type="date" id="taskDate" min="" />
-            <input type="time" id="taskTime" placeholder="Time (Optional)" />
-            <select id="taskCat">
-                <option value="work">Work</option>
-                <option value="home">Home</option>
-                <option value="personal">Personal</option>
-                <option value="urgent">Urgent</option>
-            </select>
-            <button onclick="addTask()">ADD</button>
-        </div>
-
-        <!-- Weekly Visual Dashboard -->
-        <div id="weeklyDashboard" class="weekly-dashboard" style="display: none;"></div>
-
-        <div class="board" id="kanbanBoard">
-            <div class="col">
-                <h3>🔴 Overdue</h3>
-                <ul id="prev"></ul>
+            <div class="view-toggle">
+                <button class="view-btn" id="view-week" onclick="switchView('week')">Week View</button>
+                <button class="view-btn active" id="view-today" onclick="switchView('today')">Today View</button>
+                <button class="view-btn" onclick="showCompletedHistory()">Completed</button>
             </div>
-            <div class="col">
-                <h3>⏳ In Progress</h3>
-                <ul id="now"></ul>
-            </div>
-            <div class="col">
-                <h3>📅 Upcoming</h3>
-                <ul id="up"></ul>
-            </div>
-        </div>
-    </div>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="edit-modal-overlay" onclick="closeModalOnEditOverlay(event)">
-        <div class="edit-modal">
-            <div class="edit-modal-header">Edit Task</div>
-            <form class="edit-form" onsubmit="saveEditedTask(event)">
-                <input type="text" id="editTaskName" placeholder="Task Name" required />
-                <input type="date" id="editTaskDate" required />
-                <input type="time" id="editTaskTime" placeholder="Time (Optional)" />
-                <select id="editTaskCat">
+            <div class="category-bar" id="categoryBar">
+                <div class="cat-tab active" style="background:#34495e;color:white;" onclick="filterCategory('all')">All</div>
+                <div class="cat-tab" style="background:var(--cat-work);color:white;" onclick="filterCategory('work')">Work</div>
+                <div class="cat-tab" style="background:var(--cat-home);color:white;" onclick="filterCategory('home')">Home</div>
+                <div class="cat-tab" style="background:var(--cat-personal);color:white;" onclick="filterCategory('personal')">Personal</div>
+                <div class="cat-tab" style="background:var(--cat-urgent);color:white;" onclick="filterCategory('urgent')">Urgent</div>
+            </div>
+
+            <div class="input-bar">
+                <input type="text" id="taskName" placeholder="Task Name" />
+                <input type="date" id="taskDate" min="" />
+                <input type="time" id="taskTime" placeholder="Time (Optional)" />
+                <select id="taskCat">
                     <option value="work">Work</option>
                     <option value="home">Home</option>
                     <option value="personal">Personal</option>
                     <option value="urgent">Urgent</option>
                 </select>
-                <div class="edit-form-actions">
-                    <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
-                    <button type="submit" class="btn-save">Save</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Completed History Modal -->
-    <div id="completedModal" class="completed-modal-overlay" onclick="closeModalOnOverlay(event)">
-        <div class="completed-modal">
-            <div class="completed-modal-header">
-                <h2>Completed Tasks</h2>
-                <button class="close-modal-btn" onclick="closeCompletedModal()">×</button>
+                <button onclick="addTask()">ADD</button>
             </div>
-            <div id="completedHistoryContent"></div>
+
+            <!-- Weekly Visual Dashboard -->
+            <div id="weeklyDashboard" class="weekly-dashboard" style="display: none;"></div>
+
+            <div class="board" id="kanbanBoard">
+                <div class="col">
+                    <h3>🔴 Overdue</h3>
+                    <ul id="prev"></ul>
+                </div>
+                <div class="col">
+                    <h3>📅 Today</h3>
+                    <ul id="now"></ul>
+                </div>
+                <div class="col">
+                    <h3>⏰ Upcoming</h3>
+                    <ul id="up"></ul>
+                </div>
+            </div>
         </div>
-    </div>
 
-<script type="module">
-import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getDatabase, ref, set, onValue, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        <!-- Edit Modal -->
+        <div id="editModal" class="edit-modal-overlay" onclick="closeModalOnEditOverlay(event)">
+            <div class="edit-modal">
+                <div class="edit-modal-header">Edit Task</div>
+                <form class="edit-form" onsubmit="saveEditedTask(event)">
+                    <input type="text" id="editTaskName" placeholder="Task Name" required />
+                    <input type="date" id="editTaskDate" required />
+                    <input type="time" id="editTaskTime" placeholder="Time (Optional)" />
+                    <select id="editTaskCat">
+                        <option value="work">Work</option>
+                        <option value="home">Home</option>
+                        <option value="personal">Personal</option>
+                        <option value="urgent">Urgent</option>
+                    </select>
+                    <div class="edit-form-actions">
+                        <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
+                        <button type="submit" class="btn-save">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-const firebaseConfig = {
-    apiKey: "AIzaSyA-mhIz79hzRvTbVZKeDPEfv2uv5jh-iSA",
-    authDomain: "task-list-tracker-e80d4.firebaseapp.com",
-    databaseURL: "https://task-list-tracker-e80d4-default-rtdb.asia-southeast1.firebasedatabase.app", 
-    projectId: "task-list-tracker-e80d4",
-    appId: "1:918246411240:web:3f448eb1d0a6fc3f4fb25d"
-};
+        <!-- Completed History Modal -->
+        <div id="completedModal" class="completed-modal-overlay" onclick="closeModalOnOverlay(event)">
+            <div class="completed-modal">
+                <div class="completed-modal-header">
+                    <h2>Completed Tasks</h2>
+                    <button class="close-modal-btn" onclick="closeCompletedModal()">×</button>
+                </div>
+                <div id="completedHistoryContent"></div>
+            </div>
+        </div>
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getDatabase(app);
+    <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+    import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+    import { getDatabase, ref, set, onValue, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-let allTasks = [];
-let currentView = 'today';
-let currentCategory = 'all';
-let currentUserId = null;
-let currentEditingTaskId = null;
-let isLoginMode = true;
+    const firebaseConfig = {
+        apiKey: "AIzaSyA-mhIz79hzRvTbVZKeDPEfv2uv5jh-iSA",
+        authDomain: "task-list-tracker-e80d4.firebaseapp.com",
+        databaseURL: "https://task-list-tracker-e80d4-default-rtdb.asia-southeast1.firebasedatabase.app", 
+        projectId: "task-list-tracker-e80d4",
+        appId: "1:918246411240:web:3f448eb1d0a6fc3f4fb25d"
+    };
 
-// =====================================================================
-// NOTIFICATION SYSTEM
-// =====================================================================
-let notificationCheckInterval = null;
-let scheduledNotifications = new Map(); // Store timeout IDs
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-// Request notification permission
-window.requestNotificationPermission = async function() {
-    try {
-        const permission = await Notification.requestPermission();
-        console.log('[Notification] Permission result:', permission);
+    let allTasks = [];
+    let currentView = 'today';
+    let currentCategory = 'all';
+    let currentUserId = null;
+    let currentEditingTaskId = null;
+    let isLoginMode = true;
+
+    // =====================================================================
+    // NOTIFICATION SYSTEM
+    // =====================================================================
+    let notificationCheckInterval = null;
+    let scheduledNotifications = new Map(); // Store timeout IDs
+
+    // Request notification permission
+    window.requestNotificationPermission = async function() {
+        try {
+            const permission = await Notification.requestPermission();
+            console.log('[Notification] Permission result:', permission);
+            
+            if (permission === 'granted') {
+                console.log('Notification permission granted');
+                dismissNotificationBanner();
+                localStorage.setItem('notificationPermission', 'granted');
+                
+                // Subscribe to push notifications
+                await subscribeToPushNotifications();
+                
+                // Show a test notification
+                showNotification(
+                    '🎉 Notifications Enabled!', 
+                    'You will now receive reminders for your tasks',
+                    'test-notification'
+                );
+                
+                scheduleAllTaskNotifications();
+            } else {
+                console.log('Notification permission denied');
+                localStorage.setItem('notificationPermission', 'denied');
+            }
+        } catch (error) {
+            console.error('Error requesting notification permission:', error);
+        }
+    };
+
+    // Subscribe to push notifications for backend notifications
+    async function subscribeToPushNotifications() {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            console.log('[Push] Push notifications not supported');
+            return;
+        }
         
-        if (permission === 'granted') {
-            console.log('Notification permission granted');
-            dismissNotificationBanner();
-            localStorage.setItem('notificationPermission', 'granted');
+        if (!currentUserId) {
+            console.log('[Push] No user logged in, skipping subscription');
+            return;
+        }
+        
+        try {
+            const registration = await navigator.serviceWorker.ready;
+            
+            // Check if already subscribed
+            const existingSubscription = await registration.pushManager.getSubscription();
+            if (existingSubscription) {
+                console.log('[Push] Already subscribed, updating Firebase...');
+                const subscriptionId = btoa(existingSubscription.endpoint).replace(/[^a-zA-Z0-9]/g, '');
+                
+                // Use inline module script to access Firebase imports
+                const script = document.createElement('script');
+                script.type = 'module';
+                script.textContent = `
+                    import { getDatabase, ref, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+                    const db = getDatabase();
+                    const subscriptionData = ${JSON.stringify(JSON.parse(JSON.stringify(existingSubscription)))};
+                    const userId = '${currentUserId}';
+                    const subscriptionId = '${subscriptionId}';
+                    
+                    try {
+                        await set(ref(db, 'users/' + userId + '/pushSubscriptions/' + subscriptionId), subscriptionData);
+                        console.log('[Push] ✅ Existing subscription saved to Firebase!');
+                    } catch (error) {
+                        console.error('[Push] ❌ Failed to save:', error);
+                    }
+                `;
+                document.head.appendChild(script);
+                return;
+            }
+            
+            // Your public VAPID key
+            const publicVapidKey = 'BBWQoWPP9JfvgGAwRRJ2LOiZ4OY2Ngex1piUh-Ocs9jo8IGkuxJ0NkER3s_wPqDTpU3n53zINRWEyWLrqxZuAXA';
+            
+            console.log('[Push] Creating new subscription...');
             
             // Subscribe to push notifications
-            await subscribeToPushNotifications();
+            const subscription = await registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
+            });
             
-            // Show a test notification
-            showNotification(
-                '🎉 Notifications Enabled!', 
-                'You will now receive reminders for your tasks',
-                'test-notification'
-            );
+            console.log('[Push] ✅ Subscription created:', subscription);
             
-            scheduleAllTaskNotifications();
-        } else {
-            console.log('Notification permission denied');
-            localStorage.setItem('notificationPermission', 'denied');
-        }
-    } catch (error) {
-        console.error('Error requesting notification permission:', error);
-    }
-};
-
-// Subscribe to push notifications for backend notifications
-async function subscribeToPushNotifications() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.log('[Push] Push notifications not supported');
-        return;
-    }
-    
-    if (!currentUserId) {
-        console.log('[Push] No user logged in, skipping subscription');
-        return;
-    }
-    
-    try {
-        const registration = await navigator.serviceWorker.ready;
-        
-        // Check if already subscribed
-        const existingSubscription = await registration.pushManager.getSubscription();
-        if (existingSubscription) {
-            console.log('[Push] Already subscribed, updating Firebase...');
-            const subscriptionId = btoa(existingSubscription.endpoint).replace(/[^a-zA-Z0-9]/g, '');
+            // Save subscription to Firebase using inline module script
+            const subscriptionId = btoa(subscription.endpoint).replace(/[^a-zA-Z0-9]/g, '');
+            const subscriptionData = JSON.parse(JSON.stringify(subscription));
             
-            // Use inline module script to access Firebase imports
             const script = document.createElement('script');
             script.type = 'module';
             script.textContent = `
                 import { getDatabase, ref, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
                 const db = getDatabase();
-                const subscriptionData = ${JSON.stringify(JSON.parse(JSON.stringify(existingSubscription)))};
+                const subscriptionData = ${JSON.stringify(subscriptionData)};
                 const userId = '${currentUserId}';
                 const subscriptionId = '${subscriptionId}';
                 
                 try {
                     await set(ref(db, 'users/' + userId + '/pushSubscriptions/' + subscriptionId), subscriptionData);
-                    console.log('[Push] ✅ Existing subscription saved to Firebase!');
+                    console.log('[Push] ✅ Subscription saved to Firebase!');
                 } catch (error) {
                     console.error('[Push] ❌ Failed to save:', error);
                 }
             `;
             document.head.appendChild(script);
+            
+        } catch (error) {
+            console.error('[Push] Subscription failed:', error);
+        }
+    }
+
+    // Helper function to convert VAPID key
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    }
+
+    window.dismissNotificationBanner = function() {
+        document.getElementById('notificationBanner').style.display = 'none';
+        localStorage.setItem('notificationBannerDismissed', 'true');
+    };
+
+    // Check if we should show notification banner
+    function checkNotificationBanner() {
+        const permission = Notification.permission;
+        const dismissed = localStorage.getItem('notificationBannerDismissed');
+        
+        if (permission === 'default' && !dismissed) {
+            setTimeout(() => {
+                document.getElementById('notificationBanner').style.display = 'block';
+            }, 3000); // Show after 3 seconds
+        }
+    }
+
+    // Schedule notifications for a specific task
+    function scheduleTaskNotifications(task) {
+        if (Notification.permission !== 'granted' || !task.date) return;
+        
+        // Clear existing notifications for this task
+        clearTaskNotifications(task.id);
+        
+        const taskDate = new Date(task.date + 'T00:00:00');
+        const now = new Date();
+        const todayStr = getTodayStr();
+        
+        // Only schedule for today's tasks or future tasks
+        if (task.date < todayStr || task.completed) return;
+        
+        const notifications = [];
+        
+        // If task has a specific time
+        if (task.time) {
+            const [hours, minutes] = task.time.split(':').map(Number);
+            const taskDateTime = new Date(task.date + 'T' + task.time + ':00');
+            
+            // 1. Midnight notification (00:00) for today's tasks
+            if (task.date === todayStr) {
+                const midnight = new Date(taskDate);
+                midnight.setHours(0, 0, 0, 0);
+                
+                if (now < midnight) {
+                    notifications.push({
+                        time: midnight,
+                        title: '🌙 Task Due Today',
+                        body: `"${task.name}" is due today at ${task.time}`,
+                        tag: `midnight-${task.id}`
+                    });
+                }
+            }
+            
+            // 2. 1 hour before
+            const oneHourBefore = new Date(taskDateTime.getTime() - 60 * 60 * 1000);
+            if (oneHourBefore > now) {
+                notifications.push({
+                    time: oneHourBefore,
+                    title: '⏰ Task Due in 1 Hour',
+                    body: `"${task.name}" is due at ${task.time}`,
+                    tag: `1hour-${task.id}`
+                });
+            }
+            
+            // 3. 10 minutes before
+            const tenMinsBefore = new Date(taskDateTime.getTime() - 10 * 60 * 1000);
+            if (tenMinsBefore > now) {
+                notifications.push({
+                    time: tenMinsBefore,
+                    title: '⚡ Task Due in 10 Minutes',
+                    body: `"${task.name}" is due at ${task.time}`,
+                    tag: `10min-${task.id}`
+                });
+            }
+        } else {
+            // If no specific time, just notify at midnight for today's tasks
+            if (task.date === todayStr) {
+                const midnight = new Date(taskDate);
+                midnight.setHours(0, 0, 0, 0);
+                
+                if (now < midnight) {
+                    notifications.push({
+                        time: midnight,
+                        title: '🌙 Task Due Today',
+                        body: `"${task.name}" is due today`,
+                        tag: `midnight-${task.id}`
+                    });
+                }
+            }
+        }
+        
+        // Schedule all notifications
+        notifications.forEach(notif => {
+            const delay = notif.time.getTime() - now.getTime();
+            if (delay > 0) {
+                const timeoutId = setTimeout(() => {
+                    showNotification(notif.title, notif.body, notif.tag);
+                }, delay);
+                
+                // Store the timeout ID
+                if (!scheduledNotifications.has(task.id)) {
+                    scheduledNotifications.set(task.id, []);
+                }
+                scheduledNotifications.get(task.id).push(timeoutId);
+                
+                console.log(`Scheduled notification for task "${task.name}" at ${notif.time.toLocaleString()}, delay: ${Math.round(delay/1000)}s`);
+            }
+        });
+    }
+
+    // Clear notifications for a specific task
+    function clearTaskNotifications(taskId) {
+        if (scheduledNotifications.has(taskId)) {
+            scheduledNotifications.get(taskId).forEach(timeoutId => clearTimeout(timeoutId));
+            scheduledNotifications.delete(taskId);
+        }
+    }
+
+    // Schedule notifications for all tasks
+    function scheduleAllTaskNotifications() {
+        if (Notification.permission !== 'granted') return;
+        
+        // Clear all existing notifications
+        scheduledNotifications.forEach(timeouts => {
+            timeouts.forEach(id => clearTimeout(id));
+        });
+        scheduledNotifications.clear();
+        
+        // Check for missed notifications first
+        checkMissedNotifications();
+        
+        // Schedule for all non-completed tasks
+        allTasks.filter(t => !t.completed).forEach(task => {
+            scheduleTaskNotifications(task);
+        });
+    }
+
+    // Check and fire notifications that should have already triggered
+    function checkMissedNotifications() {
+        const now = new Date();
+        const todayStr = getTodayStr();
+        
+        allTasks.filter(t => !t.completed && t.date === todayStr && t.time).forEach(task => {
+            const [hours, minutes] = task.time.split(':').map(Number);
+            const taskDateTime = new Date();
+            taskDateTime.setHours(hours, minutes, 0, 0);
+            
+            const oneHourBefore = new Date(taskDateTime.getTime() - 60 * 60 * 1000);
+            const tenMinsBefore = new Date(taskDateTime.getTime() - 10 * 60 * 1000);
+            
+            // Check if we missed the 1 hour notification (within last 5 minutes)
+            const timeSinceOneHour = now.getTime() - oneHourBefore.getTime();
+            if (timeSinceOneHour > 0 && timeSinceOneHour < 5 * 60 * 1000) {
+                console.log(`[Missed Notification] Firing missed 1-hour notification for: ${task.name}`);
+                showNotification('⏰ Task Due Soon', `"${task.name}" is due at ${task.time}`, `missed-1h-${task.id}`);
+            }
+            
+            // Check if we missed the 10 minute notification (within last 2 minutes)
+            const timeSinceTenMins = now.getTime() - tenMinsBefore.getTime();
+            if (timeSinceTenMins > 0 && timeSinceTenMins < 2 * 60 * 1000) {
+                console.log(`[Missed Notification] Firing missed 10-min notification for: ${task.name}`);
+                showNotification('⚡ Task Due Very Soon', `"${task.name}" is due at ${task.time}`, `missed-10m-${task.id}`);
+            }
+        });
+    }
+
+    // Show notification
+    async function showNotification(title, body, tag) {
+        console.log(`[Notification] Attempting to show: ${title} - ${body}`);
+        
+        // ALWAYS show visual in-app notification
+        showToast(title, body);
+        
+        // Also try system notification if permission granted
+        if (Notification.permission === 'granted') {
+            try {
+                // Use Service Worker notification for mobile compatibility (shows in notification bar)
+                if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
+                    const registration = await navigator.serviceWorker.ready;
+                    console.log('[Notification] Using Service Worker notification');
+                    
+                    await registration.showNotification(title, {
+                        body: body,
+                        icon: '/icon-192.png',
+                        badge: '/icon-192.png',
+                        tag: tag,
+                        requireInteraction: false,
+                        vibrate: [200, 100, 200],
+                        silent: false,
+                        data: {
+                            url: window.location.href
+                        }
+                    });
+                } else {
+                    // Fallback to regular notification for desktop
+                    console.log('[Notification] Using regular notification');
+                    const notification = new Notification(title, {
+                        body: body,
+                        icon: '/icon-192.png',
+                        badge: '/icon-192.png',
+                        tag: tag,
+                        requireInteraction: true,
+                        vibrate: [200, 100, 200],
+                        silent: false
+                    });
+                    
+                    // Auto-close after 30 seconds
+                    setTimeout(() => {
+                        notification.close();
+                    }, 30000);
+                    
+                    // Click handler
+                    notification.onclick = function() {
+                        window.focus();
+                        this.close();
+                    };
+                }
+            } catch (error) {
+                console.error('[Notification] System notification error:', error);
+            }
+        }
+    }
+
+    // Show visual toast notification
+    function showToast(title, body, type = 'info') {
+        const toast = document.getElementById('toastNotification');
+        const toastTitle = document.getElementById('toastTitle');
+        const toastBody = document.getElementById('toastBody');
+        
+        // Set content
+        toastTitle.innerHTML = title;
+        toastBody.innerHTML = body;
+        
+        // Remove old type classes
+        toast.classList.remove('warning', 'error', 'success', 'info');
+        toast.classList.add(type);
+        
+        // Show toast
+        toast.classList.add('show');
+        
+        // Play sound
+        try {
+            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZSA0PVqzn77BdGAk+ltryxnMkBSd+zPLaizsIGGS57OihUhELTKXh8bllHAU2kdb0z38qBSp6yu/glEIKElyx6+2nVRQKQ5zg8L1mIAU3jtPzzn0qBSx7yu7glEEKElux6u2mVRQKQpvf8L1mIAU3jtPzzn0qBSx7yu7glEEKElux6u2mVRQKQpvf8L1mIAU3jtPzzn0qBSx7yu7glEEKElux6u2mVRQKQpvf8L1mIAU3jtPzzn0qBSx7yu7glEEKElux6u2mVRQKQpvf8L1mIAU3jtPzzn0qBSx7yu7glEEK');
+            audio.volume = 0.3;
+            audio.play().catch(() => {});
+        } catch (e) {}
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+            hideToast();
+        }, 10000);
+    }
+
+    window.hideToast = function() {
+        document.getElementById('toastNotification').classList.remove('show');
+    };
+
+    // =====================================================================
+    // SERVICE WORKER REGISTRATION
+    // =====================================================================
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => {
+                console.log('Service Worker registered:', reg);
+                
+                // Listen for messages from service worker
+                navigator.serviceWorker.addEventListener('message', event => {
+                    if (event.data && event.data.type === 'NOTIFICATION_CLICKED') {
+                        // Handle notification click
+                        window.focus();
+                    }
+                });
+            })
+            .catch(err => console.error('Service Worker registration failed:', err));
+    }
+
+    // Check for missed notifications when app becomes visible again
+    document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && Notification.permission === 'granted') {
+            console.log('[App] App became visible, checking for missed notifications...');
+            checkMissedNotifications();
+        }
+    });
+
+    // =====================================================================
+    // PWA INSTALL PROMPT
+    // =====================================================================
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('install-btn').style.display = 'inline-block';
+    });
+
+    document.getElementById('install-btn').addEventListener('click', async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log(`User response: ${outcome}`);
+            deferredPrompt = null;
+            document.getElementById('install-btn').style.display = 'none';
+        }
+    });
+
+    // =====================================================================
+    // SPLASH & THEME
+    // =====================================================================
+    setTimeout(() => {
+        document.getElementById('splash-screen').classList.add('hidden');
+    }, 1500);
+
+    window.toggleTheme = function() {
+        const current = document.body.getAttribute('data-theme');
+        const newTheme = current === 'dark' ? 'light' : 'dark';
+        document.body.setAttribute('data-theme', newTheme);
+        localStorage.setItem('theme', newTheme);
+        updateThemeButton(newTheme);
+    };
+
+    function updateThemeButton(theme) {
+        const icon = document.getElementById('themeIcon');
+        const text = document.getElementById('themeText');
+        
+        if (theme === 'dark') {
+            icon.textContent = '☀️';
+            text.textContent = 'Light';
+        } else {
+            icon.textContent = '🌙';
+            text.textContent = 'Dark';
+        }
+    }
+
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) {
+        document.body.setAttribute('data-theme', savedTheme);
+        updateThemeButton(savedTheme);
+    }
+
+    // =====================================================================
+    // AUTH
+    // =====================================================================
+    window.togglePassword = () => {
+        const p = document.getElementById('password'), b = document.getElementById('togglePassBtn');
+        p.type = p.type === 'password' ? 'text' : 'password';
+        b.innerText = p.type === 'password' ? 'Show' : 'Hide';
+    };
+
+    window.handleAuth = async () => {
+        const u = document.getElementById('username').value, p = document.getElementById('password').value;
+        const email = `${u}@missioncontrol.com`;
+        try {
+            if (isLoginMode) await signInWithEmailAndPassword(auth, email, p);
+            else             await createUserWithEmailAndPassword(auth, email, p);
+        } catch (e) { document.getElementById('auth-error').innerText = e.message; }
+    };
+
+    window.toggleAuthMode = () => {
+        isLoginMode = !isLoginMode;
+        document.getElementById('auth-title').innerText = isLoginMode ? "Login" : "Sign Up";
+        document.getElementById('authBtn').innerText     = isLoginMode ? "LOGIN" : "SIGN UP";
+        document.getElementById('toggle-text').innerHTML = isLoginMode
+            ? `<span style='color:var(--text);'>New user?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span>`
+            : `<span style='color:var(--text);'>Already have an account?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Login</span>`;
+    };
+
+    window.logout = () => signOut(auth);
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUserId = user.uid;
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('app-dashboard').style.display = 'block';
+            
+            // Set minimum date to today
+            document.getElementById('taskDate').min = getTodayStr();
+            
+            loadTasks();
+            checkNotificationBanner();
+            
+            // Auto-subscribe to push notifications if permission already granted
+            if (Notification.permission === 'granted') {
+                subscribeToPushNotifications().catch(err => {
+                    console.error('[Push] Auto-subscribe failed:', err);
+                });
+            }
+        } else {
+            currentUserId = null;
+            document.getElementById('auth-screen').style.display = 'flex';
+            document.getElementById('app-dashboard').style.display = 'none';
+            allTasks = [];
+        }
+    });
+
+    // =====================================================================
+    // TASKS
+    // =====================================================================
+    function getTodayStr() {
+        return new Date().toLocaleDateString('en-CA');
+    }
+
+    function loadTasks() {
+        if (!currentUserId) return;
+        
+        const tasksRef = ref(db, `users/${currentUserId}/tasks`);
+        onValue(tasksRef, (snapshot) => {
+            const previousTasks = [...allTasks];
+            allTasks = [];
+            snapshot.forEach((child) => {
+                allTasks.push({ id: child.key, ...child.val() });
+            });
+            
+            // Only do full re-render if tasks were added/deleted, or if switching views
+            const tasksCountChanged = previousTasks.length !== allTasks.length;
+            
+            if (tasksCountChanged || previousTasks.length === 0) {
+                // Full render needed
+                if (currentView === 'week') {
+                    renderWeeklyDashboard();
+                } else {
+                    renderTasks();
+                }
+            } else {
+                // Just update existing elements (for toggles)
+                if (currentView === 'week') {
+                    updateWeeklyDashboardProgress();
+                } else {
+                    renderTasks();
+                }
+            }
+            
+            console.log(`[Tasks] Loaded ${allTasks.length} tasks, scheduling notifications...`);
+            scheduleAllTaskNotifications(); // Reschedule notifications when tasks change
+        });
+    }
+
+    window.addTask = function() {
+        const name = document.getElementById('taskName').value.trim();
+        const date = document.getElementById('taskDate').value;
+        const time = document.getElementById('taskTime').value;
+        const cat = document.getElementById('taskCat').value;
+        
+        if (!name || !date) {
+            alert('Please enter task name and date');
             return;
         }
         
-        // Your public VAPID key
-        const publicVapidKey = 'BBWQoWPP9JfvgGAwRRJ2LOiZ4OY2Ngex1piUh-Ocs9jo8IGkuxJ0NkER3s_wPqDTpU3n53zINRWEyWLrqxZuAXA';
+        console.log(`[Add Task] Creating task: "${name}" on ${date} at ${time || 'no time'}`);
         
-        console.log('[Push] Creating new subscription...');
+        const taskId = Date.now().toString();
+        const taskData = {
+            name,
+            date,
+            time: time || null,
+            cat,
+            completed: false,
+            completedAt: null
+        };
         
-        // Subscribe to push notifications
-        const subscription = await registration.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicVapidKey)
-        });
+        set(ref(db, `users/${currentUserId}/tasks/${taskId}`), taskData);
         
-        console.log('[Push] ✅ Subscription created:', subscription);
+        // Clear only task name and time, keep the date
+        document.getElementById('taskName').value = '';
+        document.getElementById('taskTime').value = '';
+    };
+
+    window.toggleTask = function(id) {
+        const task = allTasks.find(t => t.id === id);
+        if (!task) return;
         
-        // Save subscription to Firebase using inline module script
-        const subscriptionId = btoa(subscription.endpoint).replace(/[^a-zA-Z0-9]/g, '');
-        const subscriptionData = JSON.parse(JSON.stringify(subscription));
+        const newState = !task.completed;
+        const updates = {
+            completed: newState,
+            completedAt: newState ? new Date().toISOString() : null
+        };
         
-        const script = document.createElement('script');
-        script.type = 'module';
-        script.textContent = `
-            import { getDatabase, ref, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-            const db = getDatabase();
-            const subscriptionData = ${JSON.stringify(subscriptionData)};
-            const userId = '${currentUserId}';
-            const subscriptionId = '${subscriptionId}';
+        update(ref(db, `users/${currentUserId}/tasks/${id}`), updates);
+        
+        // Clear notifications if task is completed
+        if (newState) {
+            clearTaskNotifications(id);
+        }
+    };
+
+    window.deleteTask = function(id) {
+        if (confirm('Delete this task?')) {
+            remove(ref(db, `users/${currentUserId}/tasks/${id}`));
+            clearTaskNotifications(id);
+        }
+    };
+
+    // =====================================================================
+    // EDIT MODAL
+    // =====================================================================
+    window.editTask = function(id) {
+        const task = allTasks.find(t => t.id === id);
+        if (!task) return;
+        
+        currentEditingTaskId = id;
+        document.getElementById('editTaskName').value = task.name;
+        document.getElementById('editTaskDate').value = task.date;
+        document.getElementById('editTaskTime').value = task.time || '';
+        document.getElementById('editTaskCat').value = task.cat;
+        
+        document.getElementById('editModal').classList.add('show');
+    };
+
+    window.closeEditModal = function() {
+        document.getElementById('editModal').classList.remove('show');
+        currentEditingTaskId = null;
+    };
+
+    window.saveEditedTask = function(event) {
+        event.preventDefault();
+        
+        if (!currentEditingTaskId) return;
+        
+        const name = document.getElementById('editTaskName').value.trim();
+        const date = document.getElementById('editTaskDate').value;
+        const time = document.getElementById('editTaskTime').value;
+        const cat = document.getElementById('editTaskCat').value;
+        
+        if (!name || !date) {
+            alert('Please enter task name and date');
+            return;
+        }
+        
+        const updates = {
+            name,
+            date,
+            time: time || null,
+            cat
+        };
+        
+        update(ref(db, `users/${currentUserId}/tasks/${currentEditingTaskId}`), updates);
+        closeEditModal();
+    };
+
+    window.closeModalOnEditOverlay = function(event) {
+        if (event.target.id === 'editModal') {
+            closeEditModal();
+        }
+    };
+
+    // =====================================================================
+    // VIEW & FILTER
+    // =====================================================================
+    window.switchView = function(view) {
+        currentView = view;
+        document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        const weeklyDashboard = document.getElementById('weeklyDashboard');
+        const kanbanBoard = document.getElementById('kanbanBoard');
+        const analyticsContainer = document.querySelector('.analytics-container');
+        const categoryBar = document.querySelector('.category-bar');
+        const inputBar = document.querySelector('.input-bar');
+        
+        if (view === 'week') {
+            // Show weekly visual dashboard only
+            weeklyDashboard.style.display = 'grid';
+            kanbanBoard.style.display = 'none';
+            analyticsContainer.style.display = 'none';
+            categoryBar.style.display = 'none';
+            inputBar.style.display = 'none';
+            renderWeeklyDashboard();
+        } else {
+            // Show kanban board with all controls
+            weeklyDashboard.style.display = 'none';
+            kanbanBoard.style.display = 'grid';
+            analyticsContainer.style.display = 'block';
+            categoryBar.style.display = 'flex';
+            inputBar.style.display = 'grid';
+            renderTasks();
+        }
+    };
+
+    window.filterCategory = function(cat) {
+        currentCategory = cat;
+        document.querySelectorAll('.cat-tab').forEach(tab => tab.classList.remove('active'));
+        event.target.classList.add('active');
+        
+        // Refresh based on current view
+        if (currentView === 'week') {
+            renderWeeklyDashboard();
+        } else {
+            renderTasks();
+        }
+    };
+
+    // =====================================================================
+    // RENDER
+    // =====================================================================
+    // =====================================================================
+    // WEEKLY VISUAL DASHBOARD
+    // =====================================================================
+    function updateWeeklyDashboardProgress() {
+        // Update progress circles and stats without full re-render
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay());
+        
+        const cards = document.querySelectorAll('.day-card');
+        
+        for (let i = 0; i < 7; i++) {
+            const currentDay = new Date(startOfWeek);
+            currentDay.setDate(startOfWeek.getDate() + i);
+            const dateStr = currentDay.toLocaleDateString('en-CA');
             
-            try {
-                await set(ref(db, 'users/' + userId + '/pushSubscriptions/' + subscriptionId), subscriptionData);
-                console.log('[Push] ✅ Subscription saved to Firebase!');
-            } catch (error) {
-                console.error('[Push] ❌ Failed to save:', error);
-            }
-        `;
-        document.head.appendChild(script);
-        
-    } catch (error) {
-        console.error('[Push] Subscription failed:', error);
-    }
-}
-
-// Helper function to convert VAPID key
-function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-    for (let i = 0; i < rawData.length; ++i) {
-        outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-}
-
-window.dismissNotificationBanner = function() {
-    document.getElementById('notificationBanner').style.display = 'none';
-    localStorage.setItem('notificationBannerDismissed', 'true');
-};
-
-// Check if we should show notification banner
-function checkNotificationBanner() {
-    const permission = Notification.permission;
-    const dismissed = localStorage.getItem('notificationBannerDismissed');
-    
-    if (permission === 'default' && !dismissed) {
-        setTimeout(() => {
-            document.getElementById('notificationBanner').style.display = 'block';
-        }, 3000); // Show after 3 seconds
-    }
-}
-
-// Schedule notifications for a specific task
-function scheduleTaskNotifications(task) {
-    if (Notification.permission !== 'granted' || !task.date) return;
-    
-    // Clear existing notifications for this task
-    clearTaskNotifications(task.id);
-    
-    const taskDate = new Date(task.date + 'T00:00:00');
-    const now = new Date();
-    const todayStr = getTodayStr();
-    
-    // Only schedule for today's tasks or future tasks
-    if (task.date < todayStr || task.completed) return;
-    
-    const notifications = [];
-    
-    // If task has a specific time
-    if (task.time) {
-        const [hours, minutes] = task.time.split(':').map(Number);
-        const taskDateTime = new Date(task.date + 'T' + task.time + ':00');
-        
-        // 1. Midnight notification (00:00) for today's tasks
-        if (task.date === todayStr) {
-            const midnight = new Date(taskDate);
-            midnight.setHours(0, 0, 0, 0);
+            const dayTasks = allTasks.filter(t => t.date === dateStr);
+            const filteredTasks = currentCategory === 'all' 
+                ? dayTasks 
+                : dayTasks.filter(t => t.cat === currentCategory);
             
-            if (now < midnight) {
-                notifications.push({
-                    time: midnight,
-                    title: '🌙 Task Due Today',
-                    body: `"${task.name}" is due today at ${task.time}`,
-                    tag: `midnight-${task.id}`
-                });
-            }
-        }
-        
-        // 2. 1 hour before
-        const oneHourBefore = new Date(taskDateTime.getTime() - 60 * 60 * 1000);
-        if (oneHourBefore > now) {
-            notifications.push({
-                time: oneHourBefore,
-                title: '⏰ Task Due in 1 Hour',
-                body: `"${task.name}" is due at ${task.time}`,
-                tag: `1hour-${task.id}`
-            });
-        }
-        
-        // 3. 10 minutes before
-        const tenMinsBefore = new Date(taskDateTime.getTime() - 10 * 60 * 1000);
-        if (tenMinsBefore > now) {
-            notifications.push({
-                time: tenMinsBefore,
-                title: '⚡ Task Due in 10 Minutes',
-                body: `"${task.name}" is due at ${task.time}`,
-                tag: `10min-${task.id}`
-            });
-        }
-    } else {
-        // If no specific time, just notify at midnight for today's tasks
-        if (task.date === todayStr) {
-            const midnight = new Date(taskDate);
-            midnight.setHours(0, 0, 0, 0);
+            const totalTasks = filteredTasks.length;
+            const completedTasks = filteredTasks.filter(t => t.completed).length;
+            const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
             
-            if (now < midnight) {
-                notifications.push({
-                    time: midnight,
-                    title: '🌙 Task Due Today',
-                    body: `"${task.name}" is due today`,
-                    tag: `midnight-${task.id}`
-                });
-            }
-        }
-    }
-    
-    // Schedule all notifications
-    notifications.forEach(notif => {
-        const delay = notif.time.getTime() - now.getTime();
-        if (delay > 0) {
-            const timeoutId = setTimeout(() => {
-                showNotification(notif.title, notif.body, notif.tag);
-            }, delay);
-            
-            // Store the timeout ID
-            if (!scheduledNotifications.has(task.id)) {
-                scheduledNotifications.set(task.id, []);
-            }
-            scheduledNotifications.get(task.id).push(timeoutId);
-            
-            console.log(`Scheduled notification for task "${task.name}" at ${notif.time.toLocaleString()}, delay: ${Math.round(delay/1000)}s`);
-        }
-    });
-}
-
-// Clear notifications for a specific task
-function clearTaskNotifications(taskId) {
-    if (scheduledNotifications.has(taskId)) {
-        scheduledNotifications.get(taskId).forEach(timeoutId => clearTimeout(timeoutId));
-        scheduledNotifications.delete(taskId);
-    }
-}
-
-// Schedule notifications for all tasks
-function scheduleAllTaskNotifications() {
-    if (Notification.permission !== 'granted') return;
-    
-    // Clear all existing notifications
-    scheduledNotifications.forEach(timeouts => {
-        timeouts.forEach(id => clearTimeout(id));
-    });
-    scheduledNotifications.clear();
-    
-    // Check for missed notifications first
-    checkMissedNotifications();
-    
-    // Schedule for all non-completed tasks
-    allTasks.filter(t => !t.completed).forEach(task => {
-        scheduleTaskNotifications(task);
-    });
-}
-
-// Check and fire notifications that should have already triggered
-function checkMissedNotifications() {
-    const now = new Date();
-    const todayStr = getTodayStr();
-    
-    allTasks.filter(t => !t.completed && t.date === todayStr && t.time).forEach(task => {
-        const [hours, minutes] = task.time.split(':').map(Number);
-        const taskDateTime = new Date();
-        taskDateTime.setHours(hours, minutes, 0, 0);
-        
-        const oneHourBefore = new Date(taskDateTime.getTime() - 60 * 60 * 1000);
-        const tenMinsBefore = new Date(taskDateTime.getTime() - 10 * 60 * 1000);
-        
-        // Check if we missed the 1 hour notification (within last 5 minutes)
-        const timeSinceOneHour = now.getTime() - oneHourBefore.getTime();
-        if (timeSinceOneHour > 0 && timeSinceOneHour < 5 * 60 * 1000) {
-            console.log(`[Missed Notification] Firing missed 1-hour notification for: ${task.name}`);
-            showNotification('⏰ Task Due Soon', `"${task.name}" is due at ${task.time}`, `missed-1h-${task.id}`);
-        }
-        
-        // Check if we missed the 10 minute notification (within last 2 minutes)
-        const timeSinceTenMins = now.getTime() - tenMinsBefore.getTime();
-        if (timeSinceTenMins > 0 && timeSinceTenMins < 2 * 60 * 1000) {
-            console.log(`[Missed Notification] Firing missed 10-min notification for: ${task.name}`);
-            showNotification('⚡ Task Due Very Soon', `"${task.name}" is due at ${task.time}`, `missed-10m-${task.id}`);
-        }
-    });
-}
-
-// Show notification
-async function showNotification(title, body, tag) {
-    console.log(`[Notification] Attempting to show: ${title} - ${body}`);
-    
-    // ALWAYS show visual in-app notification
-    showToast(title, body);
-    
-    // Also try system notification if permission granted
-    if (Notification.permission === 'granted') {
-        try {
-            // Use Service Worker notification for mobile compatibility (shows in notification bar)
-            if ('serviceWorker' in navigator && navigator.serviceWorker.ready) {
-                const registration = await navigator.serviceWorker.ready;
-                console.log('[Notification] Using Service Worker notification');
+            if (cards[i]) {
+                // Update progress circle smoothly
+                const progressCircle = cards[i].querySelector('.day-progress-fill');
+                const progressText = cards[i].querySelector('.day-progress-text');
+                const targetOffset = 326.7 - (percentage / 100 * 326.7);
                 
-                await registration.showNotification(title, {
-                    body: body,
-                    icon: '/icon-192.png',
-                    badge: '/icon-192.png',
-                    tag: tag,
-                    requireInteraction: false,
-                    vibrate: [200, 100, 200],
-                    silent: false,
-                    data: {
-                        url: window.location.href
+                if (progressCircle) {
+                    progressCircle.style.strokeDashoffset = targetOffset;
+                }
+                if (progressText) {
+                    progressText.textContent = percentage + '%';
+                }
+                
+                // Update stats
+                const statValues = cards[i].querySelectorAll('.day-stat-value');
+                if (statValues[0]) statValues[0].textContent = totalTasks;
+                if (statValues[1]) statValues[1].textContent = completedTasks;
+                
+                // Update task list checkboxes
+                const taskItems = cards[i].querySelectorAll('.day-task-item');
+                filteredTasks.forEach((task, idx) => {
+                    if (taskItems[idx]) {
+                        const checkbox = taskItems[idx].querySelector('input[type="checkbox"]');
+                        if (checkbox) {
+                            checkbox.checked = task.completed;
+                        }
+                        if (task.completed) {
+                            taskItems[idx].classList.add('completed');
+                        } else {
+                            taskItems[idx].classList.remove('completed');
+                        }
                     }
                 });
-            } else {
-                // Fallback to regular notification for desktop
-                console.log('[Notification] Using regular notification');
-                const notification = new Notification(title, {
-                    body: body,
-                    icon: '/icon-192.png',
-                    badge: '/icon-192.png',
-                    tag: tag,
-                    requireInteraction: true,
-                    vibrate: [200, 100, 200],
-                    silent: false
-                });
-                
-                // Auto-close after 30 seconds
-                setTimeout(() => {
-                    notification.close();
-                }, 30000);
-                
-                // Click handler
-                notification.onclick = function() {
-                    window.focus();
-                    this.close();
-                };
             }
-        } catch (error) {
-            console.error('[Notification] System notification error:', error);
         }
     }
-}
 
-// Show visual toast notification
-function showToast(title, body, type = 'info') {
-    const toast = document.getElementById('toastNotification');
-    const toastTitle = document.getElementById('toastTitle');
-    const toastBody = document.getElementById('toastBody');
-    
-    // Set content
-    toastTitle.innerHTML = title;
-    toastBody.innerHTML = body;
-    
-    // Remove old type classes
-    toast.classList.remove('warning', 'error', 'success', 'info');
-    toast.classList.add(type);
-    
-    // Show toast
-    toast.classList.add('show');
-    
-    // Play sound
-    try {
-        const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZSA0PVqzn77BdGAk+ltryxnMkBSd+zPLaizsIGGS57OihUhELTKXh8bllHAU2kdb0z38qBSp6yu/glEIKElyx6+2nVRQKQ5zg8L1mIAU3jtPzzn0qBSx7yu7glEEKElux6u2mVRQKQpvf8L1mIAU3jtPzzn0qBSx7yu7glEEKElux6u2mVRQKQpvf8L1mIAU3jtPzzn0qBSx7yu7glEEKElux6u2mVRQKQpvf8L1mIAU3jtPzzn0qBSx7yu7glEEKElux6u2mVRQKQpvf8L1mIAU3jtPzzn0qBSx7yu7glEEK');
-        audio.volume = 0.3;
-        audio.play().catch(() => {});
-    } catch (e) {}
-    
-    // Auto-hide after 10 seconds
-    setTimeout(() => {
-        hideToast();
-    }, 10000);
-}
-
-window.hideToast = function() {
-    document.getElementById('toastNotification').classList.remove('show');
-};
-
-// =====================================================================
-// SERVICE WORKER REGISTRATION
-// =====================================================================
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-        .then(reg => {
-            console.log('Service Worker registered:', reg);
+    function renderWeeklyDashboard() {
+        const container = document.getElementById('weeklyDashboard');
+        container.innerHTML = '';
+        
+        const today = new Date();
+        const startOfWeek = new Date(today);
+        startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
+        
+        const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        
+        for (let i = 0; i < 7; i++) {
+            const currentDay = new Date(startOfWeek);
+            currentDay.setDate(startOfWeek.getDate() + i);
+            const dateStr = currentDay.toLocaleDateString('en-CA');
             
-            // Listen for messages from service worker
-            navigator.serviceWorker.addEventListener('message', event => {
-                if (event.data && event.data.type === 'NOTIFICATION_CLICKED') {
-                    // Handle notification click
-                    window.focus();
-                }
-            });
-        })
-        .catch(err => console.error('Service Worker registration failed:', err));
-}
-
-// Check for missed notifications when app becomes visible again
-document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && Notification.permission === 'granted') {
-        console.log('[App] App became visible, checking for missed notifications...');
-        checkMissedNotifications();
-    }
-});
-
-// =====================================================================
-// PWA INSTALL PROMPT
-// =====================================================================
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    document.getElementById('install-btn').style.display = 'inline-block';
-});
-
-document.getElementById('install-btn').addEventListener('click', async () => {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response: ${outcome}`);
-        deferredPrompt = null;
-        document.getElementById('install-btn').style.display = 'none';
-    }
-});
-
-// =====================================================================
-// SPLASH & THEME
-// =====================================================================
-setTimeout(() => {
-    document.getElementById('splash-screen').classList.add('hidden');
-}, 1500);
-
-window.toggleTheme = function() {
-    const current = document.body.getAttribute('data-theme');
-    const newTheme = current === 'dark' ? 'light' : 'dark';
-    document.body.setAttribute('data-theme', newTheme);
-    localStorage.setItem('theme', newTheme);
-    updateThemeButton(newTheme);
-};
-
-function updateThemeButton(theme) {
-    const icon = document.getElementById('themeIcon');
-    const text = document.getElementById('themeText');
-    
-    if (theme === 'dark') {
-        icon.textContent = '☀️';
-        text.textContent = 'Light';
-    } else {
-        icon.textContent = '🌙';
-        text.textContent = 'Dark';
-    }
-}
-
-const savedTheme = localStorage.getItem('theme');
-if (savedTheme) {
-    document.body.setAttribute('data-theme', savedTheme);
-    updateThemeButton(savedTheme);
-}
-
-// =====================================================================
-// AUTH
-// =====================================================================
-window.togglePassword = () => {
-    const p = document.getElementById('password'), b = document.getElementById('togglePassBtn');
-    p.type = p.type === 'password' ? 'text' : 'password';
-    b.innerText = p.type === 'password' ? 'Show' : 'Hide';
-};
-
-window.handleAuth = async () => {
-    const u = document.getElementById('username').value, p = document.getElementById('password').value;
-    const email = `${u}@missioncontrol.com`;
-    try {
-        if (isLoginMode) await signInWithEmailAndPassword(auth, email, p);
-        else             await createUserWithEmailAndPassword(auth, email, p);
-    } catch (e) { document.getElementById('auth-error').innerText = e.message; }
-};
-
-window.toggleAuthMode = () => {
-    isLoginMode = !isLoginMode;
-    document.getElementById('auth-title').innerText = isLoginMode ? "Login" : "Sign Up";
-    document.getElementById('authBtn').innerText     = isLoginMode ? "LOGIN" : "SIGN UP";
-    document.getElementById('toggle-text').innerHTML = isLoginMode
-        ? `<span style='color:var(--text);'>New user?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span>`
-        : `<span style='color:var(--text);'>Already have an account?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Login</span>`;
-};
-
-window.logout = () => signOut(auth);
-
-onAuthStateChanged(auth, (user) => {
-    if (user) {
-        currentUserId = user.uid;
-        document.getElementById('auth-screen').style.display = 'none';
-        document.getElementById('app-dashboard').style.display = 'block';
-        
-        // Set minimum date to today
-        document.getElementById('taskDate').min = getTodayStr();
-        
-        loadTasks();
-        checkNotificationBanner();
-        
-        // Auto-subscribe to push notifications if permission already granted
-        if (Notification.permission === 'granted') {
-            subscribeToPushNotifications().catch(err => {
-                console.error('[Push] Auto-subscribe failed:', err);
-            });
-        }
-    } else {
-        currentUserId = null;
-        document.getElementById('auth-screen').style.display = 'flex';
-        document.getElementById('app-dashboard').style.display = 'none';
-        allTasks = [];
-    }
-});
-
-// =====================================================================
-// TASKS
-// =====================================================================
-function getTodayStr() {
-    return new Date().toLocaleDateString('en-CA');
-}
-
-function loadTasks() {
-    if (!currentUserId) return;
-    
-    const tasksRef = ref(db, `users/${currentUserId}/tasks`);
-    onValue(tasksRef, (snapshot) => {
-        const previousTasks = [...allTasks];
-        allTasks = [];
-        snapshot.forEach((child) => {
-            allTasks.push({ id: child.key, ...child.val() });
-        });
-        
-        // Only do full re-render if tasks were added/deleted, or if switching views
-        const tasksCountChanged = previousTasks.length !== allTasks.length;
-        
-        if (tasksCountChanged || previousTasks.length === 0) {
-            // Full render needed
-            if (currentView === 'week') {
-                renderWeeklyDashboard();
-            } else {
-                renderTasks();
-            }
-        } else {
-            // Just update existing elements (for toggles)
-            if (currentView === 'week') {
-                updateWeeklyDashboardProgress();
-            } else {
-                renderTasks();
-            }
-        }
-        
-        console.log(`[Tasks] Loaded ${allTasks.length} tasks, scheduling notifications...`);
-        scheduleAllTaskNotifications(); // Reschedule notifications when tasks change
-    });
-}
-
-window.addTask = function() {
-    const name = document.getElementById('taskName').value.trim();
-    const date = document.getElementById('taskDate').value;
-    const time = document.getElementById('taskTime').value;
-    const cat = document.getElementById('taskCat').value;
-    
-    if (!name || !date) {
-        alert('Please enter task name and date');
-        return;
-    }
-    
-    console.log(`[Add Task] Creating task: "${name}" on ${date} at ${time || 'no time'}`);
-    
-    const taskId = Date.now().toString();
-    const taskData = {
-        name,
-        date,
-        time: time || null,
-        cat,
-        completed: false,
-        completedAt: null
-    };
-    
-    set(ref(db, `users/${currentUserId}/tasks/${taskId}`), taskData);
-    
-    // Clear only task name and time, keep the date
-    document.getElementById('taskName').value = '';
-    document.getElementById('taskTime').value = '';
-};
-
-window.toggleTask = function(id) {
-    const task = allTasks.find(t => t.id === id);
-    if (!task) return;
-    
-    const newState = !task.completed;
-    const updates = {
-        completed: newState,
-        completedAt: newState ? new Date().toISOString() : null
-    };
-    
-    update(ref(db, `users/${currentUserId}/tasks/${id}`), updates);
-    
-    // Clear notifications if task is completed
-    if (newState) {
-        clearTaskNotifications(id);
-    }
-};
-
-window.deleteTask = function(id) {
-    if (confirm('Delete this task?')) {
-        remove(ref(db, `users/${currentUserId}/tasks/${id}`));
-        clearTaskNotifications(id);
-    }
-};
-
-// =====================================================================
-// EDIT MODAL
-// =====================================================================
-window.editTask = function(id) {
-    const task = allTasks.find(t => t.id === id);
-    if (!task) return;
-    
-    currentEditingTaskId = id;
-    document.getElementById('editTaskName').value = task.name;
-    document.getElementById('editTaskDate').value = task.date;
-    document.getElementById('editTaskTime').value = task.time || '';
-    document.getElementById('editTaskCat').value = task.cat;
-    
-    document.getElementById('editModal').classList.add('show');
-};
-
-window.closeEditModal = function() {
-    document.getElementById('editModal').classList.remove('show');
-    currentEditingTaskId = null;
-};
-
-window.saveEditedTask = function(event) {
-    event.preventDefault();
-    
-    if (!currentEditingTaskId) return;
-    
-    const name = document.getElementById('editTaskName').value.trim();
-    const date = document.getElementById('editTaskDate').value;
-    const time = document.getElementById('editTaskTime').value;
-    const cat = document.getElementById('editTaskCat').value;
-    
-    if (!name || !date) {
-        alert('Please enter task name and date');
-        return;
-    }
-    
-    const updates = {
-        name,
-        date,
-        time: time || null,
-        cat
-    };
-    
-    update(ref(db, `users/${currentUserId}/tasks/${currentEditingTaskId}`), updates);
-    closeEditModal();
-};
-
-window.closeModalOnEditOverlay = function(event) {
-    if (event.target.id === 'editModal') {
-        closeEditModal();
-    }
-};
-
-// =====================================================================
-// VIEW & FILTER
-// =====================================================================
-window.switchView = function(view) {
-    currentView = view;
-    document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    const weeklyDashboard = document.getElementById('weeklyDashboard');
-    const kanbanBoard = document.getElementById('kanbanBoard');
-    const analyticsContainer = document.querySelector('.analytics-container');
-    const categoryBar = document.querySelector('.category-bar');
-    const inputBar = document.querySelector('.input-bar');
-    
-    if (view === 'week') {
-        // Show weekly visual dashboard only
-        weeklyDashboard.style.display = 'grid';
-        kanbanBoard.style.display = 'none';
-        analyticsContainer.style.display = 'none';
-        categoryBar.style.display = 'none';
-        inputBar.style.display = 'none';
-        renderWeeklyDashboard();
-    } else {
-        // Show kanban board with all controls
-        weeklyDashboard.style.display = 'none';
-        kanbanBoard.style.display = 'grid';
-        analyticsContainer.style.display = 'block';
-        categoryBar.style.display = 'flex';
-        inputBar.style.display = 'grid';
-        renderTasks();
-    }
-};
-
-window.filterCategory = function(cat) {
-    currentCategory = cat;
-    document.querySelectorAll('.cat-tab').forEach(tab => tab.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    // Refresh based on current view
-    if (currentView === 'week') {
-        renderWeeklyDashboard();
-    } else {
-        renderTasks();
-    }
-};
-
-// =====================================================================
-// RENDER
-// =====================================================================
-// =====================================================================
-// WEEKLY VISUAL DASHBOARD
-// =====================================================================
-function updateWeeklyDashboardProgress() {
-    // Update progress circles and stats without full re-render
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-    
-    const cards = document.querySelectorAll('.day-card');
-    
-    for (let i = 0; i < 7; i++) {
-        const currentDay = new Date(startOfWeek);
-        currentDay.setDate(startOfWeek.getDate() + i);
-        const dateStr = currentDay.toLocaleDateString('en-CA');
-        
-        const dayTasks = allTasks.filter(t => t.date === dateStr);
-        const filteredTasks = currentCategory === 'all' 
-            ? dayTasks 
-            : dayTasks.filter(t => t.cat === currentCategory);
-        
-        const totalTasks = filteredTasks.length;
-        const completedTasks = filteredTasks.filter(t => t.completed).length;
-        const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-        
-        if (cards[i]) {
-            // Update progress circle smoothly
-            const progressCircle = cards[i].querySelector('.day-progress-fill');
-            const progressText = cards[i].querySelector('.day-progress-text');
+            // Get tasks for this day
+            const dayTasks = allTasks.filter(t => t.date === dateStr);
+            const totalTasks = dayTasks.length;
+            const completedTasks = dayTasks.filter(t => t.completed).length;
+            const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+            
+            // Filter by category if needed
+            const filteredTasks = currentCategory === 'all' 
+                ? dayTasks 
+                : dayTasks.filter(t => t.cat === currentCategory);
+            
+            const card = document.createElement('div');
+            card.className = 'day-card';
+            
+            // Format date as DD/MM/YYYY
+            const day = String(currentDay.getDate()).padStart(2, '0');
+            const month = String(currentDay.getMonth() + 1).padStart(2, '0');
+            const year = currentDay.getFullYear();
+            const formattedDate = `${day}/${month}/${year}`;
+            
             const targetOffset = 326.7 - (percentage / 100 * 326.7);
             
-            if (progressCircle) {
-                progressCircle.style.strokeDashoffset = targetOffset;
-            }
-            if (progressText) {
-                progressText.textContent = percentage + '%';
-            }
+            card.innerHTML = `
+                <div class="day-card-header">
+                    <div>
+                        <div class="day-name">${days[i]}</div>
+                        <div class="day-date">${formattedDate}</div>
+                    </div>
+                </div>
+                
+                <div class="day-progress">
+                    <svg width="120" height="120">
+                        <circle class="day-progress-bg" cx="60" cy="60" r="52" stroke-width="12" fill="transparent"></circle>
+                        <circle class="day-progress-fill" cx="60" cy="60" r="52" stroke-width="12" fill="transparent" 
+                                stroke-dasharray="326.7" stroke-dashoffset="326.7" stroke-linecap="round" data-target="${targetOffset}"></circle>
+                    </svg>
+                    <div class="day-progress-text" style="opacity: 0;">${percentage}%</div>
+                </div>
+                
+                <div class="day-stats" style="opacity: 0;">
+                    <div class="day-stat">
+                        <div class="day-stat-value">${totalTasks}</div>
+                        <div class="day-stat-label">Tasks</div>
+                    </div>
+                    <div class="day-stat">
+                        <div class="day-stat-value">${completedTasks}</div>
+                        <div class="day-stat-label">Done</div>
+                    </div>
+                </div>
+                
+                <div class="day-tasks-list" style="opacity: 0;">
+                    ${filteredTasks.length === 0 
+                        ? '<div style="text-align: center; padding: 20px; opacity: 0.5; font-size: 13px;">No tasks</div>' 
+                        : filteredTasks.map(task => `
+                            <div class="day-task-item ${task.completed ? 'completed' : ''}">
+                                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" style="accent-color: var(--primary);">
+                                <span>${task.name}</span>
+                                ${task.time ? `<span style="margin-left: auto; opacity: 0.6; font-size: 11px;">${task.time}</span>` : ''}
+                            </div>
+                        `).join('')}
+                </div>
+            `;
             
-            // Update stats
-            const statValues = cards[i].querySelectorAll('.day-stat-value');
-            if (statValues[0]) statValues[0].textContent = totalTasks;
-            if (statValues[1]) statValues[1].textContent = completedTasks;
+            container.appendChild(card);
             
-            // Update task list checkboxes
-            const taskItems = cards[i].querySelectorAll('.day-task-item');
-            filteredTasks.forEach((task, idx) => {
-                if (taskItems[idx]) {
-                    const checkbox = taskItems[idx].querySelector('input[type="checkbox"]');
-                    if (checkbox) {
-                        checkbox.checked = task.completed;
-                    }
-                    if (task.completed) {
-                        taskItems[idx].classList.add('completed');
-                    } else {
-                        taskItems[idx].classList.remove('completed');
-                    }
+            // Trigger animations after DOM update
+            setTimeout(() => {
+                const circle = card.querySelector('.day-progress-fill');
+                const progressText = card.querySelector('.day-progress-text');
+                const stats = card.querySelector('.day-stats');
+                const tasksList = card.querySelector('.day-tasks-list');
+                
+                if (circle) {
+                    circle.style.strokeDashoffset = targetOffset;
                 }
+                if (progressText) {
+                    progressText.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    progressText.style.opacity = '1';
+                }
+                if (stats) {
+                    stats.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    stats.style.opacity = '1';
+                }
+                if (tasksList) {
+                    tasksList.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                    tasksList.style.opacity = '1';
+                }
+            }, i * 100 + 50);
+        }
+    }
+
+    // =====================================================================
+    // RENDERING & UI
+    // =====================================================================
+    function renderTasks() {
+        const prev = document.getElementById('prev');
+        const now  = document.getElementById('now');
+        const up   = document.getElementById('up');
+        prev.innerHTML = '';
+        now.innerHTML  = '';
+        up.innerHTML   = '';
+
+        const todayStr = getTodayStr();
+        const sunStr = (() => {
+            const d = new Date();
+            d.setDate(d.getDate() - d.getDay());
+            return d.toLocaleDateString('en-CA');
+        })();
+        const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+        let stats = [0,0,0,0,0,0,0], doneStats = [0,0,0,0,0,0,0];
+        
+        let filtered = [...allTasks];
+        if (currentCategory !== 'all') filtered = filtered.filter(t => t.cat === currentCategory);
+
+        // Calculate stats from ALL tasks for accurate bar graph
+        let allTasksForStats = allTasks;
+        if (currentCategory !== 'all') allTasksForStats = allTasksForStats.filter(t => t.cat === currentCategory);
+
+        allTasksForStats.forEach(t => {
+            const tDate = new Date(t.date + 'T00:00:00');
+            const diff  = Math.round((tDate - new Date(sunStr + 'T00:00:00')) / 86400000);
+            if (diff >= 0 && diff < 7) { 
+                stats[diff]++; 
+                if (t.completed) doneStats[diff]++;
+            }
+        });
+
+        // Group tasks by category
+        const overdueByDate = {};  // { "2025-02-10": [tasks...] }
+        const todayTasks = [];
+        const upcomingByDate = {}; // { "2025-02-16": [tasks...] }
+        
+        filtered.forEach(t => {
+            // Skip completed tasks
+            if (t.completed) return;
+            
+            // Check if today's task with time is overdue
+            const isOverdue = () => {
+                if (t.date < todayStr) return true; // Past date
+                if (t.date === todayStr && t.time) {
+                    const now = new Date();
+                    const [hours, minutes] = t.time.split(':').map(Number);
+                    const taskDateTime = new Date();
+                    taskDateTime.setHours(hours, minutes, 0, 0);
+                    return now > taskDateTime;
+                }
+                return false;
+            };
+            
+            if (t.date === todayStr) {
+                if (isOverdue()) {
+                    // Today's overdue task
+                    if (!overdueByDate[t.date]) overdueByDate[t.date] = [];
+                    overdueByDate[t.date].push(t);
+                } else {
+                    todayTasks.push(t);
+                }
+            } else if (t.date < todayStr) {
+                // Past overdue tasks
+                if (!overdueByDate[t.date]) overdueByDate[t.date] = [];
+                overdueByDate[t.date].push(t);
+            } else {
+                // Future tasks
+                if (!upcomingByDate[t.date]) upcomingByDate[t.date] = [];
+                upcomingByDate[t.date].push(t);
+            }
+        });
+
+        // Render OVERDUE with date subheadings (oldest first)
+        const overdueDates = Object.keys(overdueByDate).sort();
+        overdueDates.forEach(date => {
+            // Create date subheading
+            const dateHeader = document.createElement('div');
+            dateHeader.style.cssText = 'font-weight: 600; font-size: 11px; opacity: 0.7; margin: 12px 0 6px 0; padding-left: 4px;';
+            dateHeader.textContent = formatDate(date);
+            prev.appendChild(dateHeader);
+            
+            // Sort tasks by time (earliest first), tasks without time come last
+            const sortedTasks = overdueByDate[date].sort((a, b) => {
+                if (!a.time && !b.time) return 0;
+                if (!a.time) return 1;
+                if (!b.time) return -1;
+                return a.time.localeCompare(b.time);
             });
-        }
+            
+            // Render tasks for this date
+            sortedTasks.forEach(t => {
+                const li = createTaskElement(t);
+                prev.appendChild(li);
+            });
+        });
+
+        // Sort today's tasks by time (earliest first)
+        const sortedTodayTasks = todayTasks.sort((a, b) => {
+            if (!a.time && !b.time) return 0;
+            if (!a.time) return 1;
+            if (!b.time) return -1;
+            return a.time.localeCompare(b.time);
+        });
+
+        // Render TODAY (no date header needed)
+        sortedTodayTasks.forEach(t => {
+            const li = createTaskElement(t);
+            now.appendChild(li);
+        });
+
+        // Render UPCOMING with date subheadings (soonest first)
+        const upcomingDates = Object.keys(upcomingByDate).sort();
+        upcomingDates.forEach(date => {
+            // Create date subheading
+            const dateHeader = document.createElement('div');
+            dateHeader.style.cssText = 'font-weight: 600; font-size: 11px; opacity: 0.7; margin: 12px 0 6px 0; padding-left: 4px;';
+            dateHeader.textContent = formatDate(date);
+            up.appendChild(dateHeader);
+            
+            // Sort tasks by time (earliest first), tasks without time come last
+            const sortedTasks = upcomingByDate[date].sort((a, b) => {
+                if (!a.time && !b.time) return 0;
+                if (!a.time) return 1;
+                if (!b.time) return -1;
+                return a.time.localeCompare(b.time);
+            });
+            
+            // Render tasks for this date
+            sortedTasks.forEach(t => {
+                const li = createTaskElement(t);
+                up.appendChild(li);
+            });
+        });
+
+        const max = Math.max(...stats, 8);
+        document.getElementById('y-max').innerText = max;
+
+        days.forEach((_, i) => {
+            const pBar = document.getElementById(`planned-${i}`);
+            const dBar = document.getElementById(`done-${i}`);
+            if (pBar) pBar.style.height = `${(stats[i]/max)*100}%`;
+            if (dBar) dBar.style.height = `${(doneStats[i]/max)*100}%`;
+        });
     }
-}
 
-function renderWeeklyDashboard() {
-    const container = document.getElementById('weeklyDashboard');
-    container.innerHTML = '';
-    
-    const today = new Date();
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
-    
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    
-    for (let i = 0; i < 7; i++) {
-        const currentDay = new Date(startOfWeek);
-        currentDay.setDate(startOfWeek.getDate() + i);
-        const dateStr = currentDay.toLocaleDateString('en-CA');
-        
-        // Get tasks for this day
-        const dayTasks = allTasks.filter(t => t.date === dateStr);
-        const totalTasks = dayTasks.length;
-        const completedTasks = dayTasks.filter(t => t.completed).length;
-        const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-        
-        // Filter by category if needed
-        const filteredTasks = currentCategory === 'all' 
-            ? dayTasks 
-            : dayTasks.filter(t => t.cat === currentCategory);
-        
-        const card = document.createElement('div');
-        card.className = 'day-card';
-        
-        // Format date as DD/MM/YYYY
-        const day = String(currentDay.getDate()).padStart(2, '0');
-        const month = String(currentDay.getMonth() + 1).padStart(2, '0');
-        const year = currentDay.getFullYear();
-        const formattedDate = `${day}/${month}/${year}`;
-        
-        const targetOffset = 326.7 - (percentage / 100 * 326.7);
-        
-        card.innerHTML = `
-            <div class="day-card-header">
-                <div>
-                    <div class="day-name">${days[i]}</div>
-                    <div class="day-date">${formattedDate}</div>
-                </div>
-            </div>
-            
-            <div class="day-progress">
-                <svg width="120" height="120">
-                    <circle class="day-progress-bg" cx="60" cy="60" r="52" stroke-width="12" fill="transparent"></circle>
-                    <circle class="day-progress-fill" cx="60" cy="60" r="52" stroke-width="12" fill="transparent" 
-                            stroke-dasharray="326.7" stroke-dashoffset="326.7" stroke-linecap="round" data-target="${targetOffset}"></circle>
-                </svg>
-                <div class="day-progress-text" style="opacity: 0;">${percentage}%</div>
-            </div>
-            
-            <div class="day-stats" style="opacity: 0;">
-                <div class="day-stat">
-                    <div class="day-stat-value">${totalTasks}</div>
-                    <div class="day-stat-label">Tasks</div>
-                </div>
-                <div class="day-stat">
-                    <div class="day-stat-value">${completedTasks}</div>
-                    <div class="day-stat-label">Done</div>
-                </div>
-            </div>
-            
-            <div class="day-tasks-list" style="opacity: 0;">
-                ${filteredTasks.length === 0 
-                    ? '<div style="text-align: center; padding: 20px; opacity: 0.5; font-size: 13px;">No tasks</div>' 
-                    : filteredTasks.map(task => `
-                        <div class="day-task-item ${task.completed ? 'completed' : ''}">
-                            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" style="accent-color: var(--primary);">
-                            <span>${task.name}</span>
-                            ${task.time ? `<span style="margin-left: auto; opacity: 0.6; font-size: 11px;">${task.time}</span>` : ''}
-                        </div>
-                    `).join('')}
-            </div>
-        `;
-        
-        container.appendChild(card);
-        
-        // Trigger animations after DOM update
-        setTimeout(() => {
-            const circle = card.querySelector('.day-progress-fill');
-            const progressText = card.querySelector('.day-progress-text');
-            const stats = card.querySelector('.day-stats');
-            const tasksList = card.querySelector('.day-tasks-list');
-            
-            if (circle) {
-                circle.style.strokeDashoffset = targetOffset;
-            }
-            if (progressText) {
-                progressText.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                progressText.style.opacity = '1';
-            }
-            if (stats) {
-                stats.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                stats.style.opacity = '1';
-            }
-            if (tasksList) {
-                tasksList.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-                tasksList.style.opacity = '1';
-            }
-        }, i * 100 + 50);
-    }
-}
-
-// =====================================================================
-// RENDERING & UI
-// =====================================================================
-function renderTasks() {
-    const prev = document.getElementById('prev');
-    const now  = document.getElementById('now');
-    const up   = document.getElementById('up');
-    prev.innerHTML = '';
-    now.innerHTML  = '';
-    up.innerHTML   = '';
-
-    const todayStr = getTodayStr();
-    const sunStr = (() => {
-        const d = new Date();
-        d.setDate(d.getDate() - d.getDay());
-        return d.toLocaleDateString('en-CA');
-    })();
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
-    let stats = [0,0,0,0,0,0,0], doneStats = [0,0,0,0,0,0,0];
-    
-    let filtered = [...allTasks];
-    // In "today" view, show today's tasks + overdue tasks (not future tasks)
-    if (currentView === 'today') filtered = filtered.filter(t => t.date <= todayStr);
-    if (currentCategory !== 'all') filtered = filtered.filter(t => t.cat === currentCategory);
-
-    // Calculate stats from ALL tasks (not just filtered) for accurate bar graph and completion meter
-    let allTasksForStats = allTasks;
-    if (currentCategory !== 'all') allTasksForStats = allTasksForStats.filter(t => t.cat === currentCategory);
-
-    allTasksForStats.forEach(t => {
-        const tDate = new Date(t.date + 'T00:00:00');
-        const diff  = Math.round((tDate - new Date(sunStr + 'T00:00:00')) / 86400000);
-        if (diff >= 0 && diff < 7) { 
-            stats[diff]++; 
-            if (t.completed) doneStats[diff]++;
-        }
-    });
-
-    // Render only the filtered tasks in the columns
-    filtered.forEach(t => {
+    // Helper function to create task element
+    function createTaskElement(t) {
         const li = document.createElement('li');
         li.style.borderLeftColor = `var(--cat-${t.cat})`;
         
-        // Add time display if available
         const timeDisplay = t.time ? ` <span style="font-size: 11px; opacity: 0.7;">(${t.time})</span>` : '';
         
         li.innerHTML = `<div><input type="checkbox" ${t.completed?'checked':''} onchange="toggleTask('${t.id}')">
             <span style="${t.completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${t.name}${timeDisplay}</span></div>
             <div><button class="btn-icon" onclick="editTask('${t.id}')" title="Edit">✏️</button><button class="btn-icon" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button></div>`;
-
-        // Determine where to place the task based on date and time
-        const isOverdue = () => {
-            if (t.date < todayStr) return true; // Past date
-            if (t.date === todayStr && t.time) {
-                // Today with time - check if time has passed
-                const now = new Date();
-                const [hours, minutes] = t.time.split(':').map(Number);
-                const taskDateTime = new Date();
-                taskDateTime.setHours(hours, minutes, 0, 0);
-                return now > taskDateTime;
-            }
-            return false;
-        };
         
-        // For TODAY'S tasks, check if time has passed
-        if (t.date === todayStr) {
-            if (isOverdue() && !t.completed) {
-                prev.appendChild(li); // Overdue (time passed)
-            } else {
-                now.appendChild(li); // Current (still time or no specific time)
-            }
-        } 
-        // For OVERDUE column (prev), show past incomplete tasks
-        else if (t.date < todayStr && !t.completed) {
-            prev.appendChild(li);
-        } 
-        // For INCOMING column (up), show future tasks
-        else if (t.date > todayStr && !t.completed) {
-            up.appendChild(li);
-        }
-        // Completed tasks from the past are hidden (already done)
-    });
-
-    const max = Math.max(...stats, 8);
-    document.getElementById('y-max').innerText = max;
-
-    days.forEach((_, i) => {
-        const pBar = document.getElementById(`planned-${i}`);
-        const dBar = document.getElementById(`done-${i}`);
-        if (pBar) pBar.style.height = `${(stats[i]/max)*100}%`;
-        if (dBar) dBar.style.height = `${(doneStats[i]/max)*100}%`;
-    });
-
-    // Calculate completion percentage from ALL tasks (not just filtered) for accurate completion meter
-    const total = allTasksForStats.length, done = allTasksForStats.filter(t => t.completed).length;
-    const pct   = total ? (done/total)*100 : 0;
-    document.getElementById('progressCircle').style.strokeDashoffset = 264 - (pct/100*264);
-    document.getElementById('pctLabel').innerText = Math.round(pct) + "%";
-}
-
-// =====================================================================
-// COMPLETED HISTORY MODAL
-// =====================================================================
-window.showCompletedHistory = function() {
-    const modal = document.getElementById('completedModal');
-    const content = document.getElementById('completedHistoryContent');
-    
-    // Get all completed tasks
-    const completedTasks = allTasks.filter(t => t.completed && t.completedAt);
-    
-    if (completedTasks.length === 0) {
-        content.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px;">No completed tasks yet.</p>';
-        modal.classList.add('show');
-        return;
+        return li;
     }
-    
-    // Group by completion date
-    const groupedByDate = {};
-    completedTasks.forEach(task => {
-        const completedDate = new Date(task.completedAt).toLocaleDateString('en-CA');
-        if (!groupedByDate[completedDate]) {
-            groupedByDate[completedDate] = [];
+
+    // Helper function to format date (e.g., "Mon, Feb 10")
+    function formatDate(dateStr) {
+        const date = new Date(dateStr + 'T00:00:00');
+        const today = new Date(getTodayStr() + 'T00:00:00');
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        // Check if it's today or tomorrow
+        if (dateStr === getTodayStr()) return 'Today';
+        if (dateStr === tomorrow.toLocaleDateString('en-CA')) return 'Tomorrow';
+        
+        // Format as "Mon, Feb 10"
+        const options = { weekday: 'short', month: 'short', day: 'numeric' };
+        return date.toLocaleDateString('en-US', options);
+    }
+
+    // =====================================================================
+    // COMPLETED HISTORY MODAL
+    // =====================================================================
+    window.showCompletedHistory = function() {
+        const modal = document.getElementById('completedModal');
+        const content = document.getElementById('completedHistoryContent');
+        
+        // Get all completed tasks
+        const completedTasks = allTasks.filter(t => t.completed && t.completedAt);
+        
+        if (completedTasks.length === 0) {
+            content.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px;">No completed tasks yet.</p>';
+            modal.classList.add('show');
+            return;
         }
-        groupedByDate[completedDate].push(task);
-    });
-    
-    // Sort dates in descending order
-    const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
-    
-    // Build HTML
-    let html = '';
-    sortedDates.forEach(date => {
-        const dateObj = new Date(date + 'T00:00:00');
-        const formattedDate = dateObj.toLocaleDateString('en-US', { 
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
+        
+        // Group by completion date
+        const groupedByDate = {};
+        completedTasks.forEach(task => {
+            const completedDate = new Date(task.completedAt).toLocaleDateString('en-CA');
+            if (!groupedByDate[completedDate]) {
+                groupedByDate[completedDate] = [];
+            }
+            groupedByDate[completedDate].push(task);
         });
         
-        const isToday = date === getTodayStr();
-        const dateLabel = isToday ? `Today - ${formattedDate}` : formattedDate;
+        // Sort dates in descending order
+        const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
         
-        html += `<div class="completed-group">`;
-        html += `<div class="completed-date-header">${dateLabel}</div>`;
-        html += `<ul style="list-style: none; padding: 0;">`;
-        
-        groupedByDate[date].forEach(task => {
-            const completedTime = new Date(task.completedAt).toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
+        // Build HTML
+        let html = '';
+        sortedDates.forEach(date => {
+            const dateObj = new Date(date + 'T00:00:00');
+            const formattedDate = dateObj.toLocaleDateString('en-US', { 
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
             });
             
-            html += `<li style="background: var(--card-bg); color: var(--text); padding: 12px 15px; 
-                     border-radius: 10px; margin-bottom: 8px; display: flex; 
-                     justify-content: space-between; align-items: center; 
-                     border-left: 4px solid var(--cat-${task.cat});">
-                <div>
-                    <span style="text-decoration: line-through; opacity: 0.7;">${task.name}</span>
-                    <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
-                        Completed at ${completedTime}
+            const isToday = date === getTodayStr();
+            const dateLabel = isToday ? `Today - ${formattedDate}` : formattedDate;
+            
+            html += `<div class="completed-group">`;
+            html += `<div class="completed-date-header">${dateLabel}</div>`;
+            html += `<ul style="list-style: none; padding: 0;">`;
+            
+            groupedByDate[date].forEach(task => {
+                const completedTime = new Date(task.completedAt).toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                
+                html += `<li style="background: var(--card-bg); color: var(--text); padding: 12px 15px; 
+                        border-radius: 10px; margin-bottom: 8px; display: flex; 
+                        justify-content: space-between; align-items: center; 
+                        border-left: 4px solid var(--cat-${task.cat});">
+                    <div>
+                        <span style="text-decoration: line-through; opacity: 0.7;">${task.name}</span>
+                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+                            Completed at ${completedTime}
+                        </div>
                     </div>
-                </div>
-                <button class="btn-icon" onclick="editTask('${task.id}')" title="Edit">✏️</button><button class="btn-icon" onclick="deleteTask('${task.id}')" title="Delete">🗑️</button>
-            </li>`;
+                    <button class="btn-icon" onclick="editTask('${task.id}')" title="Edit">✏️</button><button class="btn-icon" onclick="deleteTask('${task.id}')" title="Delete">🗑️</button>
+                </li>`;
+            });
+            
+            html += `</ul></div>`;
         });
         
-        html += `</ul></div>`;
-    });
-    
-    content.innerHTML = html;
-    modal.classList.add('show');
-};
+        content.innerHTML = html;
+        modal.classList.add('show');
+    };
 
-window.closeCompletedModal = function() {
-    document.getElementById('completedModal').classList.remove('show');
-};
+    window.closeCompletedModal = function() {
+        document.getElementById('completedModal').classList.remove('show');
+    };
 
-window.closeModalOnOverlay = function(event) {
-    if (event.target.id === 'completedModal') {
-        closeCompletedModal();
-    }
-};
-</script>
-</body>
-</html>
+    window.closeModalOnOverlay = function(event) {
+        if (event.target.id === 'completedModal') {
+            closeCompletedModal();
+        }
+    };
+    </script>
+    </body>
+    </html>
