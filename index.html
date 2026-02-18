@@ -836,6 +836,7 @@ let currentEditingTaskId = null;
 let isLoginMode = true;
 let missedNotifications = []; // Track missed notifications
 let lastOnlineCheck = Date.now(); // Last time we checked for missed notifications
+let weekOffset = 0; // Track which week to display (0 = current, -1 = last week, 1 = next week)
 
 // =====================================================================
 // NOTIFICATION SYSTEM
@@ -1567,6 +1568,9 @@ window.editTask = function(id) {
     document.getElementById('editTaskTime').value = task.time || '';
     document.getElementById('editTaskCat').value = task.cat;
     
+    // Set minimum date to today (prevent editing to past dates)
+    document.getElementById('editTaskDate').min = getTodayStr();
+    
     document.getElementById('editModal').classList.add('show');
 };
 
@@ -1610,6 +1614,12 @@ window.closeModalOnEditOverlay = function(event) {
 // =====================================================================
 // VIEW & FILTER
 // =====================================================================
+// Change week for week view navigation
+window.changeWeek = function(direction) {
+    weekOffset += direction;
+    renderWeeklyDashboard();
+};
+
 window.switchView = function(view) {
     currentView = view;
     document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
@@ -1623,6 +1633,7 @@ window.switchView = function(view) {
     
     if (view === 'week') {
         // Show weekly visual dashboard only
+        weekOffset = 0; // Reset to current week when entering week view
         weeklyDashboard.style.display = 'grid';
         kanbanBoard.style.display = 'none';
         analyticsContainer.style.display = 'none';
@@ -1722,9 +1733,35 @@ function renderWeeklyDashboard() {
     const container = document.getElementById('weeklyDashboard');
     container.innerHTML = '';
     
+    // Add navigation header
+    const navHeader = document.createElement('div');
+    navHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: var(--col-bg); border-radius: 12px;';
+    
     const today = new Date();
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay()); // Sunday
+    startOfWeek.setDate(today.getDate() - today.getDay() + (weekOffset * 7)); // Apply week offset
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    
+    const weekLabel = weekOffset === 0 ? 'This Week' : 
+                      weekOffset === -1 ? 'Last Week' :
+                      weekOffset === 1 ? 'Next Week' :
+                      weekOffset < 0 ? `${Math.abs(weekOffset)} Weeks Ago` :
+                      `${weekOffset} Weeks Ahead`;
+    
+    const dateRange = `${startOfWeek.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})} - ${endOfWeek.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}`;
+    
+    navHeader.innerHTML = `
+        <button onclick="changeWeek(-1)" style="background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold;">◀</button>
+        <div style="text-align: center;">
+            <div style="font-size: 18px; font-weight: 600; color: var(--text);">${weekLabel}</div>
+            <div style="font-size: 13px; opacity: 0.7; color: var(--text); margin-top: 4px;">${dateRange}</div>
+        </div>
+        <button onclick="changeWeek(1)" style="background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold;">▶</button>
+    `;
+    
+    container.appendChild(navHeader);
     
     const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     
