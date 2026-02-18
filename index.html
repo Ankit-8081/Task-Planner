@@ -97,34 +97,34 @@
         
         .analytics-container { background: var(--card-bg); border-radius: 12px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
         .analytics-header { background: var(--primary); color: white; padding: 10px 20px; font-weight: 600; text-align: center; font-size: 18px; transition: background 0.3s; }
-        .analytics-content { display: flex; padding: 25px; align-items: flex-end; gap: 15px; }
+        .analytics-content { display: flex; padding: 25px; align-items: flex-end; gap: 10px; }
         
         .y-axis { 
             display: flex; 
             flex-direction: column; 
             justify-content: space-between; 
-            height: 150px; 
-            padding-bottom: 25px; 
+            height: 175px;
             color: var(--text); 
             opacity: 0.7; 
             font-size: 11px; 
-            min-width: 20px;
-            text-align: left;
+            width: 20px;
+            text-align: right;
+            padding-right: 5px;
         }
-        .chart-area { flex-grow: 1; display: flex; justify-content: space-between; align-items: flex-end; height: 150px; border-bottom: 2px solid var(--border); padding: 0 10px; position: relative; }
+        .chart-area { flex-grow: 1; display: flex; justify-content: space-between; align-items: flex-end; height: 150px; border-bottom: 2px solid var(--border); padding: 0 10px; position: relative; margin-bottom: 25px; }
         
         @media (max-width: 768px) {
-            .analytics-content { padding: 15px; gap: 8px; }
+            .analytics-content { padding: 15px; gap: 5px; }
             .y-axis { 
-                min-width: 15px;
+                width: 18px;
                 font-size: 9px;
-                height: 120px;
-                padding-bottom: 20px;
+                height: 145px;
+                padding-right: 3px;
             }
-            .chart-area { height: 120px; padding: 0 5px; }
-            .bar-track { height: 120px; width: 22px; }
-            .bar-wrapper { max-width: 35px; }
-            .day-label { font-size: 10px; }
+            .chart-area { height: 120px; padding: 0 3px; margin-bottom: 20px; }
+            .bar-track { height: 120px; width: 20px; }
+            .bar-wrapper { max-width: 32px; }
+            .day-label { font-size: 9px; }
         }
         
         .bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; z-index: 1; max-width: 50px; }
