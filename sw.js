@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mission-control-v0.2.0';
+const CACHE_NAME = 'mission-control-v0.2.2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -191,9 +191,10 @@ self.addEventListener('notificationclick', (event) => {
               return client.focus();
             }
           }
-          // If no window is open, open a new one
+          // If no window is open, open a new one with correct URL
           if (clients.openWindow) {
-            return clients.openWindow('/');
+            // Use the full scope path for GitHub Pages
+            return clients.openWindow(self.registration.scope);
           }
         })
         .then((client) => {
