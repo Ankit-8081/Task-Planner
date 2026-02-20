@@ -123,19 +123,20 @@
         }
         
         @media (max-width: 768px) {
-            .analytics-content { padding: 15px; gap: 2px; }
-            .y-axis { 
-                width: 18px;
-                font-size: 9px;
-                height: 140px;
-                padding-bottom: 25px;
-                text-align: left;
-                padding-left: 2px;
-            }
-            .chart-area { 
-                height: 140px; 
-                padding: 0 2px; 
-            }
+    .y-axis { 
+        width: 18px;
+        font-size: 9px;
+        height: 140px;
+        padding-bottom: 25px;
+        text-align: right;  /* Align labels to the right edge of the y-axis container, so they're snug against the bars */
+        padding-left: 0;
+        padding-right: 2px;  /* Slight padding on right to avoid touching the bars */
+        order: -1;  /* Move y-axis to the start of the flex container (left side) */
+    }
+    .analytics-content {
+        gap: 2px;  /* Keep your existing small gap, but ensure no overflow */
+    }
+}
             .bar-track { height: 140px; width: 22px; }
             .bar-wrapper { max-width: 35px; }
             .day-label { font-size: 9px; margin-top: 5px; }
