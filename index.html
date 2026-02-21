@@ -123,23 +123,148 @@
         }
         
         @media (max-width: 768px) {
-    .y-axis { 
-        width: 18px;
-        font-size: 9px;
-        height: 140px;
-        padding-bottom: 25px;
-        text-align: right;  /* Align labels to the right edge of the y-axis container, so they're snug against the bars */
-        padding-left: 0;
-        padding-right: 2px;  /* Slight padding on right to avoid touching the bars */
-        order: -1;  /* Move y-axis to the start of the flex container (left side) */
-    }
-    .analytics-content {
-        gap: 2px;  /* Keep your existing small gap, but ensure no overflow */
-    }
-}
+            .analytics-content { padding: 15px; gap: 2px; }
+            .y-axis { 
+                width: 18px;
+                font-size: 9px;
+                height: 140px;
+                padding-bottom: 25px;
+                text-align: left;
+                padding-left: 2px;
+            }
+            .chart-area { 
+                height: 140px; 
+                padding: 0 2px; 
+            }
             .bar-track { height: 140px; width: 22px; }
             .bar-wrapper { max-width: 35px; }
             .day-label { font-size: 9px; margin-top: 5px; }
+        }
+        
+        /* Completion Trends Graph */
+        .trends-container { 
+            background: var(--card-bg); 
+            border-radius: 12px; 
+            margin-bottom: 25px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05); 
+            overflow: hidden; 
+        }
+        .trends-header { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            color: white; 
+            padding: 10px 20px; 
+            font-weight: 600; 
+            text-align: center; 
+            font-size: 18px; 
+        }
+        .trends-content { 
+            padding: 25px; 
+        }
+        .trends-canvas-wrapper { 
+            position: relative; 
+            height: 220px; 
+            margin-bottom: 20px;
+            width: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+        
+        /* Hide scrollbar for Chrome, Safari and Opera */
+        .trends-canvas-wrapper::-webkit-scrollbar {
+            display: none;
+        }
+        
+        /* Custom scroll indicator */
+        .trends-scroll-indicator {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--col-bg);
+            display: none;
+        }
+        
+        .trends-scroll-thumb {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 3px;
+            transition: background 0.3s;
+        }
+        
+        #trendsCanvas {
+            display: block;
+        }
+        
+        /* Scroll hint for mobile */
+        @media (max-width: 768px) {
+            .trends-scroll-indicator {
+                display: block;
+            }
+            
+            .trends-canvas-wrapper::after {
+                content: '← Swipe to see more →';
+                position: absolute;
+                bottom: 8px;
+                right: 10px;
+                font-size: 10px;
+                color: var(--text);
+                opacity: 0.5;
+                pointer-events: none;
+                animation: fadeInOut 3s ease-in-out infinite;
+            }
+            
+            @keyframes fadeInOut {
+                0%, 100% { opacity: 0.3; }
+                50% { opacity: 0.7; }
+            }
+        }
+        
+        .trends-stats { 
+            display: flex; 
+            justify-content: space-around; 
+            flex-wrap: wrap; 
+            gap: 15px; 
+        }
+        .trend-stat { 
+            text-align: center; 
+            padding: 12px; 
+            background: var(--col-bg); 
+            border-radius: 10px; 
+            flex: 1; 
+            min-width: 100px; 
+        }
+        .trend-stat-value { 
+            font-size: 24px; 
+            font-weight: 700; 
+            color: var(--primary); 
+            margin-bottom: 5px; 
+        }
+        .trend-stat-label { 
+            font-size: 11px; 
+            opacity: 0.7; 
+            color: var(--text); 
+        }
+        .trend-change { 
+            font-size: 12px; 
+            font-weight: 600; 
+            margin-top: 5px; 
+        }
+        .trend-up { color: #27ae60; }
+        .trend-down { color: #e74c3c; }
+        
+        @media (max-width: 768px) {
+            .trends-canvas-wrapper { 
+                height: 200px;
+            }
+            .trends-content {
+                padding: 15px 10px;
+            }
+            .trend-stat { min-width: 80px; }
+            .trend-stat-value { font-size: 20px; }
         }
         
         .bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; z-index: 1; max-width: 50px; }
@@ -754,6 +879,34 @@
                         <circle id="progressCircle" cx="50" cy="50" r="42" stroke-width="10" fill="transparent" stroke-dasharray="264" stroke-dashoffset="264"></circle>
                     </svg>
                     <div id="pctLabel" class="pct-label">0%</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Trends Graph -->
+        <div class="trends-container">
+            <div class="trends-header">📈 Monthly Completion Trends</div>
+            <div class="trends-content">
+                <div class="trends-canvas-wrapper" id="trendsWrapper">
+                    <canvas id="trendsCanvas"></canvas>
+                    <div class="trends-scroll-indicator">
+                        <div class="trends-scroll-thumb" id="trendsScrollThumb"></div>
+                    </div>
+                </div>
+                <div class="trends-stats">
+                    <div class="trend-stat">
+                        <div class="trend-stat-value" id="avgCompletion">0%</div>
+                        <div class="trend-stat-label">Month Average</div>
+                        <div class="trend-change" id="avgChange"></div>
+                    </div>
+                    <div class="trend-stat">
+                        <div class="trend-stat-value" id="bestWeek">0%</div>
+                        <div class="trend-stat-label">Best Day</div>
+                    </div>
+                    <div class="trend-stat">
+                        <div class="trend-stat-value" id="currentStreak">0</div>
+                        <div class="trend-stat-label">Perfect Days</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1405,6 +1558,27 @@ document.getElementById('install-btn').addEventListener('click', async () => {
 });
 
 // =====================================================================
+// ADD TASK ON ENTER KEY
+// =====================================================================
+document.addEventListener('DOMContentLoaded', () => {
+    const taskNameInput = document.getElementById('taskName');
+    const taskDateInput = document.getElementById('taskDate');
+    const taskTimeInput = document.getElementById('taskTime');
+    
+    // Add task when pressing Enter in any input field
+    const addTaskOnEnter = (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            addTask();
+        }
+    };
+    
+    if (taskNameInput) taskNameInput.addEventListener('keypress', addTaskOnEnter);
+    if (taskDateInput) taskDateInput.addEventListener('keypress', addTaskOnEnter);
+    if (taskTimeInput) taskTimeInput.addEventListener('keypress', addTaskOnEnter);
+});
+
+// =====================================================================
 // SPLASH & THEME
 // =====================================================================
 setTimeout(() => {
@@ -1521,6 +1695,7 @@ function loadTasks() {
             } else {
                 renderTasks();
             }
+            renderTrendsGraph(); // Update trends graph
         } else {
             // Just update existing elements (for toggles)
             if (currentView === 'week') {
@@ -1528,6 +1703,7 @@ function loadTasks() {
             } else {
                 renderTasks();
             }
+            renderTrendsGraph(); // Update trends graph
         }
         
         console.log(`[Tasks] Loaded ${allTasks.length} tasks, scheduling notifications...`);
@@ -1672,6 +1848,7 @@ window.switchView = function(view) {
     const weeklyDashboard = document.getElementById('weeklyDashboard');
     const kanbanBoard = document.getElementById('kanbanBoard');
     const analyticsContainer = document.querySelector('.analytics-container');
+    const trendsContainer = document.querySelector('.trends-container');
     const categoryBar = document.querySelector('.category-bar');
     const inputBar = document.querySelector('.input-bar');
     
@@ -1681,6 +1858,7 @@ window.switchView = function(view) {
         weeklyDashboard.style.display = 'grid';
         kanbanBoard.style.display = 'none';
         analyticsContainer.style.display = 'none';
+        trendsContainer.style.display = 'none';
         categoryBar.style.display = 'none';
         inputBar.style.display = 'none';
         renderWeeklyDashboard();
@@ -1689,9 +1867,11 @@ window.switchView = function(view) {
         weeklyDashboard.style.display = 'none';
         kanbanBoard.style.display = 'grid';
         analyticsContainer.style.display = 'block';
+        trendsContainer.style.display = 'block';
         categoryBar.style.display = 'flex';
         inputBar.style.display = 'grid';
         renderTasks();
+        renderTrendsGraph();
     }
 };
 
@@ -1706,6 +1886,7 @@ window.filterCategory = function(cat) {
     } else {
         renderTasks();
     }
+    renderTrendsGraph();
 };
 
 // =====================================================================
@@ -2102,6 +2283,236 @@ function formatDate(dateStr) {
     const options = { weekday: 'short', month: 'short', day: 'numeric' };
     return date.toLocaleDateString('en-US', options);
 }
+
+// =====================================================================
+// COMPLETION TRENDS GRAPH
+// =====================================================================
+function renderTrendsGraph() {
+    const canvas = document.getElementById('trendsCanvas');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    const container = canvas.parentElement;
+    
+    // Set canvas size - wider on mobile for scrolling
+    const isMobile = window.innerWidth <= 768;
+    canvas.width = isMobile ? Math.max(800, container.clientWidth) : container.clientWidth;
+    canvas.height = container.clientHeight;
+    
+    // Calculate current month's daily completion rates (only up to today)
+    const days = [];
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const todayDate = today.getDate();
+    
+    // Only show days from 1st to today
+    for (let i = 1; i <= todayDate; i++) {
+        const day = new Date(year, month, i);
+        const dayStr = day.toLocaleDateString('en-CA');
+        
+        const dayTasks = allTasks.filter(t => t.date === dayStr);
+        const completed = dayTasks.filter(t => t.completed).length;
+        const total = dayTasks.length;
+        const percentage = total > 0 ? (completed / total) * 100 : 0;
+        
+        const isToday = i === todayDate;
+        
+        days.push({
+            day: i,
+            percentage: Math.round(percentage),
+            completed,
+            total,
+            date: dayStr,
+            isToday
+        });
+    }
+    
+    // Calculate stats - ONLY from days with tasks
+    const daysWithTasks = days.filter(d => d.total > 0);
+    const avgCompletion = daysWithTasks.length > 0 
+        ? daysWithTasks.reduce((sum, d) => sum + d.percentage, 0) / daysWithTasks.length 
+        : 0;
+    const bestDay = daysWithTasks.length > 0 
+        ? Math.max(...daysWithTasks.map(d => d.percentage))
+        : 0;
+    
+    // Calculate change (yesterday vs today)
+    const yesterdayDay = todayDate - 1;
+    const change = todayDate > 1 
+        ? days[todayDate - 1].percentage - days[yesterdayDay - 1].percentage 
+        : 0;
+    
+    // Calculate streak - consecutive days completing ALL tasks
+    let streak = 0;
+    for (let i = todayDate - 1; i >= 0; i--) {
+        if (days[i].total > 0 && days[i].percentage === 100) {
+            streak++;
+        } else if (days[i].total > 0) {
+            break;
+        }
+    }
+    
+    // Update stats display
+    document.getElementById('avgCompletion').textContent = Math.round(avgCompletion) + '%';
+    document.getElementById('bestWeek').textContent = bestDay + '%';
+    document.getElementById('currentStreak').textContent = streak;
+    
+    const avgChange = document.getElementById('avgChange');
+    if (change > 0) {
+        avgChange.textContent = `↑ ${Math.round(change)}%`;
+        avgChange.className = 'trend-change trend-up';
+    } else if (change < 0) {
+        avgChange.textContent = `↓ ${Math.abs(Math.round(change))}%`;
+        avgChange.className = 'trend-change trend-down';
+    } else {
+        avgChange.textContent = '→ No change';
+        avgChange.className = 'trend-change';
+    }
+    
+    // Draw graph
+    const padding = 40;
+    const paddingBottom = 50; // Extra space for all date labels
+    const width = canvas.width - padding * 2;
+    const height = canvas.height - padding - paddingBottom;
+    const maxY = 100;
+    
+    // Draw grid lines
+    ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--border');
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 4; i++) {
+        const y = padding + (height / 4) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding, y);
+        ctx.lineTo(canvas.width - padding, y);
+        ctx.stroke();
+        
+        // Y-axis labels
+        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
+        ctx.font = '11px Poppins';
+        ctx.textAlign = 'right';
+        ctx.fillText(`${100 - i * 25}%`, padding - 10, y + 4);
+    }
+    
+    // Draw line graph with gradient fill
+    const gradient = ctx.createLinearGradient(0, padding, 0, padding + height);
+    gradient.addColorStop(0, 'rgba(102, 126, 234, 0.3)');
+    gradient.addColorStop(1, 'rgba(102, 126, 234, 0.05)');
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    
+    const stepX = width / (days.length - 1);
+    
+    // Create filled area
+    ctx.moveTo(padding, padding + height);
+    days.forEach((day, i) => {
+        const x = padding + stepX * i;
+        const y = padding + height - (day.percentage / maxY) * height;
+        ctx.lineTo(x, y);
+    });
+    ctx.lineTo(padding + stepX * (days.length - 1), padding + height);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Draw line
+    ctx.strokeStyle = '#667eea';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    days.forEach((day, i) => {
+        const x = padding + stepX * i;
+        const y = padding + height - (day.percentage / maxY) * height;
+        
+        if (i === 0) {
+            ctx.moveTo(x, y);
+        } else {
+            ctx.lineTo(x, y);
+        }
+    });
+    ctx.stroke();
+    
+    // Draw points only for days with tasks or today
+    days.forEach((day, i) => {
+        const x = padding + stepX * i;
+        const y = padding + height - (day.percentage / maxY) * height;
+        
+        if (day.total > 0 || day.isToday) {
+            // Point
+            ctx.fillStyle = day.isToday ? '#e74c3c' : '#667eea';
+            ctx.beginPath();
+            ctx.arc(x, y, day.isToday ? 5 : 4, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Inner circle
+            ctx.fillStyle = '#ffffff';
+            ctx.beginPath();
+            ctx.arc(x, y, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    });
+    
+    // Draw ALL date labels (1, 2, 3, 4...)
+    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
+    ctx.font = todayDate <= 15 ? '9px Poppins' : '8px Poppins'; // Smaller font for more days
+    ctx.textAlign = 'center';
+    
+    days.forEach((day, i) => {
+        const x = padding + stepX * i;
+        const y = padding + height + 15;
+        
+        // Highlight today's date
+        if (day.isToday) {
+            ctx.font = 'bold ' + (todayDate <= 15 ? '10px' : '9px') + ' Poppins';
+            ctx.fillStyle = '#e74c3c';
+            ctx.fillText(day.day, x, y);
+            ctx.font = todayDate <= 15 ? '9px Poppins' : '8px Poppins';
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
+        } else {
+            ctx.fillText(day.day, x, y);
+        }
+    });
+    
+    // Draw month name
+    const monthName = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    ctx.font = 'bold 11px Poppins';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text');
+    ctx.fillText(monthName, canvas.width / 2, canvas.height - 5);
+    
+    // Update scroll indicator
+    updateTrendsScrollIndicator();
+}
+
+// =====================================================================
+// TRENDS SCROLL INDICATOR
+// =====================================================================
+function updateTrendsScrollIndicator() {
+    const wrapper = document.getElementById('trendsWrapper');
+    const thumb = document.getElementById('trendsScrollThumb');
+    
+    if (!wrapper || !thumb) return;
+    
+    const scrollWidth = wrapper.scrollWidth;
+    const clientWidth = wrapper.clientWidth;
+    const scrollLeft = wrapper.scrollLeft;
+    
+    // Calculate thumb width and position
+    const thumbWidth = (clientWidth / scrollWidth) * 100;
+    const thumbPosition = (scrollLeft / scrollWidth) * 100;
+    
+    thumb.style.width = thumbWidth + '%';
+    thumb.style.marginLeft = thumbPosition + '%';
+}
+
+// Add scroll listener to update indicator
+document.addEventListener('DOMContentLoaded', () => {
+    const wrapper = document.getElementById('trendsWrapper');
+    if (wrapper) {
+        wrapper.addEventListener('scroll', updateTrendsScrollIndicator);
+        // Initial update
+        setTimeout(updateTrendsScrollIndicator, 500);
+    }
+});
 
 // =====================================================================
 // COMPLETED HISTORY MODAL
