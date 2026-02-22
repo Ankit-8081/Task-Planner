@@ -96,7 +96,75 @@
         #app-dashboard { display: none; padding: 20px; max-width: 1200px; margin: auto; padding-top: 80px; }
         
         .analytics-container { background: var(--card-bg); border-radius: 12px; margin-bottom: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); overflow: hidden; }
-        .analytics-header { background: var(--primary); color: white; padding: 10px 20px; font-weight: 600; text-align: center; font-size: 18px; transition: background 0.3s; }
+        .analytics-header { 
+            background: var(--primary); 
+            color: white; 
+            padding: 10px 20px; 
+            font-weight: 600; 
+            text-align: center; 
+            font-size: 18px; 
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .week-header-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+        }
+        .week-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .week-date-range {
+            font-size: 11px;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        .week-nav-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .week-nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+        .week-nav-btn:active {
+            transform: scale(0.95);
+        }
+        .today-btn {
+            background: rgba(255,255,255,0.25);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 500;
+            margin-left: 10px;
+            transition: all 0.3s;
+            font-family: 'Poppins', sans-serif;
+        }
+        .today-btn:hover {
+            background: rgba(255,255,255,0.4);
+            transform: scale(1.05);
+        }
+        .today-btn:active {
+            transform: scale(0.95);
+        }
         .analytics-content { display: flex; padding: 25px; align-items: flex-end; gap: 30px; }
         
         .y-axis { 
@@ -124,6 +192,25 @@
         
         @media (max-width: 768px) {
             .analytics-content { padding: 15px; gap: 2px; }
+            .analytics-header {
+                padding: 8px 10px;
+            }
+            .week-nav-btn {
+                width: 32px;
+                height: 32px;
+                font-size: 14px;
+            }
+            .week-title {
+                font-size: 16px;
+            }
+            .today-btn {
+                font-size: 10px;
+                padding: 3px 8px;
+                margin-left: 6px;
+            }
+            .week-date-range {
+                font-size: 10px;
+            }
             .y-axis { 
                 width: 18px;
                 font-size: 9px;
@@ -256,6 +343,82 @@
         .trend-up { color: #27ae60; }
         .trend-down { color: #e74c3c; }
         
+        /* Fire Emoji Streak Animation */
+        .fire-emoji {
+            font-size: 28px;
+            display: inline-block;
+            margin-right: 5px;
+            transition: all 0.5s ease;
+            filter: grayscale(100%) brightness(0.5);
+            animation: flicker 2s infinite;
+        }
+        
+        /* Streak levels with increasing glow */
+        .fire-emoji.streak-1 {
+            filter: grayscale(80%) brightness(0.7);
+            text-shadow: 0 0 5px rgba(255, 140, 0, 0.3);
+        }
+        
+        .fire-emoji.streak-2 {
+            filter: grayscale(60%) brightness(0.9);
+            text-shadow: 0 0 8px rgba(255, 140, 0, 0.5);
+        }
+        
+        .fire-emoji.streak-3 {
+            filter: grayscale(40%) brightness(1.1);
+            text-shadow: 0 0 12px rgba(255, 100, 0, 0.6);
+        }
+        
+        .fire-emoji.streak-4 {
+            filter: grayscale(20%) brightness(1.3);
+            text-shadow: 0 0 15px rgba(255, 69, 0, 0.8);
+            animation: flame-glow 1.5s ease-in-out infinite;
+        }
+        
+        .fire-emoji.streak-5 {
+            filter: grayscale(0%) brightness(1.5);
+            text-shadow: 
+                0 0 20px rgba(255, 69, 0, 1),
+                0 0 30px rgba(255, 140, 0, 0.8),
+                0 0 40px rgba(255, 215, 0, 0.6);
+            animation: flame-intense 1s ease-in-out infinite;
+        }
+        
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.95; }
+        }
+        
+        @keyframes flame-glow {
+            0%, 100% { 
+                transform: scale(1);
+                filter: grayscale(20%) brightness(1.3);
+            }
+            50% { 
+                transform: scale(1.05);
+                filter: grayscale(10%) brightness(1.4);
+            }
+        }
+        
+        @keyframes flame-intense {
+            0%, 100% { 
+                transform: scale(1) rotate(0deg);
+                filter: grayscale(0%) brightness(1.5);
+            }
+            25% { 
+                transform: scale(1.08) rotate(-2deg);
+                filter: grayscale(0%) brightness(1.6);
+            }
+            50% { 
+                transform: scale(1.1) rotate(0deg);
+                filter: grayscale(0%) brightness(1.7);
+            }
+            75% { 
+                transform: scale(1.08) rotate(2deg);
+                filter: grayscale(0%) brightness(1.6);
+            }
+        }
+        
         @media (max-width: 768px) {
             .trends-canvas-wrapper { 
                 height: 200px;
@@ -265,6 +428,7 @@
             }
             .trend-stat { min-width: 80px; }
             .trend-stat-value { font-size: 20px; }
+            .fire-emoji { font-size: 22px; }
         }
         
         .bar-wrapper { flex: 1; display: flex; flex-direction: column; align-items: center; z-index: 1; max-width: 50px; }
@@ -857,7 +1021,17 @@
         </div>
 
         <div class="analytics-container">
-            <div class="analytics-header">Weekly Progress</div>
+            <div class="analytics-header">
+                <button class="week-nav-btn" onclick="navigateBarGraphWeek(-1)" title="Previous Week">◀</button>
+                <div class="week-header-content">
+                    <div class="week-title">
+                        Weekly Progress
+                        <button class="today-btn" onclick="goToTodayWeek()" title="Jump to current week">Today</button>
+                    </div>
+                    <div class="week-date-range" id="barGraphWeekRange"></div>
+                </div>
+                <button class="week-nav-btn" onclick="navigateBarGraphWeek(1)" title="Next Week">▶</button>
+            </div>
             <div class="analytics-content">
                 <div class="y-axis">
                     <span id="y-max">8</span>
@@ -906,6 +1080,13 @@
                     <div class="trend-stat">
                         <div class="trend-stat-value" id="currentStreak">0</div>
                         <div class="trend-stat-label">Perfect Days</div>
+                    </div>
+                    <div class="trend-stat">
+                        <div class="trend-stat-value">
+                            <span class="fire-emoji" id="fireEmoji">🔥</span>
+                            <span id="streakCounter">0</span>
+                        </div>
+                        <div class="trend-stat-label">Day Streak</div>
                     </div>
                 </div>
             </div>
@@ -1034,6 +1215,7 @@ let isLoginMode = true;
 let missedNotifications = []; // Track missed notifications
 let lastOnlineCheck = Date.now(); // Last time we checked for missed notifications
 let weekOffset = 0; // Track which week to display (0 = current, -1 = last week, 1 = next week)
+let barGraphWeekOffset = 0; // Track which week to display in bar graph
 
 // =====================================================================
 // NOTIFICATION SYSTEM
@@ -1748,7 +1930,7 @@ window.toggleTask = function(id) {
     const newState = !task.completed;
     const updates = {
         completed: newState,
-        completedAt: newState ? new Date().toISOString() : null
+        completedAt: newState ? Date.now() : null  // Save as timestamp number (milliseconds)
     };
     
     update(ref(db, `users/${currentUserId}/tasks/${id}`), updates);
@@ -1888,6 +2070,64 @@ window.filterCategory = function(cat) {
     }
     renderTrendsGraph();
 };
+
+// Navigate bar graph weeks
+window.navigateBarGraphWeek = function(direction) {
+    barGraphWeekOffset += direction;
+    renderTasks();
+    updateBarGraphWeekLabel();
+};
+
+// Jump to current week (today)
+window.goToTodayWeek = function() {
+    barGraphWeekOffset = 0;  // Reset to current week
+    renderTasks();
+    updateBarGraphWeekLabel();
+};
+
+// Update bar graph week label
+function updateBarGraphWeekLabel() {
+    const today = new Date();
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - today.getDay() + (barGraphWeekOffset * 7));
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    
+    const formatDate = (date) => {
+        const month = date.toLocaleDateString('en-US', { month: 'short' });
+        const day = date.getDate();
+        return `${month} ${day}`;
+    };
+    
+    let weekLabel = '';
+    if (barGraphWeekOffset === 0) {
+        weekLabel = 'This Week';
+    } else if (barGraphWeekOffset === -1) {
+        weekLabel = 'Last Week';
+    } else if (barGraphWeekOffset < -1) {
+        weekLabel = `${Math.abs(barGraphWeekOffset)} Weeks Ago`;
+    } else if (barGraphWeekOffset === 1) {
+        weekLabel = 'Next Week';
+    } else {
+        weekLabel = `${barGraphWeekOffset} Weeks Ahead`;
+    }
+    
+    const dateRange = `${formatDate(weekStart)} - ${formatDate(weekEnd)}`;
+    const weekRangeEl = document.getElementById('barGraphWeekRange');
+    if (weekRangeEl) {
+        weekRangeEl.textContent = `${weekLabel} (${dateRange})`;
+    }
+    
+    // Show/hide Today button based on whether we're on current week
+    const todayBtn = document.querySelector('.today-btn');
+    if (todayBtn) {
+        if (barGraphWeekOffset === 0) {
+            todayBtn.style.display = 'none';  // Hide when on current week
+        } else {
+            todayBtn.style.display = 'inline-block';  // Show when navigated away
+        }
+    }
+}
 
 // =====================================================================
 // RENDER
@@ -2098,11 +2338,14 @@ function renderTasks() {
     up.innerHTML   = '';
 
     const todayStr = getTodayStr();
+    
+    // Calculate Sunday based on barGraphWeekOffset
     const sunStr = (() => {
         const d = new Date();
-        d.setDate(d.getDate() - d.getDay());
+        d.setDate(d.getDate() - d.getDay() + (barGraphWeekOffset * 7));
         return d.toLocaleDateString('en-CA');
     })();
+    
     const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
     let stats = [0,0,0,0,0,0,0], doneStats = [0,0,0,0,0,0,0];
@@ -2122,6 +2365,9 @@ function renderTasks() {
             if (t.completed) doneStats[diff]++;
         }
     });
+    
+    // Update bar graph week label
+    updateBarGraphWeekLabel();
 
     // Group tasks by category
     const overdueByDate = {};  // { "2025-02-10": [tasks...] }
@@ -2232,16 +2478,31 @@ function renderTasks() {
     days.forEach((_, i) => {
         const pBar = document.getElementById(`planned-${i}`);
         const dBar = document.getElementById(`done-${i}`);
-        if (pBar) pBar.style.height = `${(stats[i]/max)*100}%`;
-        if (dBar) dBar.style.height = `${(doneStats[i]/max)*100}%`;
+        
+        // Calculate heights - if no tasks, both should be 0%
+        const plannedHeight = stats[i] > 0 ? `${(stats[i]/max)*100}%` : '0%';
+        const doneHeight = stats[i] > 0 ? `${(doneStats[i]/max)*100}%` : '0%';
+        
+        if (pBar) pBar.style.height = plannedHeight;
+        if (dBar) dBar.style.height = doneHeight;
     });
     
-    // Calculate completion percentage ONLY from today's and overdue tasks (not future tasks)
-    // todayStr already declared at the top of this function
-    const relevantTasks = allTasksForStats.filter(t => t.date <= todayStr);
+    // Calculate completion percentage for the selected week in bar graph
+    // Always calculate for the specific week (Sun-Sat), matching the bar graph logic
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (barGraphWeekOffset * 7));
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    
+    const weekStartStr = weekStart.toLocaleDateString('en-CA');
+    const weekEndStr = weekEnd.toLocaleDateString('en-CA');
+    
+    // Only count tasks within this specific week (matches bar graph logic)
+    const relevantTasks = allTasksForStats.filter(t => t.date >= weekStartStr && t.date <= weekEndStr);
+    
     const total = relevantTasks.length;
     const done = relevantTasks.filter(t => t.completed).length;
-    const pct = total ? (done/total)*100 : 0;
+    const pct = total > 0 ? (done/total)*100 : 0;
     
     const progressCircle = document.getElementById('progressCircle');
     const pctLabel = document.getElementById('pctLabel');
@@ -2337,36 +2598,63 @@ function renderTrendsGraph() {
         ? Math.max(...daysWithTasks.map(d => d.percentage))
         : 0;
     
-    // Calculate change (yesterday vs today)
-    const yesterdayDay = todayDate - 1;
-    const change = todayDate > 1 
-        ? days[todayDate - 1].percentage - days[yesterdayDay - 1].percentage 
-        : 0;
+    // Calculate perfect days - total days with 100% completion in the month (not consecutive)
+    let perfectDays = 0;
+    for (let i = 0; i < days.length; i++) {
+        if (days[i].total > 0 && days[i].percentage === 100) {
+            perfectDays++;
+        }
+    }
     
-    // Calculate streak - consecutive days completing ALL tasks
-    let streak = 0;
+    // Calculate consecutive streak - days in a row with 100% completion (from today backwards)
+    let consecutiveStreak = 0;
     for (let i = todayDate - 1; i >= 0; i--) {
         if (days[i].total > 0 && days[i].percentage === 100) {
-            streak++;
+            consecutiveStreak++;
         } else if (days[i].total > 0) {
+            // Stop at first non-perfect day with tasks
             break;
         }
+        // Skip days with no tasks (continue the streak)
     }
     
     // Update stats display
     document.getElementById('avgCompletion').textContent = Math.round(avgCompletion) + '%';
     document.getElementById('bestWeek').textContent = bestDay + '%';
-    document.getElementById('currentStreak').textContent = streak;
+    document.getElementById('currentStreak').textContent = perfectDays;
     
+    // Update streak counter and fire emoji
+    const streakCounter = document.getElementById('streakCounter');
+    const fireEmoji = document.getElementById('fireEmoji');
+    
+    if (streakCounter) {
+        streakCounter.textContent = consecutiveStreak;
+    }
+    
+    if (fireEmoji) {
+        // Remove all streak classes
+        fireEmoji.className = 'fire-emoji';
+        
+        // Add appropriate streak class based on consecutive days
+        if (consecutiveStreak === 0) {
+            // No class - dim fire
+        } else if (consecutiveStreak >= 1 && consecutiveStreak <= 2) {
+            fireEmoji.classList.add('streak-1');  // Weak glow
+        } else if (consecutiveStreak >= 3 && consecutiveStreak <= 6) {
+            fireEmoji.classList.add('streak-2');  // Medium glow
+        } else if (consecutiveStreak >= 7 && consecutiveStreak <= 13) {
+            fireEmoji.classList.add('streak-3');  // Strong glow
+        } else if (consecutiveStreak >= 14 && consecutiveStreak <= 29) {
+            fireEmoji.classList.add('streak-4');  // Very strong glow with animation
+        } else if (consecutiveStreak >= 30) {
+            fireEmoji.classList.add('streak-5');  // INTENSE glow with intense animation! 🔥
+        }
+    }
+    
+    // Hide the change indicator - it was confusing (comparing yesterday vs today)
     const avgChange = document.getElementById('avgChange');
-    if (change > 0) {
-        avgChange.textContent = `↑ ${Math.round(change)}%`;
-        avgChange.className = 'trend-change trend-up';
-    } else if (change < 0) {
-        avgChange.textContent = `↓ ${Math.abs(Math.round(change))}%`;
-        avgChange.className = 'trend-change trend-down';
-    } else {
-        avgChange.textContent = '→ No change';
+    if (avgChange) {
+        avgChange.textContent = '';
         avgChange.className = 'trend-change';
     }
     
@@ -2530,14 +2818,14 @@ window.showCompletedHistory = function() {
         return;
     }
     
-    // Group by completion date
+    // Group by ORIGINAL TASK DATE (not completion date)
     const groupedByDate = {};
     completedTasks.forEach(task => {
-        const completedDate = new Date(task.completedAt).toLocaleDateString('en-CA');
-        if (!groupedByDate[completedDate]) {
-            groupedByDate[completedDate] = [];
+        const taskDate = task.date; // Original task date (e.g., "2024-02-19")
+        if (!groupedByDate[taskDate]) {
+            groupedByDate[taskDate] = [];
         }
-        groupedByDate[completedDate].push(task);
+        groupedByDate[taskDate].push(task);
     });
     
     // Sort dates in descending order
@@ -2562,11 +2850,46 @@ window.showCompletedHistory = function() {
         html += `<ul style="list-style: none; padding: 0;">`;
         
         groupedByDate[date].forEach(task => {
-            const completedTime = new Date(task.completedAt).toLocaleTimeString('en-US', {
+            // Get completion date and time
+            let completedDate;
+            if (typeof task.completedAt === 'number') {
+                completedDate = new Date(task.completedAt);
+            } else {
+                completedDate = new Date(task.completedAt);
+            }
+            
+            const completedTime = completedDate.toLocaleTimeString('en-US', {
                 hour: 'numeric',
                 minute: '2-digit',
                 hour12: true
             });
+            
+            // Get completion date string (local date)
+            const completedYear = completedDate.getFullYear();
+            const completedMonth = String(completedDate.getMonth() + 1).padStart(2, '0');
+            const completedDay = String(completedDate.getDate()).padStart(2, '0');
+            const completedDateStr = `${completedYear}-${completedMonth}-${completedDay}`;
+            
+            // Check if completion date is different from task date
+            const isDifferentDate = completedDateStr !== task.date;
+            
+            // Format completion date for display
+            let completionNote = '';
+            if (isDifferentDate) {
+                const completedDateObj = new Date(completedDateStr + 'T00:00:00');
+                const formattedCompletedDate = completedDateObj.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                completionNote = `<div style="font-size: 11px; color: var(--primary); margin-top: 4px; font-weight: 500;">
+                    ✓ Completed on ${formattedCompletedDate} at ${completedTime}
+                </div>`;
+            } else {
+                completionNote = `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
+                    Completed at ${completedTime}
+                </div>`;
+            }
             
             html += `<li style="background: var(--card-bg); color: var(--text); padding: 12px 15px; 
                      border-radius: 10px; margin-bottom: 8px; display: flex; 
@@ -2578,9 +2901,7 @@ window.showCompletedHistory = function() {
                            title="Untick to mark as incomplete">
                     <div>
                         <span style="text-decoration: line-through; opacity: 0.7;">${task.name}</span>
-                        <div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
-                            Completed at ${completedTime}
-                        </div>
+                        ${completionNote}
                     </div>
                 </div>
                 <div>
