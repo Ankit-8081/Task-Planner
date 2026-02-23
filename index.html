@@ -1085,7 +1085,7 @@
                 <div class="week-header-content">
                     <div class="week-title">
                         Weekly Progress
-                        <button class="today-btn" onclick="goToTodayWeek()" title="Jump to current week">This Week</button>
+                        <button class="today-btn" onclick="goToTodayWeek()" title="Jump to current week">Today</button>
                     </div>
                     <div class="week-date-range" id="barGraphWeekRange"></div>
                 </div>
@@ -1443,26 +1443,9 @@ function scheduleTaskNotifications(task) {
     
     // If task has a specific time
     if (task.time) {
-        const [hours, minutes] = task.time.split(':').map(Number);
         const taskDateTime = new Date(task.date + 'T' + task.time + ':00');
         
-        // 1. Midnight notification (00:00 of next day) for today's tasks with a time set
-        if (task.date === todayStr) {
-            const midnight = new Date(taskDate);
-            midnight.setDate(midnight.getDate() + 1);
-            midnight.setHours(0, 0, 0, 0);
-            
-            if (now < midnight) {
-                notifications.push({
-                    time: midnight,
-                    title: '🌙 Task Due Today',
-                    body: `"${task.name}" is due today at ${task.time}`,
-                    tag: `midnight-${task.id}`
-                });
-            }
-        }
-        
-        // 2. 1 hour before
+        // 1. 1 hour before
         const oneHourBefore = new Date(taskDateTime.getTime() - 60 * 60 * 1000);
         if (oneHourBefore > now) {
             notifications.push({
@@ -1473,7 +1456,7 @@ function scheduleTaskNotifications(task) {
             });
         }
         
-        // 3. 10 minutes before
+        // 2. 10 minutes before
         const tenMinsBefore = new Date(taskDateTime.getTime() - 10 * 60 * 1000);
         if (tenMinsBefore > now) {
             notifications.push({
@@ -1482,22 +1465,6 @@ function scheduleTaskNotifications(task) {
                 body: `"${task.name}" is due at ${task.time}`,
                 tag: `10min-${task.id}`
             });
-        }
-    } else {
-        // If no specific time, notify at next midnight (start of tomorrow) for today's tasks
-        if (task.date === todayStr) {
-            const midnight = new Date(taskDate);
-            midnight.setDate(midnight.getDate() + 1);
-            midnight.setHours(0, 0, 0, 0);
-            
-            if (now < midnight) {
-                notifications.push({
-                    time: midnight,
-                    title: '🌙 Task Due Today',
-                    body: `"${task.name}" is due today`,
-                    tag: `midnight-${task.id}`
-                });
-            }
         }
     }
     
@@ -1545,6 +1512,38 @@ function scheduleAllTaskNotifications() {
     allTasks.filter(t => !t.completed).forEach(task => {
         scheduleTaskNotifications(task);
     });
+
+    // Schedule the 7am daily summary (frontend fallback)
+    scheduleDailySummary();
+}
+
+// Schedule the 7am daily summary notification
+let dailySummaryTimeoutId = null;
+function scheduleDailySummary() {
+    if (Notification.permission !== 'granted') return;
+    if (dailySummaryTimeoutId) { clearTimeout(dailySummaryTimeoutId); dailySummaryTimeoutId = null; }
+    const now = new Date();
+    const summary = new Date();
+    summary.setHours(7, 0, 0, 0);
+    if (now >= summary) summary.setDate(summary.getDate() + 1);
+    const delay = summary.getTime() - now.getTime();
+    dailySummaryTimeoutId = setTimeout(() => {
+        const todayStr = getTodayStr();
+        const todayTasks = allTasks.filter(t => !t.completed && t.date === todayStr);
+        if (todayTasks.length > 0) {
+            const lines = todayTasks
+                .map(t => t.time ? `• ${t.name} at ${t.time}` : `• ${t.name}`)
+                .slice(0, 5).join('\n') +
+                (todayTasks.length > 5 ? `\n…and ${todayTasks.length - 5} more` : '');
+            showNotification(
+                `🌅 Good Morning! ${todayTasks.length} task${todayTasks.length > 1 ? 's' : ''} today`,
+                lines,
+                'daily-summary'
+            );
+        }
+        scheduleDailySummary(); // reschedule for next day
+    }, delay);
+    console.log(`Daily summary scheduled for ${summary.toLocaleString()}`);
 }
 
 // Check and fire notifications that should have already triggered
