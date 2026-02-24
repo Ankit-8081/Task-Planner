@@ -3,11 +3,11 @@
 
 **Mission Control Pro** is a next-generation task management application engineered with a "Mission Command" aesthetic. Built on a robust offline-first architecture with Firebase cloud synchronization and **real-time push notifications**, it delivers seamless productivity wrapped in a fluid, animated UI that transforms task management into an immersive experience.
 
-**Live Deployment** - [aquaimmortal7.github.io/Task-Planner/](https://aquaimmortal7.github.io/Task-Planner/)
+**Live Deployment** → [aquaimmortal7.github.io/Task-Planner/](https://aquaimmortal7.github.io/Task-Planner/)
 
 ---
 
-## 🛠️ Tech Stack & Badges
+## 🛠️ Tech Stack
 
 ![Firebase](https://img.shields.io/badge/Firebase-039BE5?style=for-the-badge&logo=Firebase&logoColor=white)
 ![Cloud Functions](https://img.shields.io/badge/Cloud_Functions-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)
@@ -23,6 +23,30 @@
 
 ## ✨ Key Features
 
+### 👤 Profile & Settings Panel
+* **Slide-In Profile Panel**: Full-featured settings panel that slides in from the right with a smooth animation
+* **Avatar System**: Auto-generated avatar from username initial shown in the top nav and panel header
+* **Change Password**: Secure inline password change with re-authentication before applying
+* **Notification Controls**:
+  - Toggle daily morning summary on/off
+  - Set your preferred daily summary time (defaults to 7:00 AM)
+  - Toggle 1-hour reminder on/off
+  - Toggle 10-minute reminder on/off
+* **App Preferences**:
+  - Dark/Light mode toggle (synced with existing theme system)
+  - Week start day — Sunday or Monday (live-restructures bar graph instantly)
+  - Default task time — pre-fills time field when adding new tasks
+* **Account Actions**: Logout with confirmation, delete account with password verification
+* **Cloud-Persisted Settings**: All preferences saved to `users/{userId}/settings` in Firebase — sync across devices
+
+### 🌅 Smart Daily Morning Summary
+* **7 AM Briefing**: Single push notification every morning listing all of today's tasks
+* **Replaces Midnight Notification**: No more useless 12 AM alerts — get your summary when you actually start your day
+* **User-Configurable Time**: Set your own preferred summary time from the Profile panel
+* **Smart Body**: Shows up to 5 tasks with times, then "…and N more" if there are additional tasks
+* **Dual Delivery**: Fires from the Firebase Cloud Function (when app is closed) and a `setTimeout` scheduler (when app is open)
+* **Toggleable**: Can be fully disabled from Profile settings
+
 ### 🌐 Offline-First Architecture
 * **Local-First Performance**: All operations write to IndexedDB instantly for zero-latency interaction
 * **Background Sync**: Automatic cloud synchronization when online, with smart queue management for offline changes
@@ -32,53 +56,51 @@
 * **IndexedDB Storage**: Complete task state persistence in browser database
 
 ### 🔔 Cloud-Powered Push Notifications
-* **Background Notifications**: Receive task reminders even when app is closed
-* **Intelligent Scheduling**: 
-  - 10-minute advance warning for upcoming tasks
-  - 1-hour advance notification for better planning
+* **Background Notifications**: Receive task reminders even when the app is closed
+* **Intelligent Scheduling**:
+  - 🌅 **7 AM Daily Summary**: All of today's tasks in one morning briefing
+  - ⏰ **1-Hour Warning**: 55–65 min window before task is due
+  - ⚡ **10-Minute Warning**: 8–12 min window before task is due (tightened for accuracy)
 * **Firebase Cloud Functions**: Serverless backend checks tasks every 5 minutes
 * **Cross-Device Support**: Notifications on desktop, mobile PWA, and tablets
-* **Smart Timing**: Timezone-aware (Asia/Kolkata) with 5-15 min notification windows
+* **Timezone-Aware**: Runs on Asia/Kolkata (UTC+5:30) time
 * **VAPID Authentication**: Secure web push protocol implementation
 * **Auto-Subscribe**: Seamless push subscription on notification permission grant
+* **Stale Subscription Cleanup**: Invalid subscriptions automatically removed (410/404 responses)
 
 ### 📊 Weekly Visual Dashboard
+* **Week Start Setting**: Bar graph and weekly cards restructure instantly when week start is changed to Monday
 * **Week View Toggle**: Switch between Today View and Week View with one click
 * **Circular Progress Indicators**: Beautiful SVG-based completion circles for each day
-* **7-Day Overview**: Sunday to Saturday cards showing daily task completion
-* **Interactive Task Lists**: View and complete tasks directly from week cards
-* **Smooth Animations**: 
-  - Staggered card animations (100ms delay cascade)
-  - Progress circles fill from 0% to completion percentage
-  - Fade-in effects for stats and task lists
+* **7-Day Overview**: Cards showing daily task completion for the configured week
+* **Interactive Task Lists**: Themed scrollbar — view and complete tasks directly from week cards
+* **Smooth Animations**: Staggered card animations (100ms delay cascade), progress circles fill with cubic-bezier easing
 * **Real-Time Updates**: Progress updates smoothly without page reload
 * **Category Filtering**: Works seamlessly with category filters
-* **Date Format**: DD/MM/YYYY display for international users
 
 ### 🎯 Smart Task Management
 * **Time-Based Scheduling**: Add specific times to tasks (HH:MM format)
+* **Default Task Time**: Set a preferred time that pre-fills when adding tasks (configurable in Profile)
 * **Overdue Detection**: Tasks with passed times automatically move to "Overdue" column
-* **Three-Column Kanban**: 
+* **Three-Column Kanban**:
   - 🔴 **Overdue**: Past dates + today's tasks with passed times
-  - ⏳ **Current**: Today's tasks (all statuses)
-  - 📅 **Incoming**: Future tasks (incomplete only)
+  - ⏳ **Current**: Today's tasks
+  - 📅 **Incoming**: Future tasks
 * **Auto-Archive System**: Completed tasks hide from main view (shown in History)
 * **Intelligent Revert**: Unticking a completed task instantly reverts it to active
-* **Historical Calendar**: 📅 History button reveals all completed tasks grouped by date
+* **Historical Calendar**: History button reveals all completed tasks grouped by date
 
 ### 💧 Liquid Analytics Engine
 * **Weekly Fuel Levels**: Custom-built bar graph with "Liquid Grow" animations
-* **Dual-Layer Visualization**: 
+* **Week Start Aware**: Bar graph days reorder live (Sun→Sat or Mon→Sun) based on profile setting
+* **Dual-Layer Visualization**:
   - Transparent bars show planned tasks per day
   - Gradient-filled bars display completed tasks
-* **Real-Time Accuracy**: Stats calculated from ALL tasks regardless of current view filter
 * **Circular Progress Meter**: Dynamic SVG-based completion percentage with smooth transitions
-* **Hidden in Week View**: Clean interface showing only relevant data per view
+* **Themed Scrollbar**: Task list scrollbar inside day cards matches the primary green theme
 
 ### 🌓 Dual-Phase Interface
-* **Dynamic Theme Toggle**: 
-  - Light mode button: 🌙 Dark (click to enable dark mode)
-  - Dark mode button: ☀️ Light (click to enable light mode)
+* **Dynamic Theme Toggle**: Available both from top nav and Profile panel
 * **Stealth Mode (Dark)**: Deep-space aesthetic minimizing eye strain
 * **Command Mode (Light)**: High-clarity daylight interface with glassmorphism
 * **Persistent Theme**: Auto-saves to localStorage across sessions
@@ -87,31 +109,31 @@
 ### ☁️ Real-Time Cloud Sync
 * **Multi-Device Synchronization**: Instant updates across all devices
 * **Firebase Realtime Database**: Asia-Southeast regional cluster
-* **Smart Conflict Resolution**: Handles simultaneous edits gracefully
-* **Data Isolation**: Private user workspaces with strict security rules
+* **Settings Sync**: Profile preferences sync across devices via Firebase
 
 ### 🔒 Secure Authentication
 * **Firebase Auth Integration**: Email/password authentication
+* **Password Change**: Re-authenticates with current password before updating
+* **Account Deletion**: Full data wipe from Firebase before account deletion
 * **Password Visibility Toggle**: Built-in show/hide for secure entry
 * **Persistent Sessions**: Auto-login after first authentication
-* **User-Specific Notifications**: Push subscriptions tied to individual accounts
 
 ### 🏷️ Advanced Categorization
 * **Four Mission Types**: Work, Home, Personal, and Urgent
-* **Visual Color Coding**: 
+* **Visual Color Coding**:
   - Work: `#0984e3` (Blue)
   - Home: `#6c5ce7` (Purple)
   - Personal: `#00b894` (Teal)
   - Urgent: `#d63031` (Red)
-* **Category Filtering**: Filter tasks across all views (Today, Week, History)
-* **View-Specific UI**: Categories and input hidden in Week View for clean analytics
+* **Category Filtering**: Filter tasks across all views
 
 ### 📱 Progressive Web App (PWA)
-* **Installable**: Add to home screen on iOS and Android
-* **Full-Screen Experience**: Runs without browser chrome
+* **Installable**:
+  - 🤖 **Android (Chrome)**: A native **"Install App"** banner appears automatically — one tap installs it like a real app with no extra steps needed
+  - 🍎 **iOS (Safari)**: Manual process required — tap Share ⬆️ then "Add to Home Screen" (Apple does not support automatic install prompts)
+* **Full-Screen Experience**: Runs without browser chrome after installation
 * **Service Worker**: Handles caching and push notifications
 * **Offline Capable**: Core functionality without internet
-* **Background Sync**: Push notifications work even when app is closed
 
 ---
 
@@ -126,59 +148,51 @@ User Action → IndexedDB (Instant) → UI Update → Cloud Sync (Background)
               Auto-Process (when online)
 ```
 
-### State Management Layers
-1. **Local Truth**: IndexedDB stores complete task state
-2. **Cloud Backup**: Firebase mirrors local state for multi-device sync
-3. **Memory Cache**: In-app `allTasks` array for instant rendering
-4. **Conflict Resolution**: Server state merges with pending local changes
-
 ### Push Notification System
 ```
-Firebase Cloud Functions (Scheduled - Every 5 min)
+Firebase Cloud Functions (Every 5 min, Asia/Kolkata)
          ↓
-    Check All Users' Tasks
+    For each user:
          ↓
-    Find Tasks Due in 10-15 min or 55-65 min
-         ↓
-    Fetch User Push Subscriptions
-         ↓
-    Send Web Push Notification
-         ↓
-Service Worker Receives Push
-         ↓
-Display System Notification (Even If App Closed)
+    ┌─── Is it 7:00–7:05 AM? ───► Send daily summary of all today's tasks
+    │
+    └─── For each task due today with a time:
+              ├── 55–65 min away? ──► "⏰ Task Due in 1 Hour"
+              └── 8–12 min away?  ──► "⚡ Task Due in 10 Minutes"
 ```
 
-### Notification Flow
+### Profile Settings Flow
 ```
-User Enables Notifications
+User changes setting in Profile Panel
          ↓
-Request Permission (Browser API)
+saveSetting(key, value) called
          ↓
-Create Push Subscription (Service Worker + VAPID Key)
+userSettings object updated in memory
          ↓
-Save Subscription to Firebase Database
+Value written to Firebase: users/{uid}/settings/{key}
          ↓
-Cloud Function Retrieves Subscription Every 5 min
-         ↓
-Send Notification at Scheduled Times
+Live effect applied immediately:
+  weekStart     → updateBarGraphDayLabels() + renderTasks()
+  summaryTime   → scheduleDailySummary() rescheduled
+  defaultTime   → task time input pre-filled
+  notify toggles→ respected on next notification schedule
 ```
 
 ### Weekly Dashboard Rendering
 ```
-User Clicks "Week View"
+User Clicks "Week View" (or changes weekStart in Profile)
          ↓
-Calculate Current Week (Sunday - Saturday)
+Calculate week start using: (currentDay - weekStartDay + 7) % 7
          ↓
-For Each Day:
+Reorder day labels: [Mon, Tue, Wed, Thu, Fri, Sat, Sun] if Monday
+         ↓
+For each of 7 days:
   - Filter tasks by date
   - Calculate completion percentage
   - Render circular progress (SVG)
-  - Display task list with checkboxes
+  - Display themed scrollable task list
          ↓
-Staggered Animations (100ms cascade)
-         ↓
-Interactive Cards with Live Updates
+Staggered animations (100ms cascade)
 ```
 
 ---
@@ -186,10 +200,9 @@ Interactive Cards with Live Updates
 ## 📐 The Logic Engine
 
 ### 1. Time-Based Task Sorting
-Tasks automatically categorize based on date and time:
 
 $$
-\text{Status} = \begin{cases} 
+\text{Status} = \begin{cases}
 \text{Overdue} & \text{if } (date < today) \lor (date = today \land time < now) \\
 \text{Current} & \text{if } date = today \\
 \text{Incoming} & \text{if } date > today
@@ -197,46 +210,45 @@ $$
 $$
 
 ### 2. Notification Timing Algorithm
-Cloud Function calculates time until task:
 
 $$
 t_{until} = t_{task} - t_{now}
 $$
 
 $$
-\text{Send Notification} = \begin{cases} 
-\text{1-hour alert} & \text{if } 55min \leq t_{until} \leq 65min \\
-\text{10-min alert} & \text{if } 5min \leq t_{until} \leq 15min
+\text{Send Notification} = \begin{cases}
+\text{Daily Summary} & \text{if } t_{now} \in [T_{summary}, T_{summary} + 5\text{min}] \\
+\text{1-hour alert} & \text{if } 55\text{min} \leq t_{until} \leq 65\text{min} \\
+\text{10-min alert} & \text{if } 8\text{min} \leq t_{until} \leq 12\text{min}
 \end{cases}
 $$
 
-Wide windows (±5 min) ensure notifications aren't missed between 5-minute function checks.
+### 3. Week Start Calculation
 
-### 3. Weekly Progress Calculation
-For each day in the week:
+$$
+\text{offset} = (currentDay - weekStartDay + 7) \mod 7
+$$
+
+$$
+\text{weekStart} = today - \text{offset} + (weekOffset \times 7)
+$$
+
+Applies to bar graph, weekly dashboard cards, week header date range, and completion percentage ring.
+
+### 4. Weekly Progress Calculation
 
 $$
 P_{day} = \left( \frac{n_{completed}}{n_{total}} \right) \times 100
 $$
 
-Displayed as:
-- Circular SVG with `stroke-dashoffset` animation
-- Stats showing `n_{total}` tasks and `n_{completed}` done
-
-### 4. Timezone Normalization
-All times converted to Asia/Kolkata (UTC+5:30):
-
+### 5. Timezone Normalization
 ```javascript
 const indiaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
 ```
 
-Ensures consistent behavior regardless of server location.
-
 ---
 
 ## 🛡️ Firebase Security Rules
-
-**Firebase Console > Realtime Database > Rules:**
 
 ```json
 {
@@ -252,6 +264,10 @@ Ensures consistent behavior regardless of server location.
         "pushSubscriptions": {
           ".read": "$uid === auth.uid",
           ".write": "$uid === auth.uid"
+        },
+        "settings": {
+          ".read": "$uid === auth.uid",
+          ".write": "$uid === auth.uid"
         }
       }
     }
@@ -259,18 +275,19 @@ Ensures consistent behavior regardless of server location.
 }
 ```
 
+> ⚠️ Add the `settings` node to your existing rules if upgrading from v2.
+
 ---
 
 ## 🚀 Deployment Guide
 
 ### 1. Firebase Project Setup
 
-#### Create Firebase Project
 1. Go to [Firebase Console](https://console.firebase.google.com/)
-2. Create new project: `your-project-name`
+2. Create new project
 3. Enable **Realtime Database** (Asia-Southeast region)
 4. Enable **Authentication** → Email/Password
-5. Upgrade to **Blaze Plan** (pay-as-you-go, free tier sufficient)
+5. Upgrade to **Blaze Plan** (pay-as-you-go, free tier sufficient for personal use)
 
 #### Configure Firebase in `index.html`
 ```javascript
@@ -279,131 +296,88 @@ const firebaseConfig = {
     authDomain: "YOUR_PROJECT.firebaseapp.com",
     databaseURL: "https://YOUR_PROJECT.asia-southeast1.firebasedatabase.app",
     projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_PROJECT.appspot.com",
-    messagingSenderId: "YOUR_MESSAGING_ID",
     appId: "YOUR_APP_ID"
 };
 ```
 
-### 2. Cloud Functions Setup (for Push Notifications)
+### 2. Cloud Functions Setup
 
-#### Install Firebase CLI
 ```bash
 npm install -g firebase-tools
 firebase login
-```
-
-#### Initialize Cloud Functions
-```bash
-cd your-project-folder
-firebase init functions
-```
-
-Select:
-- Use existing project
-- JavaScript
-- Install dependencies: Yes
-
-#### Create `functions/index.js`
-```javascript
-const {onSchedule} = require('firebase-functions/v2/scheduler');
-const admin = require('firebase-admin');
-const webpush = require('web-push');
-
-admin.initializeApp();
-
-// Generate VAPID keys: npx web-push generate-vapid-keys
-webpush.setVapidDetails(
-  'mailto:your-email@example.com',
-  'YOUR_PUBLIC_VAPID_KEY',
-  'YOUR_PRIVATE_VAPID_KEY'
-);
-
-exports.checkAndSendNotifications = onSchedule({
-  schedule: '*/5 * * * *',
-  timeZone: 'Asia/Kolkata'
-}, async (event) => {
-  // ... (full code in repository)
-});
-```
-
-#### Install Dependencies
-```bash
+firebase init functions   # select JavaScript, install deps
 cd functions
 npm install web-push
-cd ..
 ```
 
-#### Deploy Cloud Functions
-```bash
-firebase deploy --only functions
-```
-
-#### Generate VAPID Keys
+Generate VAPID keys:
 ```bash
 npx web-push generate-vapid-keys
 ```
 
-Update `index.html` with your **public VAPID key**:
-```javascript
-const publicVapidKey = 'YOUR_PUBLIC_VAPID_KEY';
+Update `functions/index.js` and `index.html` with your VAPID keys, then deploy:
+```bash
+firebase deploy --only functions
 ```
 
 ### 3. GitHub Pages Hosting
-1. Push `index.html`, `sw.js`, `manifest.json`, icons to GitHub repo
-2. **Settings** → **Pages** → Source: `main` branch
-3. Site deploys to: `https://username.github.io/repo-name/`
+Push `index.html`, `sw.js`, `manifest.json`, and icons to your repo, then enable Pages from **Settings → Pages → main branch**.
 
 ### 4. PWA Installation
 
-#### iOS (Safari)
-1. Open site in Safari
-2. Tap **Share** (⬆️) → **Add to Home Screen**
+#### 🤖 Android (Chrome) — Automatic
+Chrome detects the PWA manifest and shows a native **"Install App"** banner at the bottom of the screen automatically. Tap it and the app installs instantly — no menus, no steps.
 
-#### Android (Chrome)
-1. Open site in Chrome
-2. Tap menu (⋮) → **Install App**
+> If the banner was dismissed, tap the browser menu ⋮ → **"Install App"** to trigger it manually.
+
+#### 🍎 iOS (Safari) — Manual Steps Required
+Apple does not support automatic PWA install prompts. You must install manually:
+
+1. Open the site in **Safari** (not Chrome — Chrome on iOS cannot install PWAs)
+2. Tap the **Share** button ⬆️ at the bottom of the screen
+3. Scroll down and tap **"Add to Home Screen"**
+4. Confirm the name and tap **"Add"**
+
+> **Note**: Push notifications on iOS PWAs have limited support due to Apple restrictions. Full notification support requires iOS 16.4+ with the PWA installed to the home screen.
 
 ---
 
 ## 📊 Data Structure
 
-### Task Object Schema
+### Task Object
 ```javascript
 {
-  id: "1738764523000",           // Timestamp-based unique ID
-  name: "Deploy Mission Alpha",  // Task title
-  cat: "work",                   // Category: work|home|personal|urgent
-  date: "2025-02-14",           // Due date (YYYY-MM-DD)
-  time: "14:30",                 // Optional time (HH:MM)
-  completed: false,              // Completion status
-  completedAt: null              // ISO timestamp when completed
+  id: "1738764523000",
+  name: "Deploy Mission Alpha",
+  cat: "work",              // work | home | personal | urgent
+  date: "2025-02-14",
+  time: "14:30",            // optional
+  completed: false,
+  completedAt: null
 }
 ```
 
-### Push Subscription Schema
+### User Settings Object
 ```javascript
+// Stored at: users/{userId}/settings
+{
+  dailySummaryEnabled: true,
+  dailySummaryTime: "07:00",   // user-configurable morning briefing time
+  notify1Hour: true,
+  notify10Min: true,
+  weekStart: 0,               // 0 = Sunday, 1 = Monday
+  defaultTaskTime: "09:00"    // pre-fills task time input
+}
+```
+
+### Push Subscription
+```javascript
+// Stored at: users/{userId}/pushSubscriptions/{subscriptionId}
 {
   endpoint: "https://fcm.googleapis.com/fcm/send/...",
   expirationTime: null,
-  keys: {
-    p256dh: "base64-encoded-public-key",
-    auth: "base64-encoded-auth-secret"
-  }
+  keys: { p256dh: "...", auth: "..." }
 }
-```
-
-Stored at: `users/{userId}/pushSubscriptions/{subscriptionId}`
-
-### IndexedDB Structure
-```
-Database: MissionControlDB
-  Store: tasks
-    Key: task.id
-    Value: task object
-  Store: syncQueue
-    Key: auto-increment
-    Value: { type, taskId, data/updates }
 ```
 
 ---
@@ -412,125 +386,73 @@ Database: MissionControlDB
 
 ### View-Specific Behavior
 | Element | Today View | Week View |
-|---------|-----------|-----------|
-| Bar Graph | ✅ Visible | ❌ Hidden |
-| Category Filters | ✅ Visible | ❌ Hidden |
-| Add Task Input | ✅ Visible | ❌ Hidden |
-| 7-Day Cards | ❌ Hidden | ✅ Visible |
-| Kanban Board | ✅ Visible | ❌ Hidden |
+|---------|:---:|:---:|
+| Bar Graph | ✅ | ❌ |
+| Category Filters | ✅ | ❌ |
+| Add Task Input | ✅ | ❌ |
+| 7-Day Cards | ❌ | ✅ |
+| Kanban Board | ✅ | ❌ |
+
+### Notification Schedule
+| Notification | When | Configurable |
+|---|---|:---:|
+| 🌅 Daily Summary | 7 AM (user-set time) | ✅ |
+| ⏰ 1-Hour Reminder | 55–65 min before task | ✅ |
+| ⚡ 10-Min Reminder | 8–12 min before task | ✅ |
 
 ### Animations & Transitions
+- **Profile Panel**: Slide-in from right, 0.35s cubic-bezier
 - **Week Card Cascade**: 100ms staggered delays
 - **Progress Circles**: 1.2s cubic-bezier fill animation
-- **Task Toggle**: Smooth opacity/strikethrough (no reload)
+- **Task Toggle**: Smooth opacity/strikethrough
 - **Theme Switch**: 0.3s color transitions
-- **View Toggle**: Instant switch with fade effects
-
-### Responsive Design
-- **Desktop**: Full-width week cards (3-4 per row)
-- **Tablet**: 2 cards per row
-- **Mobile**: Single column, scrollable
-- **Breakpoint**: 768px grid to flex transformation
-
----
-
-## 🔧 Advanced Features
-
-### Sync Queue Management
-```javascript
-// Queued operation structure
-{
-  type: 'set' | 'update' | 'remove',
-  taskId: string,
-  data?: object,      // For 'set'
-  updates?: object    // For 'update'
-}
-```
-
-### Network Detection
-- **Online**: Green header, immediate Firebase sync
-- **Offline**: Orange header with "Sync Pending..." message
-- **Events**: Listens to Firebase `.info/connected` + browser online/offline
-
-### Smart Notification Logic
-```javascript
-// Cloud Function runs every 5 minutes
-// Checks: Is task 5-15 min away OR 55-65 min away?
-const timeUntilTask = taskDateTime - now;
-
-if (timeUntilTask > 5min && timeUntilTask <= 15min) {
-  send("⚡ Task Due in 10 Minutes");
-}
-if (timeUntilTask > 55min && timeUntilTask <= 65min) {
-  send("⏰ Task Due in 1 Hour");
-}
-```
-
-### Service Worker Push Handler
-```javascript
-self.addEventListener('push', (event) => {
-  const data = event.data.json();
-  event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      vibrate: [200, 100, 200]
-    })
-  );
-});
-```
-
-### Auto-Subscribe on Login
-```javascript
-onAuthStateChanged(auth, (user) => {
-  if (user && Notification.permission === 'granted') {
-    subscribeToPushNotifications();  // Auto-create subscription
-  }
-});
-```
+- **Bar Graph Days**: Instant reorder on week start change
 
 ---
 
 ## 👨‍💻 About the Developer
 
-| Feature | Details |
+| | |
 | :--- | :--- |
 | **Name** | Ankit Raj |
 | **Education** | 1st Year B.Tech CSE at **Galgotias University** |
 | **Core Expertise** | Backend Development, Cloud Functions, Real-Time Systems |
 | **YouTube** | [AQUAIMMORTAL Official Channel](https://youtube.com/@AQUAIMMORTAL) |
-| **Specialization** | Firebase Cloud Functions, PWA Architecture, Push Notifications |
-
-### 📜 Recent Achievements
-* ✅ Implemented serverless push notification system with Firebase Cloud Functions
-* ✅ Built weekly visual dashboard with circular progress indicators
-* ✅ Architected time-based task categorization system
-* ✅ Deployed production-grade PWA with Service Worker integration
+| **GitHub** | [aquaimmortal7](https://github.com/aquaimmortal7) |
 
 ---
 
 ## 📝 Version History
 
-### v2.0.0 - Push Notifications & Weekly Dashboard (Feb 2026)
-**Major Features:**
-- ✅ **Firebase Cloud Functions**: Serverless backend for push notifications
-- ✅ **Web Push API**: VAPID-authenticated notifications
-- ✅ **Weekly Dashboard**: 7-day overview with circular progress
-- ✅ **Time-Based Sorting**: Tasks auto-categorize by date + time
-- ✅ **Auto-Subscribe**: Seamless push subscription on permission grant
-- ✅ **View Toggle System**: Clean separation of Today/Week interfaces
+### v3.0.0 — Profile, Settings & Smart Notifications (Feb 2026)
+
+**New Features:**
+- ✅ **Profile Panel**: Slide-in settings panel with avatar, password change, and all preferences
+- ✅ **Daily 7 AM Summary**: Replaced midnight notification with a useful morning briefing
+- ✅ **User-Configurable Summary Time**: Pick your own morning briefing time
+- ✅ **Notification Toggles**: Individually enable/disable daily summary, 1-hour, and 10-min reminders
+- ✅ **Week Start Setting**: Choose Sunday or Monday — bar graph and weekly cards restructure instantly
+- ✅ **Default Task Time**: Set a preferred time that pre-fills when adding tasks
+- ✅ **Themed Scrollbar**: Task list scrollbar in week cards matches the primary green theme
+- ✅ **Account Deletion**: Full Firebase data wipe with password confirmation
+- ✅ **Secure Password Change**: Re-authentication required before updating password
 
 **Technical Improvements:**
-- ⚡ Cloud Functions check tasks every 5 minutes
-- ⚡ Smart notification windows (5-15 min, 55-65 min)
-- ⚡ Timezone-aware calculations (Asia/Kolkata)
-- ⚡ Smooth progress updates without full re-render
-- ⚡ Service Worker handles background push events
+- ⚡ Tightened 10-min notification window from 5–15 min to 8–12 min for accuracy
+- ⚡ All settings persisted to `users/{uid}/settings` — sync across devices
+- ⚡ Week start calculation now uses `(currentDay - weekStartDay + 7) % 7` across all 4 render paths
+- ⚡ Daily summary fires from both Cloud Function (background) and `setTimeout` (when app open)
+- ⚡ Firebase security rules updated to cover new `settings` node
 
-### v1.0.0 - Core Task Management (Jan 2025)
-- Basic task CRUD operations
-- Firebase Realtime Database sync
+### v2.0.0 — Push Notifications & Weekly Dashboard (Feb 2026)
+- ✅ Firebase Cloud Functions — serverless push notification backend
+- ✅ Web Push API with VAPID authentication
+- ✅ Weekly Dashboard with circular SVG progress indicators
+- ✅ Time-based task categorization (overdue/current/incoming)
+- ✅ View toggle system (Today / Week)
+
+### v1.0.0 — Core Task Management (Jan 2025)
+- Basic task CRUD with Firebase Realtime Database
 - Category filtering
 - Dark/Light theme toggle
 - Weekly bar graph analytics
@@ -539,15 +461,14 @@ onAuthStateChanged(auth, (user) => {
 
 ## 💰 Cost Analysis
 
-### Firebase Usage (FREE Tier)
-| Service | Usage | Free Tier | Status |
-|---------|-------|-----------|--------|
-| Cloud Functions | ~8,640 calls/month | 125,000/month | ✅ FREE |
+| Service | Monthly Usage | Free Tier | Cost |
+|---------|:---:|:---:|:---:|
+| Cloud Functions | ~8,640 calls | 125,000/month | ✅ FREE |
 | Realtime Database | Read/Write ops | 100GB/month | ✅ FREE |
 | Authentication | User sign-ins | Unlimited | ✅ FREE |
 | Hosting (GitHub Pages) | Static files | Unlimited | ✅ FREE |
 
-**Estimated Monthly Cost**: **$0.00** (well within free tier)
+**Estimated Monthly Cost: $0.00**
 
 ---
 
@@ -555,66 +476,47 @@ onAuthStateChanged(auth, (user) => {
 
 ### Current Limitations
 - iOS PWA has limited background notification support (Apple restriction)
-- Push notifications require installed PWA (not browser tabs) on mobile
+- Push notifications require installed PWA on mobile (not browser tabs)
 - Service Worker requires HTTPS (GitHub Pages provides this)
 
-### Future Enhancements
-- [ ] Recurring task support (daily/weekly/monthly)
-- [ ] Task priority levels (high/medium/low)
-- [ ] Drag-and-drop task reordering
+### Planned Features
+- [ ] Recurring tasks (daily/weekly/monthly)
+- [ ] Task priority levels
+- [ ] Drag-and-drop reordering
 - [ ] Export to CSV/JSON
-- [ ] Shared workspaces (collaborative tasks)
-- [ ] Task attachments and notes
-- [ ] Custom notification sound selection
+- [ ] Shared workspaces
+- [ ] Task notes and attachments
 - [ ] Snooze notification feature
-- [ ] Task templates and quick-add
+- [ ] Custom notification sound
+- [ ] Task templates
 
 ---
 
 ## 📞 Contact & Support
 
-**Ankit Raj** - [@AQUAIMMORTAL](https://youtube.com/@AQUAIMMORTAL)
+**Ankit Raj** — [@AQUAIMMORTAL](https://youtube.com/@AQUAIMMORTAL)
 
-**Project Link**: [https://github.com/aquaimmortal7/Task-Planner](https://github.com/aquaimmortal7/Task-Planner)
+**Project**: [github.com/aquaimmortal7/Task-Planner](https://github.com/aquaimmortal7/Task-Planner)
 
-**Live Demo**: [https://aquaimmortal7.github.io/Task-Planner/](https://aquaimmortal7.github.io/Task-Planner/)
+**Live Demo**: [aquaimmortal7.github.io/Task-Planner/](https://aquaimmortal7.github.io/Task-Planner/)
 
-### Report Issues
-Found a bug? [Open an issue](https://github.com/aquaimmortal7/Task-Planner/issues)
-
-### Request Features
-Have an idea? [Start a discussion](https://github.com/aquaimmortal7/Task-Planner/discussions)
-
----
-
-## ⭐️ Show Your Support
-
-Give a ⭐️ if this project helped you!
-
-### Share With
-- Developers building notification systems
-- Students learning Firebase Cloud Functions
-- Teams needing offline-first PWA examples
-- Anyone interested in real-time push notifications
+[Report a Bug](https://github.com/aquaimmortal7/Task-Planner/issues) · [Request a Feature](https://github.com/aquaimmortal7/Task-Planner/discussions)
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](./CONTRIBUTING.md) for guidelines.
-
-### How to Contribute
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
+2. Create your feature branch: `git checkout -b feature/AmazingFeature`
+3. Commit: `git commit -m 'Add AmazingFeature'`
+4. Push: `git push origin feature/AmazingFeature`
+5. Open a Pull Request
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](./LICENSE).
+Licensed under the [MIT License](./LICENSE).
 
 ---
 
@@ -625,5 +527,7 @@ This project is licensed under the [MIT License](./LICENSE).
 *"Transform chaos into clarity, one mission at a time."*
 
 **Powered by Firebase Cloud Functions • Web Push API • Service Workers**
+
+⭐ Star this repo if it helped you!
 
 </div>
