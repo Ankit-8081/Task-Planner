@@ -1029,6 +1029,157 @@
             color: var(--text-secondary);
             text-transform: uppercase;
         }
+
+        /* ── PROFILE PANEL ─────────────────────────────────────── */
+        #profilePanel {
+            position: fixed;
+            top: 0; right: 0;
+            width: 100%; max-width: 420px;
+            height: 100%;
+            background: var(--card-bg);
+            box-shadow: -8px 0 40px rgba(0,0,0,0.18);
+            z-index: 2000;
+            transform: translateX(100%);
+            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        #profilePanel.open { transform: translateX(0); }
+        #profileOverlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 1999;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.35s;
+        }
+        #profileOverlay.open { opacity: 1; pointer-events: all; }
+        .profile-header {
+            background: var(--bg-gradient);
+            padding: 30px 20px 24px;
+            display: flex; align-items: center; gap: 16px;
+            position: relative;
+        }
+        .profile-close-btn {
+            position: absolute; top: 14px; right: 14px;
+            background: rgba(255,255,255,0.2); border: none; color: white;
+            width: 32px; height: 32px; border-radius: 50%;
+            font-size: 18px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.2s;
+        }
+        .profile-close-btn:hover { background: rgba(255,255,255,0.35); }
+        .profile-avatar {
+            width: 68px; height: 68px; border-radius: 50%;
+            background: rgba(255,255,255,0.25);
+            border: 3px solid rgba(255,255,255,0.6);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 28px; font-weight: 700; color: white; flex-shrink: 0;
+            text-transform: uppercase;
+        }
+        .profile-user-info { flex: 1; min-width: 0; }
+        .profile-username {
+            font-size: 20px; font-weight: 700; color: white;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .profile-email { font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 2px; }
+        .profile-body {
+            flex: 1; overflow-y: auto; padding: 10px 0 20px;
+            scrollbar-width: thin; scrollbar-color: var(--primary) var(--col-bg);
+        }
+        .profile-body::-webkit-scrollbar { width: 4px; }
+        .profile-body::-webkit-scrollbar-track { background: var(--col-bg); }
+        .profile-body::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+        .profile-section-title {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 1.2px; color: var(--primary); padding: 18px 20px 6px;
+        }
+        .profile-row {
+            display: flex; align-items: center; padding: 13px 20px; gap: 14px;
+            cursor: pointer; transition: background 0.15s;
+            border-bottom: 1px solid var(--border);
+        }
+        .profile-row:last-child { border-bottom: none; }
+        .profile-row:hover { background: var(--col-bg); }
+        .profile-row.no-hover { cursor: default; }
+        .profile-row.no-hover:hover { background: transparent; }
+        .profile-row-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 17px; flex-shrink: 0;
+        }
+        .icon-green  { background: rgba(39,174,96,0.12); }
+        .icon-blue   { background: rgba(9,132,227,0.12); }
+        .icon-purple { background: rgba(108,92,231,0.12); }
+        .icon-orange { background: rgba(253,126,20,0.12); }
+        .icon-red    { background: rgba(231,76,60,0.12); }
+        .icon-yellow { background: rgba(253,203,110,0.2); }
+        .profile-row-content { flex: 1; min-width: 0; }
+        .profile-row-label { font-size: 14px; font-weight: 600; color: var(--text); }
+        .profile-row-sub { font-size: 11px; color: var(--text); opacity: 0.55; margin-top: 1px; }
+        .profile-row-right { color: var(--text); opacity: 0.35; font-size: 16px; }
+        .profile-toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+        .profile-toggle input { display: none; }
+        .profile-toggle-slider {
+            position: absolute; inset: 0; background: var(--border);
+            border-radius: 24px; cursor: pointer; transition: background 0.25s;
+        }
+        .profile-toggle-slider::before {
+            content: ''; position: absolute;
+            width: 18px; height: 18px; left: 3px; top: 3px;
+            background: white; border-radius: 50%;
+            transition: transform 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        .profile-toggle input:checked + .profile-toggle-slider { background: var(--primary); }
+        .profile-toggle input:checked + .profile-toggle-slider::before { transform: translateX(20px); }
+        .profile-inline-input {
+            background: var(--col-bg); border: 1.5px solid var(--border);
+            border-radius: 8px; padding: 6px 10px; font-size: 13px;
+            font-family: 'Poppins', sans-serif; color: var(--text);
+            width: 100px; text-align: right; outline: none; transition: border-color 0.2s;
+        }
+        .profile-inline-input:focus { border-color: var(--primary); }
+        .profile-subform {
+            background: var(--col-bg); border-radius: 14px;
+            margin: 0 14px 4px; padding: 14px 16px;
+            display: none; flex-direction: column; gap: 10px;
+        }
+        .profile-subform.open { display: flex; }
+        .profile-subform input {
+            background: var(--card-bg); border: 1.5px solid var(--border);
+            border-radius: 8px; padding: 10px 12px; font-size: 13px;
+            font-family: 'Poppins', sans-serif; color: var(--text);
+            outline: none; transition: border-color 0.2s;
+        }
+        .profile-subform input:focus { border-color: var(--primary); }
+        .profile-subform-btn {
+            background: var(--primary); color: white; border: none;
+            border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600;
+            font-family: 'Poppins', sans-serif; cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+        }
+        .profile-subform-btn:hover { background: var(--primary-shadow); }
+        .profile-subform-btn:active { transform: scale(0.97); }
+        .profile-subform-err { font-size: 11px; color: var(--overdue); display: none; }
+        .profile-subform-ok  { font-size: 11px; color: var(--primary); display: none; }
+        .profile-danger-btn {
+            margin: 8px 14px; width: calc(100% - 28px); padding: 13px;
+            border-radius: 12px; border: 2px solid var(--overdue);
+            background: transparent; color: var(--overdue);
+            font-size: 14px; font-weight: 600; font-family: 'Poppins', sans-serif;
+            cursor: pointer; transition: all 0.2s; display: block;
+        }
+        .profile-danger-btn:hover { background: var(--overdue); color: white; }
+        .profile-nav-btn {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--primary); border: 2px solid var(--card-bg);
+            color: white; font-size: 15px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+            text-transform: uppercase; transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .profile-nav-btn:hover { transform: scale(1.1); box-shadow: 0 4px 14px rgba(0,0,0,0.2); }
+
     </style>
 </head>
 <body data-theme="light">
@@ -1061,13 +1212,13 @@
                 🔔
                 <span class="missed-count" id="missedCount">0</span>
             </div>
-            <button class="btn-header logout-btn" onclick="logout()">Logout</button>
+            <button class="profile-nav-btn" id="profileNavBtn" onclick="openProfile()" title="Profile & Settings">?</button>
         </div>
 
         <!-- Notification Permission Banner -->
         <div id="notificationBanner" class="notification-banner">
             <div>Get notified about your tasks!</div>
-            <div style="font-size: 12px; margin-top: 5px;">Receive reminders at midnight, 1 hour before, and 10 minutes before tasks are due</div>
+            <div style="font-size: 12px; margin-top: 5px;">Receive a 7am daily summary, 1-hour reminder, and 10-minute reminder for your tasks</div>
             <button class="btn-allow" onclick="requestNotificationPermission()">Enable Notifications</button>
             <button class="btn-dismiss" onclick="dismissNotificationBanner()">Maybe Later</button>
         </div>
@@ -1249,9 +1400,143 @@
         </div>
     </div>
 
+        <!-- Profile Panel Overlay -->
+        <div id="profileOverlay" onclick="closeProfile()"></div>
+
+        <!-- Profile Panel -->
+        <div id="profilePanel">
+            <div class="profile-header">
+                <div class="profile-avatar" id="profileAvatar">?</div>
+                <div class="profile-user-info">
+                    <div class="profile-username" id="profileUsername">Loading...</div>
+                    <div class="profile-email" id="profileEmailDisplay"></div>
+                </div>
+                <button class="profile-close-btn" onclick="closeProfile()">✕</button>
+            </div>
+
+            <div class="profile-body">
+
+                <!-- ACCOUNT -->
+                <div class="profile-section-title">Account</div>
+
+                <div class="profile-row" onclick="toggleSubform('changePasswordForm')">
+                    <div class="profile-row-icon icon-blue">🔑</div>
+                    <div class="profile-row-content">
+                        <div class="profile-row-label">Change Password</div>
+                        <div class="profile-row-sub">Update your login password</div>
+                    </div>
+                    <div class="profile-row-right" id="changePasswordArrow">›</div>
+                </div>
+                <div class="profile-subform" id="changePasswordForm">
+                    <input type="password" id="cpCurrentPass" placeholder="Current password" autocomplete="current-password">
+                    <input type="password" id="cpNewPass" placeholder="New password (min 6 chars)" autocomplete="new-password">
+                    <input type="password" id="cpConfirmPass" placeholder="Confirm new password" autocomplete="new-password">
+                    <div class="profile-subform-err" id="cpErr"></div>
+                    <div class="profile-subform-ok"  id="cpOk">✅ Password updated!</div>
+                    <button class="profile-subform-btn" onclick="saveNewPassword()">Update Password</button>
+                </div>
+
+                <!-- NOTIFICATIONS -->
+                <div class="profile-section-title">Notifications</div>
+
+                <div class="profile-row no-hover">
+                    <div class="profile-row-icon icon-yellow">🌅</div>
+                    <div class="profile-row-content">
+                        <div class="profile-row-label">Daily Summary</div>
+                        <div class="profile-row-sub">Morning briefing of today's tasks</div>
+                    </div>
+                    <label class="profile-toggle">
+                        <input type="checkbox" id="toggleDailySummary" onchange="saveSetting('dailySummaryEnabled', this.checked)">
+                        <span class="profile-toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="profile-row no-hover">
+                    <div class="profile-row-icon icon-yellow">⏰</div>
+                    <div class="profile-row-content">
+                        <div class="profile-row-label">Summary Time</div>
+                        <div class="profile-row-sub">When to receive the morning briefing</div>
+                    </div>
+                    <input type="time" id="summaryTimeInput" class="profile-inline-input"
+                        value="07:00" onchange="saveSetting('dailySummaryTime', this.value)">
+                </div>
+
+                <div class="profile-row no-hover">
+                    <div class="profile-row-icon icon-orange">⏰</div>
+                    <div class="profile-row-content">
+                        <div class="profile-row-label">1-Hour Reminder</div>
+                        <div class="profile-row-sub">Notify 1 hour before task is due</div>
+                    </div>
+                    <label class="profile-toggle">
+                        <input type="checkbox" id="toggle1Hour" onchange="saveSetting('notify1Hour', this.checked)">
+                        <span class="profile-toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="profile-row no-hover">
+                    <div class="profile-row-icon icon-orange">⚡</div>
+                    <div class="profile-row-content">
+                        <div class="profile-row-label">10-Minute Reminder</div>
+                        <div class="profile-row-sub">Notify 10 minutes before task is due</div>
+                    </div>
+                    <label class="profile-toggle">
+                        <input type="checkbox" id="toggle10Min" onchange="saveSetting('notify10Min', this.checked)">
+                        <span class="profile-toggle-slider"></span>
+                    </label>
+                </div>
+
+                <!-- PREFERENCES -->
+                <div class="profile-section-title">Preferences</div>
+
+                <div class="profile-row no-hover">
+                    <div class="profile-row-icon icon-purple">🌙</div>
+                    <div class="profile-row-content">
+                        <div class="profile-row-label">Dark Mode</div>
+                        <div class="profile-row-sub">Switch between light and dark theme</div>
+                    </div>
+                    <label class="profile-toggle">
+                        <input type="checkbox" id="toggleDarkMode" onchange="toggleThemeFromProfile(this.checked)">
+                        <span class="profile-toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="profile-row no-hover">
+                    <div class="profile-row-icon icon-green">📅</div>
+                    <div class="profile-row-content">
+                        <div class="profile-row-label">Week Starts On</div>
+                        <div class="profile-row-sub">First day of your week</div>
+                    </div>
+                    <select id="weekStartSelect" class="profile-inline-input"
+                        onchange="saveSetting('weekStart', this.value)" style="width:90px; text-align:left; cursor:pointer;">
+                        <option value="0">Sunday</option>
+                        <option value="1">Monday</option>
+                    </select>
+                </div>
+
+                <div class="profile-row no-hover">
+                    <div class="profile-row-icon icon-blue">🕐</div>
+                    <div class="profile-row-content">
+                        <div class="profile-row-label">Default Task Time</div>
+                        <div class="profile-row-sub">Pre-fill time when adding tasks</div>
+                    </div>
+                    <input type="time" id="defaultTaskTime" class="profile-inline-input"
+                        onchange="saveSetting('defaultTaskTime', this.value)">
+                </div>
+
+                <!-- DANGER ZONE -->
+                <div class="profile-section-title">Account Actions</div>
+
+                <div style="padding: 4px 14px;">
+                    <button class="profile-danger-btn" onclick="confirmLogout()">🚪 Logout</button>
+                    <button class="profile-danger-btn" onclick="confirmDeleteAccount()" style="margin-top:8px;">🗑️ Delete Account</button>
+                </div>
+
+            </div>
+        </div>
+
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, deleteUser } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getDatabase, ref, set, onValue, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
 const firebaseConfig = {
@@ -1447,7 +1732,7 @@ function scheduleTaskNotifications(task) {
         
         // 1. 1 hour before
         const oneHourBefore = new Date(taskDateTime.getTime() - 60 * 60 * 1000);
-        if (oneHourBefore > now) {
+        if (oneHourBefore > now && userSettings.notify1Hour !== false) {
             notifications.push({
                 time: oneHourBefore,
                 title: '⏰ Task Due in 1 Hour',
@@ -1458,7 +1743,7 @@ function scheduleTaskNotifications(task) {
         
         // 2. 10 minutes before
         const tenMinsBefore = new Date(taskDateTime.getTime() - 10 * 60 * 1000);
-        if (tenMinsBefore > now) {
+        if (tenMinsBefore > now && userSettings.notify10Min !== false) {
             notifications.push({
                 time: tenMinsBefore,
                 title: '⚡ Task Due in 10 Minutes',
@@ -1521,10 +1806,13 @@ function scheduleAllTaskNotifications() {
 let dailySummaryTimeoutId = null;
 function scheduleDailySummary() {
     if (Notification.permission !== 'granted') return;
+    if (userSettings && userSettings.dailySummaryEnabled === false) return;
     if (dailySummaryTimeoutId) { clearTimeout(dailySummaryTimeoutId); dailySummaryTimeoutId = null; }
     const now = new Date();
     const summary = new Date();
-    summary.setHours(7, 0, 0, 0);
+    const timeStr = (userSettings && userSettings.dailySummaryTime) || '07:00';
+    const [sHour, sMin] = timeStr.split(':').map(Number);
+    summary.setHours(sHour, sMin, 0, 0);
     if (now >= summary) summary.setDate(summary.getDate() + 1);
     const delay = summary.getTime() - now.getTime();
     dailySummaryTimeoutId = setTimeout(() => {
@@ -1884,6 +2172,184 @@ window.toggleAuthMode = () => {
 
 window.logout = () => signOut(auth);
 
+// =====================================================================
+// PROFILE PANEL
+// =====================================================================
+let userSettings = {
+    dailySummaryEnabled: true,
+    dailySummaryTime: '07:00',
+    notify1Hour: true,
+    notify10Min: true,
+    weekStart: 0,
+    defaultTaskTime: ''
+};
+
+function openProfile() {
+    const panel = document.getElementById('profilePanel');
+    const overlay = document.getElementById('profileOverlay');
+    panel.classList.add('open');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    populateProfileUI();
+}
+
+function closeProfile() {
+    document.getElementById('profilePanel').classList.remove('open');
+    document.getElementById('profileOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+}
+window.openProfile = openProfile;
+window.closeProfile = closeProfile;
+
+function populateProfileUI() {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    // Avatar: first letter of username (email prefix)
+    const username = user.email.replace('@missioncontrol.com', '');
+    document.getElementById('profileAvatar').textContent = username.charAt(0);
+    document.getElementById('profileUsername').textContent = username;
+    document.getElementById('profileEmailDisplay').textContent = user.email;
+    document.getElementById('profileNavBtn').textContent = username.charAt(0);
+
+    // Apply saved settings to UI
+    document.getElementById('toggleDailySummary').checked = userSettings.dailySummaryEnabled !== false;
+    document.getElementById('summaryTimeInput').value = userSettings.dailySummaryTime || '07:00';
+    document.getElementById('toggle1Hour').checked = userSettings.notify1Hour !== false;
+    document.getElementById('toggle10Min').checked = userSettings.notify10Min !== false;
+    document.getElementById('toggleDarkMode').checked = document.body.getAttribute('data-theme') === 'dark';
+    document.getElementById('weekStartSelect').value = userSettings.weekStart || 0;
+    document.getElementById('defaultTaskTime').value = userSettings.defaultTaskTime || '';
+}
+
+function loadUserSettings() {
+    if (!currentUserId) return;
+    const settingsRef = ref(db, `users/${currentUserId}/settings`);
+    onValue(settingsRef, (snap) => {
+        if (snap.val()) {
+            userSettings = { ...userSettings, ...snap.val() };
+        }
+        // Update profile nav avatar once loaded
+        const user = auth.currentUser;
+        if (user) {
+            const username = user.email.replace('@missioncontrol.com', '');
+            const btn = document.getElementById('profileNavBtn');
+            if (btn) btn.textContent = username.charAt(0);
+        }
+        // Reschedule daily summary with loaded time
+        if (typeof scheduleDailySummary === 'function') scheduleDailySummary();
+        // Redraw bar graph day labels with correct week start
+        updateBarGraphDayLabels();
+        renderTasks();
+        updateBarGraphWeekLabel();
+        // Apply default task time
+        if (userSettings.defaultTaskTime) {
+            const tf = document.getElementById('taskTime');
+            if (tf && !tf.value) tf.value = userSettings.defaultTaskTime;
+        }
+    }, { onlyOnce: false });
+}
+
+function saveSetting(key, value) {
+    if (!currentUserId) return;
+    userSettings[key] = value;
+    set(ref(db, `users/${currentUserId}/settings/${key}`), value);
+    // Live-apply certain settings
+    if (key === 'dailySummaryTime' || key === 'dailySummaryEnabled') {
+        if (typeof scheduleDailySummary === 'function') scheduleDailySummary();
+    }
+    if (key === 'weekStart') {
+        updateBarGraphDayLabels();
+        renderTasks();
+        updateBarGraphWeekLabel();
+    }
+    if (key === 'defaultTaskTime') {
+        document.getElementById('taskTime').value = value;
+    }
+}
+
+function updateBarGraphDayLabels() {
+    const weekStartDay = parseInt(userSettings.weekStart) || 0;
+    const allDays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const orderedDays = [...allDays.slice(weekStartDay), ...allDays.slice(0, weekStartDay)];
+    const labels = document.querySelectorAll('.chart-area .day-label');
+    labels.forEach((el, i) => { el.textContent = orderedDays[i]; });
+}
+window.saveSetting = saveSetting;
+
+function toggleSubform(id) {
+    const form = document.getElementById(id);
+    const isOpen = form.classList.contains('open');
+    // Close all subforms first
+    document.querySelectorAll('.profile-subform').forEach(f => f.classList.remove('open'));
+    if (!isOpen) form.classList.add('open');
+}
+window.toggleSubform = toggleSubform;
+
+async function saveNewPassword() {
+    const current = document.getElementById('cpCurrentPass').value;
+    const newP    = document.getElementById('cpNewPass').value;
+    const confirm = document.getElementById('cpConfirmPass').value;
+    const errEl   = document.getElementById('cpErr');
+    const okEl    = document.getElementById('cpOk');
+    errEl.style.display = 'none';
+    okEl.style.display  = 'none';
+
+    if (!current || !newP || !confirm) { errEl.textContent = 'Please fill all fields.'; errEl.style.display = 'block'; return; }
+    if (newP.length < 6) { errEl.textContent = 'New password must be at least 6 characters.'; errEl.style.display = 'block'; return; }
+    if (newP !== confirm) { errEl.textContent = 'Passwords do not match.'; errEl.style.display = 'block'; return; }
+
+    try {
+        const user = auth.currentUser;
+        const credential = EmailAuthProvider.credential(user.email, current);
+        await reauthenticateWithCredential(user, credential);
+        await updatePassword(user, newP);
+        okEl.style.display = 'block';
+        document.getElementById('cpCurrentPass').value = '';
+        document.getElementById('cpNewPass').value = '';
+        document.getElementById('cpConfirmPass').value = '';
+        setTimeout(() => { okEl.style.display = 'none'; document.getElementById('changePasswordForm').classList.remove('open'); }, 2500);
+    } catch(e) {
+        errEl.textContent = e.code === 'auth/wrong-password' ? 'Current password is incorrect.' : e.message;
+        errEl.style.display = 'block';
+    }
+}
+window.saveNewPassword = saveNewPassword;
+
+function toggleThemeFromProfile(isDark) {
+    const theme = isDark ? 'dark' : 'light';
+    document.body.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    updateThemeButton(theme);
+}
+window.toggleThemeFromProfile = toggleThemeFromProfile;
+
+function confirmLogout() {
+    if (confirm('Are you sure you want to logout?')) {
+        closeProfile();
+        signOut(auth);
+    }
+}
+window.confirmLogout = confirmLogout;
+
+async function confirmDeleteAccount() {
+    const sure = confirm('⚠️ Delete your account? This cannot be undone. All your tasks will be lost.');
+    if (!sure) return;
+    const pass = prompt('Enter your password to confirm:');
+    if (!pass) return;
+    try {
+        const user = auth.currentUser;
+        const credential = EmailAuthProvider.credential(user.email, pass);
+        await reauthenticateWithCredential(user, credential);
+        // Delete all user data
+        await remove(ref(db, `users/${currentUserId}`));
+        await deleteUser(user);
+    } catch(e) {
+        alert(e.code === 'auth/wrong-password' ? 'Wrong password. Account not deleted.' : e.message);
+    }
+}
+window.confirmDeleteAccount = confirmDeleteAccount;
+
 onAuthStateChanged(auth, (user) => {
     if (user) {
         currentUserId = user.uid;
@@ -1894,6 +2360,7 @@ onAuthStateChanged(auth, (user) => {
         document.getElementById('taskDate').min = getTodayStr();
         
         loadTasks();
+        loadUserSettings();
         checkNotificationBanner();
         
         // Auto-subscribe to push notifications if permission already granted
@@ -2149,8 +2616,10 @@ window.goToTodayWeek = function() {
 // Update bar graph week label
 function updateBarGraphWeekLabel() {
     const today = new Date();
+    const weekStartDay = parseInt(userSettings.weekStart) || 0;
     const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - today.getDay() + (barGraphWeekOffset * 7));
+    const diff = (today.getDay() - weekStartDay + 7) % 7;
+    weekStart.setDate(today.getDate() - diff + (barGraphWeekOffset * 7));
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
     
@@ -2199,8 +2668,10 @@ function updateBarGraphWeekLabel() {
 function updateWeeklyDashboardProgress() {
     // Update progress circles and stats without full re-render
     const today = new Date();
+    const weekStartDay = parseInt(userSettings.weekStart) || 0;
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
+    const diffW = (today.getDay() - weekStartDay + 7) % 7;
+    startOfWeek.setDate(today.getDate() - diffW);
     
     const cards = document.querySelectorAll('.day-card');
     
@@ -2265,7 +2736,9 @@ function renderWeeklyDashboard() {
     
     const today = new Date();
     const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay() + (weekOffset * 7)); // Apply week offset
+    const weekStartDayDash = parseInt(userSettings.weekStart) || 0;
+    const diffDash = (today.getDay() - weekStartDayDash + 7) % 7;
+    startOfWeek.setDate(today.getDate() - diffDash + (weekOffset * 7)); // Apply week offset
     
     const endOfWeek = new Date(startOfWeek);
     endOfWeek.setDate(startOfWeek.getDate() + 6);
@@ -2400,14 +2873,19 @@ function renderTasks() {
 
     const todayStr = getTodayStr();
     
-    // Calculate Sunday based on barGraphWeekOffset
+    // Calculate week start based on weekStart setting (0=Sun, 1=Mon)
+    const weekStartDay = parseInt(userSettings.weekStart) || 0;
     const sunStr = (() => {
         const d = new Date();
-        d.setDate(d.getDate() - d.getDay() + (barGraphWeekOffset * 7));
+        const currentDay = d.getDay(); // 0=Sun, 1=Mon...
+        const diff = (currentDay - weekStartDay + 7) % 7;
+        d.setDate(d.getDate() - diff + (barGraphWeekOffset * 7));
         return d.toLocaleDateString('en-CA');
     })();
-    
-    const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+    // Day labels starting from weekStartDay
+    const allDays = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+    const days = [...allDays.slice(weekStartDay), ...allDays.slice(0, weekStartDay)];
 
     let stats = [0,0,0,0,0,0,0], doneStats = [0,0,0,0,0,0,0];
     
@@ -2548,15 +3026,15 @@ function renderTasks() {
         if (dBar) dBar.style.height = doneHeight;
     });
     
-    // Calculate completion percentage for the selected week in bar graph
-    // Always calculate for the specific week (Sun-Sat), matching the bar graph logic
-    const weekStart = new Date();
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (barGraphWeekOffset * 7));
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
+    // Calculate completion percentage for the selected week (respects weekStart setting)
+    const pctWeekStart = new Date();
+    const pctDiff = (pctWeekStart.getDay() - weekStartDay + 7) % 7;
+    pctWeekStart.setDate(pctWeekStart.getDate() - pctDiff + (barGraphWeekOffset * 7));
+    const pctWeekEnd = new Date(pctWeekStart);
+    pctWeekEnd.setDate(pctWeekStart.getDate() + 6);
     
-    const weekStartStr = weekStart.toLocaleDateString('en-CA');
-    const weekEndStr = weekEnd.toLocaleDateString('en-CA');
+    const weekStartStr = pctWeekStart.toLocaleDateString('en-CA');
+    const weekEndStr = pctWeekEnd.toLocaleDateString('en-CA');
     
     // Only count tasks within this specific week (matches bar graph logic)
     const relevantTasks = allTasksForStats.filter(t => t.date >= weekStartStr && t.date <= weekEndStr);
