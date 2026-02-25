@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mission-control-v0.3.8';
+const CACHE_NAME = 'mission-control-v0.3.9';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
