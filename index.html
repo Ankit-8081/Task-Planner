@@ -3531,6 +3531,156 @@ window.closeModalOnOverlay = function(event, modalId) {
         else closeCompletedModal();
     }
 };
+
+// =====================================================================
+// SWIPE GESTURE DETECTION FOR VIEW NAVIGATION
+// =====================================================================
+
+let touchStartX = 0;
+let touchStartY = 0;
+let touchEndX = 0;
+let touchEndY = 0;
+let isCompletedViewActive = false;
+
+// Minimum swipe distance (in pixels)
+const minSwipeDistance = 50;
+
+// Track current view state
+const views = ['today', 'week', 'completed'];
+let currentViewIndex = 0; // 0=today, 1=week, 2=completed
+
+function handleTouchStart(e) {
+    // Don't intercept swipes on interactive elements
+    const target = e.target;
+    if (target.tagName === 'INPUT' || 
+        target.tagName === 'BUTTON' || 
+        target.tagName === 'SELECT' ||
+        target.closest('.modal') ||
+        target.closest('.analytics-container') ||
+        target.closest('.trends-canvas-wrapper')) {
+        return;
+    }
+    
+    touchStartX = e.changedTouches[0].screenX;
+    touchStartY = e.changedTouches[0].screenY;
+}
+
+function handleTouchEnd(e) {
+    // Don't intercept swipes on interactive elements
+    const target = e.target;
+    if (target.tagName === 'INPUT' || 
+        target.tagName === 'BUTTON' || 
+        target.tagName === 'SELECT' ||
+        target.closest('.modal') ||
+        target.closest('.analytics-container') ||
+        target.closest('.trends-canvas-wrapper')) {
+        return;
+    }
+    
+    touchEndX = e.changedTouches[0].screenX;
+    touchEndY = e.changedTouches[0].screenY;
+    handleSwipe();
+}
+
+function handleSwipe() {
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    
+    // Check if it's a horizontal swipe (not vertical scroll)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+        if (deltaX > 0) {
+            // Swipe right - go to previous view
+            swipeToPreviousView();
+        } else {
+            // Swipe left - go to next view
+            swipeToNextView();
+        }
+    }
+}
+
+function swipeToNextView() {
+    if (isCompletedViewActive) {
+        // Already at last view, do nothing or cycle back
+        return;
+    }
+    
+    if (currentView === 'today') {
+        // Today → Week
+        currentViewIndex = 1;
+        document.getElementById('view-week').click();
+    } else if (currentView === 'week') {
+        // Week → Completed
+        currentViewIndex = 2;
+        isCompletedViewActive = true;
+        showCompletedHistory();
+    }
+}
+
+function swipeToPreviousView() {
+    if (isCompletedViewActive) {
+        // Completed → Week
+        currentViewIndex = 1;
+        isCompletedViewActive = false;
+        document.getElementById('view-week').click();
+    } else if (currentView === 'week') {
+        // Week → Today
+        currentViewIndex = 0;
+        document.getElementById('view-today').click();
+    }
+    // If already at first view (today), do nothing
+}
+
+// Override showCompletedHistory to track state
+const originalShowCompletedHistory = window.showCompletedHistory;
+window.showCompletedHistory = function() {
+    isCompletedViewActive = true;
+    currentViewIndex = 2;
+    originalShowCompletedHistory();
+};
+
+// Override closeCompletedModal to track state
+const originalCloseCompletedModal = window.closeCompletedModal;
+window.closeCompletedModal = function() {
+    isCompletedViewActive = false;
+    // Determine which view to return to
+    if (currentView === 'week') {
+        currentViewIndex = 1;
+    } else {
+        currentViewIndex = 0;
+    }
+    originalCloseCompletedModal();
+};
+
+// Add touch event listeners
+document.addEventListener('touchstart', handleTouchStart, { passive: true });
+document.addEventListener('touchend', handleTouchEnd, { passive: true });
+
+// Add visual feedback (optional - add swipe indicator)
+const style = document.createElement('style');
+style.textContent = `
+    .swipe-indicator {
+        position: fixed;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 40px;
+        opacity: 0;
+        transition: opacity 0.2s;
+        pointer-events: none;
+        z-index: 9999;
+    }
+    .swipe-indicator.left {
+        right: 20px;
+    }
+    .swipe-indicator.right {
+        left: 20px;
+    }
+    .swipe-indicator.show {
+        opacity: 0.6;
+    }
+`;
+document.head.appendChild(style);
+
+console.log('✅ Swipe gestures enabled! Swipe left/right to navigate between views.');
 </script>
 </body>
 </html>
