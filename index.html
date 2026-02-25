@@ -1562,6 +1562,15 @@ let lastOnlineCheck = Date.now(); // Last time we checked for missed notificatio
 let weekOffset = 0; // Track which week to display (0 = current, -1 = last week, 1 = next week)
 let barGraphWeekOffset = 0; // Track which week to display in bar graph
 
+let userSettings = {
+    dailySummaryEnabled: true,
+    dailySummaryTime: '07:00',
+    notify1Hour: true,
+    notify10Min: true,
+    weekStart: 0,
+    defaultTaskTime: ''
+};
+
 // =====================================================================
 // NOTIFICATION SYSTEM
 // =====================================================================
@@ -1619,25 +1628,13 @@ async function subscribeToPushNotifications() {
         if (existingSubscription) {
             console.log('[Push] Already subscribed, updating Firebase...');
             const subscriptionId = btoa(existingSubscription.endpoint).replace(/[^a-zA-Z0-9]/g, '');
-            
-            // Use inline module script to access Firebase imports
-            const script = document.createElement('script');
-            script.type = 'module';
-            script.textContent = `
-                import { getDatabase, ref, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-                const db = getDatabase();
-                const subscriptionData = ${JSON.stringify(JSON.parse(JSON.stringify(existingSubscription)))};
-                const userId = '${currentUserId}';
-                const subscriptionId = '${subscriptionId}';
-                
-                try {
-                    await set(ref(db, 'users/' + userId + '/pushSubscriptions/' + subscriptionId), subscriptionData);
-                    console.log('[Push] ✅ Existing subscription saved to Firebase!');
-                } catch (error) {
-                    console.error('[Push] ❌ Failed to save:', error);
-                }
-            `;
-            document.head.appendChild(script);
+            const subscriptionData = JSON.parse(JSON.stringify(existingSubscription));
+            try {
+                await set(ref(db, `users/${currentUserId}/pushSubscriptions/${subscriptionId}`), subscriptionData);
+                console.log('[Push] ✅ Existing subscription saved to Firebase!');
+            } catch (error) {
+                console.error('[Push] ❌ Failed to save:', error);
+            }
             return;
         }
         
@@ -1653,28 +1650,16 @@ async function subscribeToPushNotifications() {
         });
         
         console.log('[Push] ✅ Subscription created:', subscription);
-        
-        // Save subscription to Firebase using inline module script
+
+        // Save subscription directly using already-imported Firebase
         const subscriptionId = btoa(subscription.endpoint).replace(/[^a-zA-Z0-9]/g, '');
         const subscriptionData = JSON.parse(JSON.stringify(subscription));
-        
-        const script = document.createElement('script');
-        script.type = 'module';
-        script.textContent = `
-            import { getDatabase, ref, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
-            const db = getDatabase();
-            const subscriptionData = ${JSON.stringify(subscriptionData)};
-            const userId = '${currentUserId}';
-            const subscriptionId = '${subscriptionId}';
-            
-            try {
-                await set(ref(db, 'users/' + userId + '/pushSubscriptions/' + subscriptionId), subscriptionData);
-                console.log('[Push] ✅ Subscription saved to Firebase!');
-            } catch (error) {
-                console.error('[Push] ❌ Failed to save:', error);
-            }
-        `;
-        document.head.appendChild(script);
+        try {
+            await set(ref(db, `users/${currentUserId}/pushSubscriptions/${subscriptionId}`), subscriptionData);
+            console.log('[Push] ✅ Subscription saved to Firebase!');
+        } catch (error) {
+            console.error('[Push] ❌ Failed to save:', error);
+        }
         
     } catch (error) {
         console.error('[Push] Subscription failed:', error);
@@ -2175,15 +2160,6 @@ window.logout = () => signOut(auth);
 // =====================================================================
 // PROFILE PANEL
 // =====================================================================
-let userSettings = {
-    dailySummaryEnabled: true,
-    dailySummaryTime: '07:00',
-    notify1Hour: true,
-    notify10Min: true,
-    weekStart: 0,
-    defaultTaskTime: ''
-};
-
 function openProfile() {
     const panel = document.getElementById('profilePanel');
     const overlay = document.getElementById('profileOverlay');
@@ -3533,154 +3509,268 @@ window.closeModalOnOverlay = function(event, modalId) {
 };
 
 // =====================================================================
-// SWIPE GESTURE DETECTION FOR VIEW NAVIGATION
+// SWIPE GESTURE NAVIGATION - FIXED VERSION
 // =====================================================================
 
 let touchStartX = 0;
 let touchStartY = 0;
-let touchEndX = 0;
-let touchEndY = 0;
-let isCompletedViewActive = false;
+let isSwiping = false;
 
-// Minimum swipe distance (in pixels)
-const minSwipeDistance = 50;
+// For touchpad
+let wheelDeltaX = 0;
+let wheelTimeout = null;
 
-// Track current view state
-const views = ['today', 'week', 'completed'];
-let currentViewIndex = 0; // 0=today, 1=week, 2=completed
+const MIN_SWIPE_DISTANCE = 80;
+const MIN_WHEEL_DELTA = 100;
 
-function handleTouchStart(e) {
-    // Don't intercept swipes on interactive elements
-    const target = e.target;
-    if (target.tagName === 'INPUT' || 
-        target.tagName === 'BUTTON' || 
-        target.tagName === 'SELECT' ||
-        target.closest('.modal') ||
-        target.closest('.analytics-container') ||
-        target.closest('.trends-canvas-wrapper')) {
-        return;
+// Add animation CSS
+const swipeAnimationStyle = document.createElement('style');
+swipeAnimationStyle.textContent = `
+    #app-dashboard {
+        transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94), opacity 0.3s ease;
     }
     
-    touchStartX = e.changedTouches[0].screenX;
-    touchStartY = e.changedTouches[0].screenY;
-}
-
-function handleTouchEnd(e) {
-    // Don't intercept swipes on interactive elements
-    const target = e.target;
-    if (target.tagName === 'INPUT' || 
-        target.tagName === 'BUTTON' || 
-        target.tagName === 'SELECT' ||
-        target.closest('.modal') ||
-        target.closest('.analytics-container') ||
-        target.closest('.trends-canvas-wrapper')) {
-        return;
+    #app-dashboard.swipe-left {
+        animation: slideLeft 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     }
     
-    touchEndX = e.changedTouches[0].screenX;
-    touchEndY = e.changedTouches[0].screenY;
-    handleSwipe();
-}
-
-function handleSwipe() {
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
-    
-    // Check if it's a horizontal swipe (not vertical scroll)
-    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
-        if (deltaX > 0) {
-            // Swipe right - go to previous view
-            swipeToPreviousView();
-        } else {
-            // Swipe left - go to next view
-            swipeToNextView();
-        }
-    }
-}
-
-function swipeToNextView() {
-    if (isCompletedViewActive) {
-        // Already at last view, do nothing or cycle back
-        return;
+    #app-dashboard.swipe-right {
+        animation: slideRight 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     }
     
-    if (currentView === 'today') {
-        // Today → Week
-        currentViewIndex = 1;
-        document.getElementById('view-week').click();
-    } else if (currentView === 'week') {
-        // Week → Completed
-        currentViewIndex = 2;
-        isCompletedViewActive = true;
-        showCompletedHistory();
+    @keyframes slideLeft {
+        0% { transform: translateX(0); opacity: 1; }
+        100% { transform: translateX(-30%); opacity: 0; }
     }
-}
-
-function swipeToPreviousView() {
-    if (isCompletedViewActive) {
-        // Completed → Week
-        currentViewIndex = 1;
-        isCompletedViewActive = false;
-        document.getElementById('view-week').click();
-    } else if (currentView === 'week') {
-        // Week → Today
-        currentViewIndex = 0;
-        document.getElementById('view-today').click();
+    
+    @keyframes slideRight {
+        0% { transform: translateX(0); opacity: 1; }
+        100% { transform: translateX(30%); opacity: 0; }
     }
-    // If already at first view (today), do nothing
-}
-
-// Override showCompletedHistory to track state
-const originalShowCompletedHistory = window.showCompletedHistory;
-window.showCompletedHistory = function() {
-    isCompletedViewActive = true;
-    currentViewIndex = 2;
-    originalShowCompletedHistory();
-};
-
-// Override closeCompletedModal to track state
-const originalCloseCompletedModal = window.closeCompletedModal;
-window.closeCompletedModal = function() {
-    isCompletedViewActive = false;
-    // Determine which view to return to
-    if (currentView === 'week') {
-        currentViewIndex = 1;
-    } else {
-        currentViewIndex = 0;
-    }
-    originalCloseCompletedModal();
-};
-
-// Add touch event listeners
-document.addEventListener('touchstart', handleTouchStart, { passive: true });
-document.addEventListener('touchend', handleTouchEnd, { passive: true });
-
-// Add visual feedback (optional - add swipe indicator)
-const style = document.createElement('style');
-style.textContent = `
+    
     .swipe-indicator {
         position: fixed;
         top: 50%;
         transform: translateY(-50%);
-        font-size: 40px;
+        font-size: 60px;
+        color: var(--primary);
         opacity: 0;
-        transition: opacity 0.2s;
         pointer-events: none;
-        z-index: 9999;
+        z-index: 99999;
+        transition: opacity 0.2s, transform 0.2s;
+        filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
     }
+    
     .swipe-indicator.left {
-        right: 20px;
+        left: 40px;
     }
+    
     .swipe-indicator.right {
-        left: 20px;
+        right: 40px;
     }
+    
     .swipe-indicator.show {
-        opacity: 0.6;
+        opacity: 0.9;
+        animation: pulse 0.6s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { transform: translateY(-50%) scale(1); }
+        50% { transform: translateY(-50%) scale(1.15); }
     }
 `;
-document.head.appendChild(style);
+document.head.appendChild(swipeAnimationStyle);
 
-console.log('✅ Swipe gestures enabled! Swipe left/right to navigate between views.');
+// Create swipe indicators
+const leftIndicator = document.createElement('div');
+leftIndicator.className = 'swipe-indicator left';
+leftIndicator.textContent = '◀';
+document.body.appendChild(leftIndicator);
+
+const rightIndicator = document.createElement('div');
+rightIndicator.className = 'swipe-indicator right';
+rightIndicator.textContent = '▶';
+document.body.appendChild(rightIndicator);
+
+// Get current view helper
+function getCurrentViewState() {
+    const completedModal = document.getElementById('completedModal');
+    const isCompletedOpen = completedModal && completedModal.classList.contains('show');
+    
+    if (isCompletedOpen) {
+        return 'completed';
+    }
+    return currentView; // 'today' or 'week'
+}
+
+// Set view with animation
+function navigateToViewAnimated(direction) {
+    const currentState = getCurrentViewState();
+    const dashboard = document.getElementById('app-dashboard');
+    
+    // Determine target view
+    let targetView = null;
+    
+    if (direction === 'next') {
+        // next = swipe left = moving right in layout: week → today → completed
+        if (currentState === 'week') {
+            targetView = 'today';
+        } else if (currentState === 'today') {
+            targetView = 'completed';
+        }
+    } else if (direction === 'prev') {
+        // prev = swipe right = moving left in layout: completed → today → week
+        if (currentState === 'completed') {
+            targetView = 'today';
+        } else if (currentState === 'today') {
+            targetView = 'week';
+        }
+    }
+    
+    // No navigation if at boundary
+    if (!targetView) return;
+    
+    // Animate out
+    const animClass = direction === 'next' ? 'swipe-left' : 'swipe-right';
+    dashboard.classList.add(animClass);
+    
+    setTimeout(() => {
+        // Switch view
+        if (targetView === 'week') {
+            document.getElementById('view-week').click();
+        } else if (targetView === 'today') {
+            if (currentState === 'completed') {
+                closeCompletedModal();
+            }
+            document.getElementById('view-today').click();
+        } else if (targetView === 'completed') {
+            showCompletedHistory();
+        }
+        
+        // Remove animation class and reset
+        dashboard.classList.remove(animClass);
+        dashboard.style.transform = '';
+        dashboard.style.opacity = '';
+        
+        // Animate in
+        dashboard.style.transform = direction === 'next' ? 'translateX(30%)' : 'translateX(-30%)';
+        dashboard.style.opacity = '0';
+        
+        setTimeout(() => {
+            dashboard.style.transform = 'translateX(0)';
+            dashboard.style.opacity = '1';
+        }, 50);
+    }, 300);
+}
+
+// Touch handlers
+function onTouchStart(e) {
+    const target = e.target;
+    
+    // Skip on interactive elements
+    if (target.tagName === 'INPUT' || 
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.closest('button') ||
+        target.closest('canvas')) {
+        return;
+    }
+    
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    isSwiping = true;
+}
+
+function onTouchMove(e) {
+    if (!isSwiping) return;
+    
+    const touchCurrentX = e.touches[0].clientX;
+    const touchCurrentY = e.touches[0].clientY;
+    const deltaX = touchCurrentX - touchStartX;
+    const deltaY = touchCurrentY - touchStartY;
+    
+    // Check if it's a horizontal swipe
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
+        // Show indicator
+        if (deltaX > 0) {
+            leftIndicator.classList.add('show');
+            rightIndicator.classList.remove('show');
+        } else {
+            rightIndicator.classList.add('show');
+            leftIndicator.classList.remove('show');
+        }
+    }
+}
+
+function onTouchEnd(e) {
+    if (!isSwiping) return;
+    
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaX = touchEndX - touchStartX;
+    const deltaY = touchEndY - touchStartY;
+    
+    isSwiping = false;
+    leftIndicator.classList.remove('show');
+    rightIndicator.classList.remove('show');
+    
+    // Check if it's a valid horizontal swipe
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > MIN_SWIPE_DISTANCE) {
+        if (deltaX > 0) {
+            // Swipe right - go to previous view
+            navigateToViewAnimated('prev');
+        } else {
+            // Swipe left - go to next view
+            navigateToViewAnimated('next');
+        }
+    }
+}
+
+// Touchpad handler
+function onWheel(e) {
+    // Only handle horizontal scroll
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY) && Math.abs(e.deltaX) > 10) {
+        e.preventDefault();
+        
+        wheelDeltaX += e.deltaX;
+        
+        // Show indicator
+        if (e.deltaX > 0) {
+            rightIndicator.classList.add('show');
+            leftIndicator.classList.remove('show');
+        } else {
+            leftIndicator.classList.add('show');
+            rightIndicator.classList.remove('show');
+        }
+        
+        clearTimeout(wheelTimeout);
+        wheelTimeout = setTimeout(() => {
+            leftIndicator.classList.remove('show');
+            rightIndicator.classList.remove('show');
+            
+            if (Math.abs(wheelDeltaX) > MIN_WHEEL_DELTA) {
+                if (wheelDeltaX > 0) {
+                    // Scroll right - go to next view
+                    navigateToViewAnimated('next');
+                } else {
+                    // Scroll left - go to previous view
+                    navigateToViewAnimated('prev');
+                }
+            }
+            wheelDeltaX = 0;
+        }, 100);
+    }
+}
+
+// Add event listeners
+document.addEventListener('touchstart', onTouchStart, { passive: true });
+document.addEventListener('touchmove', onTouchMove, { passive: true });
+document.addEventListener('touchend', onTouchEnd, { passive: true });
+document.addEventListener('wheel', onWheel, { passive: false });
+
+console.log('✅ Swipe navigation enabled!');
+console.log('📱 Mobile: Swipe left (next) / right (prev)');
+console.log('💻 Laptop: Horizontal touchpad scroll');
 </script>
 </body>
 </html>
