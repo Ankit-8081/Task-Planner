@@ -2627,11 +2627,15 @@ window.addTask = function() {
 // ─── Recurrence helper ──────────────────────────────────────────────────────
 function getNextRecurDate(dateStr, recur) {
     const [y, m, d] = dateStr.split('-').map(Number);
-    const dt = new Date(y, m - 1, d);
+    const dt = new Date(y, m - 1, d); // local date — no UTC shift
     if (recur === 'daily')   dt.setDate(dt.getDate() + 1);
     if (recur === 'weekly')  dt.setDate(dt.getDate() + 7);
     if (recur === 'monthly') dt.setMonth(dt.getMonth() + 1);
-    return dt.toISOString().split('T')[0];
+    // Use local date parts to avoid UTC timezone shifting the date
+    const ny = dt.getFullYear();
+    const nm = String(dt.getMonth() + 1).padStart(2, '0');
+    const nd = String(dt.getDate()).padStart(2, '0');
+    return `${ny}-${nm}-${nd}`;
 }
 
 window.toggleTask = function(id) {
@@ -2682,6 +2686,11 @@ window.deleteTask = function(id) {
     if (confirm('Delete this task?')) {
         remove(ref(db, `users/${currentUserId}/tasks/${id}`));
         clearTaskNotifications(id);
+        // If completed history modal is open, refresh it after Firebase removes the task
+        const completedModal = document.getElementById('completedModal');
+        if (completedModal && completedModal.classList.contains('show')) {
+            setTimeout(() => showCompletedHistory(), 300);
+        }
     }
 };
 
