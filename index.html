@@ -1410,6 +1410,12 @@
                 <option value="personal">Personal</option>
                 <option value="urgent">Urgent</option>
             </select>
+            <select id="taskRecur" title="Repeat">
+                <option value="">No Repeat</option>
+                <option value="daily">Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="monthly">Monthly</option>
+            </select>
             <button onclick="addTask()">ADD</button>
         </div>
 
@@ -1450,6 +1456,12 @@
                     <option value="home">Home</option>
                     <option value="personal">Personal</option>
                     <option value="urgent">Urgent</option>
+                </select>
+                <select id="editTaskRecur" title="Repeat">
+                    <option value="">No Repeat</option>
+                    <option value="daily">Daily</option>
+                    <option value="weekly">Weekly</option>
+                    <option value="monthly">Monthly</option>
                 </select>
                 <div class="edit-form-actions">
                     <button type="button" class="btn-cancel" onclick="closeEditModal()">Cancel</button>
@@ -2181,6 +2193,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (taskNameInput)      taskNameInput.addEventListener('keypress', addTaskOnEnter);
     if (taskDateInput)      taskDateInput.addEventListener('keypress', addTaskOnEnter);
     if (taskStartTimeInput) taskStartTimeInput.addEventListener('keypress', addTaskOnEnter);
+
+    const taskEndTimeInput = document.getElementById('taskEndTime');
+    if (taskEndTimeInput)   taskEndTimeInput.addEventListener('keypress', addTaskOnEnter);
+
+    initDualTime();
+    initEditDualTime();
 });
 
 // =====================================================================
@@ -2583,6 +2601,7 @@ window.addTask = function() {
     const startTime = document.getElementById('taskStartTime').value;
     const endTime   = document.getElementById('taskEndTime').value;
     const cat       = document.getElementById('taskCat').value;
+    const recur     = document.getElementById('taskRecur').value;
 
     if (!name || !date) { alert('Please enter task name and date'); return; }
     if (startTime && endTime && endTime <= startTime) {
@@ -2594,14 +2613,26 @@ window.addTask = function() {
         name, date, cat,
         startTime: startTime || null,
         endTime:   endTime   || null,
+        recur:     recur     || null,
         completed: false, completedAt: null
     };
 
     set(ref(db, `users/${currentUserId}/tasks/${taskId}`), taskData);
 
     document.getElementById('taskName').value = '';
+    document.getElementById('taskRecur').value = '';
     clearDualTime();
 };
+
+// ─── Recurrence helper ──────────────────────────────────────────────────────
+function getNextRecurDate(dateStr, recur) {
+    const [y, m, d] = dateStr.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    if (recur === 'daily')   dt.setDate(dt.getDate() + 1);
+    if (recur === 'weekly')  dt.setDate(dt.getDate() + 7);
+    if (recur === 'monthly') dt.setMonth(dt.getMonth() + 1);
+    return dt.toISOString().split('T')[0];
+}
 
 window.toggleTask = function(id) {
     const task = allTasks.find(t => t.id === id);
@@ -2618,6 +2649,23 @@ window.toggleTask = function(id) {
     // Clear notifications if task is completed
     if (newState) {
         clearTaskNotifications(id);
+
+        // ── Spawn next occurrence for recurring tasks ──
+        if (task.recur) {
+            const nextDate  = getNextRecurDate(task.date, task.recur);
+            const nextId    = Date.now().toString();
+            const nextTask  = {
+                name:      task.name,
+                date:      nextDate,
+                cat:       task.cat,
+                recur:     task.recur,
+                startTime: task.startTime || null,
+                endTime:   task.endTime   || null,
+                completed: false,
+                completedAt: null
+            };
+            set(ref(db, `users/${currentUserId}/tasks/${nextId}`), nextTask);
+        }
     }
     
     // If unticking from completed modal, refresh the modal
@@ -2649,7 +2697,8 @@ window.editTask = function(id) {
     document.getElementById('editTaskDate').value = task.date;
     document.getElementById('editTaskStartTime').value = task.startTime || task.time || '';
     document.getElementById('editTaskEndTime').value   = task.endTime || '';
-    document.getElementById('editTaskCat').value = task.cat;
+    document.getElementById('editTaskCat').value   = task.cat;
+    document.getElementById('editTaskRecur').value  = task.recur || '';
     
     // Set minimum date to today (prevent editing to past dates)
     document.getElementById('editTaskDate').min = getTodayStr();
@@ -2672,6 +2721,7 @@ window.saveEditedTask = function(event) {
     const startTime = document.getElementById('editTaskStartTime').value;
     const endTime   = document.getElementById('editTaskEndTime').value;
     const cat       = document.getElementById('editTaskCat').value;
+    const recur     = document.getElementById('editTaskRecur').value;
 
     if (!name || !date) { alert('Please enter task name and date'); return; }
     if (startTime && endTime && endTime <= startTime) {
@@ -2681,7 +2731,8 @@ window.saveEditedTask = function(event) {
     const updates = {
         name, date, cat,
         startTime: startTime || null,
-        endTime:   endTime   || null
+        endTime:   endTime   || null,
+        recur:     recur     || null
     };
     
     update(ref(db, `users/${currentUserId}/tasks/${currentEditingTaskId}`), updates);
@@ -2991,7 +3042,7 @@ function renderWeeklyDashboard() {
                         <div class="day-task-item ${task.completed ? 'completed' : ''}">
                             <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" style="accent-color: var(--primary);">
                             <span>${task.name}</span>
-                            ${task.time ? `<span style="margin-left: auto; opacity: 0.6; font-size: 11px;">${task.time}</span>` : ''}
+                            ${(task.startTime || task.time) ? `<span style="margin-left: auto; opacity: 0.6; font-size: 11px;">${task.startTime || task.time}${task.endTime ? ' → ' + task.endTime : ''}</span>` : ''}
                         </div>
                     `).join('')}
             </div>
@@ -3082,20 +3133,8 @@ function renderTasks() {
         // Skip completed tasks
         if (t.completed) return;
         
-        // Overdue: past the END time if set, otherwise past the START time
-        const isOverdue = () => {
-            if (t.date < todayStr) return true;
-            if (t.date === todayStr) {
-                const overdueAt = t.endTime || t.startTime || t.time;
-                if (overdueAt) {
-                    const now = new Date();
-                    const [hours, minutes] = overdueAt.split(':').map(Number);
-                    const dt = new Date(); dt.setHours(hours, minutes, 0, 0);
-                    return now > dt;
-                }
-            }
-            return false;
-        };
+        // Overdue: uses module-scope isTaskOverdue utility
+        const isOverdue = () => isTaskOverdue(t);
         
         if (t.date === todayStr) {
             if (isOverdue()) {
@@ -3224,6 +3263,25 @@ function renderTasks() {
 }
 
 // Helper function to create task element
+// =====================================================================
+// GLOBAL OVERDUE UTILITY — used by render loop + future productivity counter
+// =====================================================================
+function isTaskOverdue(t) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (t.completed) return false;
+    if (t.date < todayStr) return true;
+    if (t.date === todayStr) {
+        const overdueAt = t.endTime || t.startTime || t.time;
+        if (overdueAt) {
+            const now = new Date();
+            const [hours, minutes] = overdueAt.split(':').map(Number);
+            const dt = new Date(); dt.setHours(hours, minutes, 0, 0);
+            return now > dt;
+        }
+    }
+    return false;
+}
+
 function createTaskElement(t) {
     const li = document.createElement('li');
     li.style.borderLeftColor = `var(--cat-${t.cat})`;
@@ -3233,11 +3291,16 @@ function createTaskElement(t) {
     const timeDisplay = _st
         ? ` <span style="font-size: 11px; opacity: 0.7;">(${_st}${_et ? ' → ' + _et : ''})</span>`
         : '';
-    
+
+    const recurIcons = { daily: '🔁', weekly: '📅', monthly: '🗓️' };
+    const recurBadge = t.recur
+        ? ` <span title="Repeats ${t.recur}" style="font-size:10px;opacity:0.6;">${recurIcons[t.recur] || '🔁'} ${t.recur}</span>`
+        : '';
+
     li.innerHTML = `<div><input type="checkbox" ${t.completed?'checked':''} onchange="toggleTask('${t.id}')">
-        <span style="${t.completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${t.name}${timeDisplay}</span></div>
+        <span style="${t.completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${t.name}${timeDisplay}${recurBadge}</span></div>
         <div><button class="btn-icon" onclick="editTask('${t.id}')" title="Edit">✏️</button><button class="btn-icon" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button></div>`;
-    
+
     return li;
 }
 
@@ -3404,18 +3467,20 @@ function renderTrendsGraph() {
         if (daysDiff > 365) break;
     }
     
-    // Calculate best streak in the DISPLAYED month only
+    // Calculate best streak ACROSS ALL TIME (not just displayed month)
     let currentStreakCount = 0;
-    for (let i = 0; i < days.length; i++) {
-        if (days[i].total > 0 && days[i].percentage === 100) {
+    const allDates = Object.keys(dateCompletionMap).sort(); // oldest → newest
+    for (const dateStr of allDates) {
+        const d = dateCompletionMap[dateStr];
+        if (d.total > 0 && d.percentage === 100) {
             currentStreakCount++;
-            if (currentStreakCount > bestStreak) {
-                bestStreak = currentStreakCount;
-            }
-        } else if (days[i].total > 0) {
+            if (currentStreakCount > bestStreak) bestStreak = currentStreakCount;
+        } else if (d.total > 0) {
             currentStreakCount = 0;
         }
     }
+    // Current streak is always at least as good as best
+    if (consecutiveStreak > bestStreak) bestStreak = consecutiveStreak;
     
     // Update stats display
     document.getElementById('avgCompletion').textContent = Math.round(avgCompletion) + '%';
@@ -4029,4 +4094,4 @@ console.log('📱 Mobile: Swipe left (next) / right (prev)');
 console.log('💻 Laptop: Horizontal touchpad scroll');
 </script>
 </body>
-</html>s
+</html>
