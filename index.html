@@ -242,7 +242,35 @@
             padding: 10px 20px; 
             font-weight: 600; 
             text-align: center; 
-            font-size: 18px; 
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .trends-month-nav-btn {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        .trends-month-nav-btn:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.1);
+        }
+        .trends-month-nav-btn:active {
+            transform: scale(0.95);
+        }
+        #trendsMonthLabel {
+            flex: 1;
+            text-align: center;
         }
         .trends-content { 
             padding: 25px; 
@@ -288,6 +316,17 @@
         
         /* Scroll hint for mobile */
         @media (max-width: 768px) {
+            .trends-month-nav-btn {
+                width: 28px;
+                height: 28px;
+                font-size: 14px;
+            }
+            
+            .trends-header {
+                font-size: 16px;
+                padding: 8px 15px;
+            }
+            
             .trends-scroll-indicator {
                 display: block;
             }
@@ -554,20 +593,52 @@
         .cat-tab.active { background: #34495e !important; color: white !important; }
         .input-bar { 
             background: var(--card-bg); padding: 20px; border-radius: 20px; 
-            display: grid; grid-template-columns: 2fr 1.2fr 1.1fr 1fr auto; 
+            display: grid; grid-template-columns: 2fr 1.2fr 1.6fr 1fr auto; 
             gap: 12px; margin-bottom: 25px; border-bottom: 4px solid var(--primary); 
             box-shadow: 0 10px 20px rgba(0,0,0,0.05); transition: border-bottom 0.3s;
         }
+
         
         .input-bar input, .input-bar select {
             padding: 12px; border: 1px solid var(--border); border-radius: 10px; outline: none; font-family: inherit; background: var(--card-bg); color: var(--text);
         }
+
         .input-bar button { 
             background: var(--primary); color: white; border: none; padding: 0 30px; 
             border-radius: 12px; font-weight: 600; letter-spacing: 1px; cursor: pointer; 
             transition: all 0.2s ease; box-shadow: 0 4px 0 var(--primary-shadow); 
         }
         .input-bar button:active { transform: translateY(3px); box-shadow: 0 2px 0 var(--primary-shadow); }
+
+        /* Dual time input: __:__ → __:__ */
+        .dual-time {
+            display: inline-flex; align-items: center; gap: 4px;
+            border: 1px solid var(--border); border-radius: 10px;
+            background: var(--card-bg); padding: 0 10px;
+            cursor: text; transition: border-color 0.2s;
+            font-family: inherit; font-size: 13px; color: var(--text);
+            height: 100%; box-sizing: border-box; width: 100%;
+        }
+        .dual-time:focus-within { border-color: var(--primary); }
+        .dual-time input[type=time] {
+            border: none; outline: none; background: transparent;
+            color: var(--text); font-family: inherit; font-size: 13px;
+            padding: 10px 0; width: 90px; flex-shrink: 0;
+        }
+        .dual-time-sep {
+            font-weight: 700; color: var(--primary);
+            flex-shrink: 0; pointer-events: none; opacity: 0.7;
+        }
+        .dual-time-clear {
+            background: none; border: none; padding: 0 0 0 4px;
+            color: var(--primary); cursor: pointer; font-size: 11px;
+            opacity: 0; pointer-events: none; transition: opacity 0.15s;
+        }
+        .dual-time:focus-within .dual-time-clear,
+        .dual-time.has-value .dual-time-clear {
+            opacity: 0.5; pointer-events: auto;
+        }
+        .dual-time-clear:hover { opacity: 1 !important; }
         .board { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 20px; }
         .col { background: var(--col-bg); padding: 18px; border-radius: 24px; min-height: 400px; transition: background 0.3s; }
         
@@ -1269,7 +1340,14 @@
 
         <!-- Completion Trends Graph -->
         <div class="trends-container">
-            <div class="trends-header">📈 Monthly Completion Trends</div>
+            <div class="trends-header">
+                <button class="trends-month-nav-btn" onclick="navigateTrendsMonth(-1)" title="Previous Month">◀</button>
+                <div style="flex: 1; text-align: center;">
+                    <span id="trendsMonthLabel">📈 Monthly Completion Trends</span>
+                    <button class="today-btn" onclick="goToCurrentMonth()" title="Jump to current month" id="trendsTodayBtn" style="display: none;">Today</button>
+                </div>
+                <button class="trends-month-nav-btn" onclick="navigateTrendsMonth(1)" title="Next Month" id="trendsNextBtn" style="visibility: hidden;">▶</button>
+            </div>
             <div class="trends-content">
                 <div class="trends-canvas-wrapper" id="trendsWrapper">
                     <canvas id="trendsCanvas"></canvas>
@@ -1320,7 +1398,12 @@
         <div class="input-bar">
             <input type="text" id="taskName" placeholder="Task Name" />
             <input type="date" id="taskDate" min="" />
-            <input type="time" id="taskTime" placeholder="Time (Optional)" />
+            <div class="dual-time" id="dualTimeWrap">
+                <input type="time" id="taskStartTime" title="Start time" />
+                <span class="dual-time-sep">→</span>
+                <input type="time" id="taskEndTime" title="End time" />
+                <button type="button" class="dual-time-clear" onclick="clearDualTime()" title="Clear">✕</button>
+            </div>
             <select id="taskCat">
                 <option value="work">Work</option>
                 <option value="home">Home</option>
@@ -1356,7 +1439,12 @@
             <form class="edit-form" onsubmit="saveEditedTask(event)">
                 <input type="text" id="editTaskName" placeholder="Task Name" required />
                 <input type="date" id="editTaskDate" required />
-                <input type="time" id="editTaskTime" placeholder="Time (Optional)" />
+                <div class="dual-time" id="editDualTimeWrap">
+                    <input type="time" id="editTaskStartTime" title="Start time" />
+                    <span class="dual-time-sep">→</span>
+                    <input type="time" id="editTaskEndTime" title="End time" />
+                    <button type="button" class="dual-time-clear" onclick="clearEditDualTime()" title="Clear">✕</button>
+                </div>
                 <select id="editTaskCat">
                     <option value="work">Work</option>
                     <option value="home">Home</option>
@@ -1554,6 +1642,7 @@ const db = getDatabase(app);
 let allTasks = [];
 let currentView = 'today';
 let currentCategory = 'all';
+let trendsMonthOffset = 0; // 0 = current month, -1 = last month, 1 = next month (not used)
 let currentUserId = null;
 let currentEditingTaskId = null;
 let isLoginMode = true;
@@ -1711,29 +1800,33 @@ function scheduleTaskNotifications(task) {
     
     const notifications = [];
     
-    // If task has a specific time
-    if (task.time) {
-        const taskDateTime = new Date(task.date + 'T' + task.time + ':00');
-        
-        // 1. 1 hour before
-        const oneHourBefore = new Date(taskDateTime.getTime() - 60 * 60 * 1000);
+    // Notifications fire relative to START time
+    const notifTime = task.startTime || task.time; // backwards-compatible with old tasks
+    if (notifTime) {
+        const taskStartDT = new Date(task.date + 'T' + notifTime + ':00');
+        const timeLabel   = (task.endTime)
+            ? `${notifTime} – ${task.endTime}`
+            : notifTime;
+
+        // 1. 1 hour before start
+        const oneHourBefore = new Date(taskStartDT.getTime() - 60 * 60 * 1000);
         if (oneHourBefore > now && userSettings.notify1Hour !== false) {
             notifications.push({
-                time: oneHourBefore,
-                title: '⏰ Task Due in 1 Hour',
-                body: `"${task.name}" is due at ${task.time}`,
-                tag: `1hour-${task.id}`
+                time:  oneHourBefore,
+                title: '⏰ Task Starting in 1 Hour',
+                body:  `"${task.name}" starts at ${timeLabel}`,
+                tag:   `1hour-${task.id}`
             });
         }
-        
-        // 2. 10 minutes before
-        const tenMinsBefore = new Date(taskDateTime.getTime() - 10 * 60 * 1000);
+
+        // 2. 10 minutes before start
+        const tenMinsBefore = new Date(taskStartDT.getTime() - 10 * 60 * 1000);
         if (tenMinsBefore > now && userSettings.notify10Min !== false) {
             notifications.push({
-                time: tenMinsBefore,
-                title: '⚡ Task Due in 10 Minutes',
-                body: `"${task.name}" is due at ${task.time}`,
-                tag: `10min-${task.id}`
+                time:  tenMinsBefore,
+                title: '⚡ Task Starting in 10 Minutes',
+                body:  `"${task.name}" starts at ${timeLabel}`,
+                tag:   `10min-${task.id}`
             });
         }
     }
@@ -1805,7 +1898,11 @@ function scheduleDailySummary() {
         const todayTasks = allTasks.filter(t => !t.completed && t.date === todayStr);
         if (todayTasks.length > 0) {
             const lines = todayTasks
-                .map(t => t.time ? `• ${t.name} at ${t.time}` : `• ${t.name}`)
+                .map(t => {
+                    const _s = t.startTime || t.time;
+                    const _e = t.endTime;
+                    return _s ? `• ${t.name} at ${_s}${_e ? ' → ' + _e : ''}` : `• ${t.name}`;
+                })
                 .slice(0, 5).join('\n') +
                 (todayTasks.length > 5 ? `\n…and ${todayTasks.length - 5} more` : '');
             showNotification(
@@ -1825,45 +1922,41 @@ function checkMissedNotifications() {
     const todayStr = getTodayStr();
     const newMissedNotifications = [];
     
-    allTasks.filter(t => !t.completed && t.date === todayStr && t.time).forEach(task => {
-        const [hours, minutes] = task.time.split(':').map(Number);
-        const taskDateTime = new Date();
-        taskDateTime.setHours(hours, minutes, 0, 0);
-        
-        const oneHourBefore = new Date(taskDateTime.getTime() - 60 * 60 * 1000);
-        const tenMinsBefore = new Date(taskDateTime.getTime() - 10 * 60 * 1000);
-        
-        // Check if notification time has passed (but task hasn't started yet)
+    allTasks.filter(t => !t.completed && t.date === todayStr && (t.startTime || t.time)).forEach(task => {
+        const notifTime   = task.startTime || task.time;
+        const timeLabel   = task.endTime ? `${notifTime} – ${task.endTime}` : notifTime;
+        const [h, m]      = notifTime.split(':').map(Number);
+        const taskStartDT = new Date(); taskStartDT.setHours(h, m, 0, 0);
+
+        const oneHourBefore = new Date(taskStartDT.getTime() - 60 * 60 * 1000);
+        const tenMinsBefore = new Date(taskStartDT.getTime() - 10 * 60 * 1000);
+
         const timeSinceOneHour = now.getTime() - oneHourBefore.getTime();
         const timeSinceTenMins = now.getTime() - tenMinsBefore.getTime();
-        
+
         // Missed 1-hour notification
-        if (timeSinceOneHour > 0 && timeSinceOneHour < 70 * 60 * 1000 && now < taskDateTime) {
+        if (timeSinceOneHour > 0 && timeSinceOneHour < 70 * 60 * 1000 && now < taskStartDT) {
             if (!missedNotifications.find(m => m.taskId === task.id && m.type === '1h')) {
                 console.log(`[Missed Notification] 1-hour notification for: ${task.name}`);
                 newMissedNotifications.push({
-                    taskId: task.id,
-                    taskName: task.name,
-                    taskTime: task.time,
-                    type: '1h',
-                    message: `Task "${task.name}" is due at ${task.time}`
+                    taskId: task.id, taskName: task.name,
+                    taskTime: timeLabel, type: '1h',
+                    message: `"${task.name}" starts at ${timeLabel}`
                 });
-                showNotification('⏰ Missed: Task Due Soon', `"${task.name}" is due at ${task.time}`, `missed-1h-${task.id}`);
+                showNotification('⏰ Missed: Task Starting Soon', `"${task.name}" starts at ${timeLabel}`, `missed-1h-${task.id}`);
             }
         }
-        
+
         // Missed 10-minute notification
-        if (timeSinceTenMins > 0 && timeSinceTenMins < 20 * 60 * 1000 && now < taskDateTime) {
+        if (timeSinceTenMins > 0 && timeSinceTenMins < 20 * 60 * 1000 && now < taskStartDT) {
             if (!missedNotifications.find(m => m.taskId === task.id && m.type === '10m')) {
                 console.log(`[Missed Notification] 10-min notification for: ${task.name}`);
                 newMissedNotifications.push({
-                    taskId: task.id,
-                    taskName: task.name,
-                    taskTime: task.time,
-                    type: '10m',
-                    message: `Task "${task.name}" is due at ${task.time}`
+                    taskId: task.id, taskName: task.name,
+                    taskTime: timeLabel, type: '10m',
+                    message: `"${task.name}" starts at ${timeLabel}`
                 });
-                showNotification('⚡ Missed: Task Due Very Soon', `"${task.name}" is due at ${task.time}`, `missed-10m-${task.id}`);
+                showNotification('⚡ Missed: Task Starting Very Soon', `"${task.name}" starts at ${timeLabel}`, `missed-10m-${task.id}`);
             }
         }
     });
@@ -2077,21 +2170,17 @@ document.getElementById('install-btn').addEventListener('click', async () => {
 // ADD TASK ON ENTER KEY
 // =====================================================================
 document.addEventListener('DOMContentLoaded', () => {
-    const taskNameInput = document.getElementById('taskName');
-    const taskDateInput = document.getElementById('taskDate');
-    const taskTimeInput = document.getElementById('taskTime');
-    
-    // Add task when pressing Enter in any input field
+    const taskNameInput      = document.getElementById('taskName');
+    const taskDateInput      = document.getElementById('taskDate');
+    const taskStartTimeInput = document.getElementById('taskStartTime');
+
     const addTaskOnEnter = (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            addTask();
-        }
+        if (e.key === 'Enter') { e.preventDefault(); addTask(); }
     };
-    
-    if (taskNameInput) taskNameInput.addEventListener('keypress', addTaskOnEnter);
-    if (taskDateInput) taskDateInput.addEventListener('keypress', addTaskOnEnter);
-    if (taskTimeInput) taskTimeInput.addEventListener('keypress', addTaskOnEnter);
+
+    if (taskNameInput)      taskNameInput.addEventListener('keypress', addTaskOnEnter);
+    if (taskDateInput)      taskDateInput.addEventListener('keypress', addTaskOnEnter);
+    if (taskStartTimeInput) taskStartTimeInput.addEventListener('keypress', addTaskOnEnter);
 });
 
 // =====================================================================
@@ -2220,8 +2309,13 @@ function loadUserSettings() {
         updateBarGraphWeekLabel();
         // Apply default task time
         if (userSettings.defaultTaskTime) {
-            const tf = document.getElementById('taskTime');
-            if (tf && !tf.value) tf.value = userSettings.defaultTaskTime;
+            const tfStart = document.getElementById('taskStartTime');
+            if (tfStart && !tfStart.value) tfStart.value = userSettings.defaultTaskTime;
+            updateDualTimeState(
+                document.getElementById('dualTimeWrap'),
+                document.getElementById('taskStartTime'),
+                document.getElementById('taskEndTime')
+            );
         }
     }, { onlyOnce: false });
 }
@@ -2240,7 +2334,13 @@ function saveSetting(key, value) {
         updateBarGraphWeekLabel();
     }
     if (key === 'defaultTaskTime') {
-        document.getElementById('taskTime').value = value;
+        const _tf = document.getElementById('taskStartTime');
+        if (_tf) _tf.value = value;
+        updateDualTimeState(
+            document.getElementById('dualTimeWrap'),
+            document.getElementById('taskStartTime'),
+            document.getElementById('taskEndTime')
+        );
     }
 }
 
@@ -2397,34 +2497,110 @@ function loadTasks() {
     });
 }
 
+// =====================================================================
+// SMART TWO-STAGE TIME PICKER
+// =====================================================================
+// DUAL TIME WIDGET  (__:__ → __:__)
+// =====================================================================
+function initDualTime() {
+    const startEl = document.getElementById('taskStartTime');
+    const endEl   = document.getElementById('taskEndTime');
+    const wrap    = document.getElementById('dualTimeWrap');
+    if (!startEl || !endEl) return;
+
+    // When start is picked, set end's min and auto-focus end
+    startEl.addEventListener('change', function() {
+        const v = this.value;
+        endEl.min = v || '';
+        // If end is set but now invalid, clear it
+        if (endEl.value && endEl.value <= v) endEl.value = '';
+        updateDualTimeState(wrap, startEl, endEl);
+        if (v) {
+            try { endEl.showPicker(); } catch(e) { endEl.focus(); }
+        }
+    });
+
+    endEl.addEventListener('change', function() {
+        const v = this.value;
+        if (v && startEl.value && v <= startEl.value) {
+            this.value = '';  // reject invalid
+        }
+        updateDualTimeState(wrap, startEl, endEl);
+    });
+}
+
+function initEditDualTime() {
+    const startEl = document.getElementById('editTaskStartTime');
+    const endEl   = document.getElementById('editTaskEndTime');
+    const wrap    = document.getElementById('editDualTimeWrap');
+    if (!startEl || !endEl) return;
+
+    startEl.addEventListener('change', function() {
+        const v = this.value;
+        endEl.min = v || '';
+        if (endEl.value && endEl.value <= v) endEl.value = '';
+        updateDualTimeState(wrap, startEl, endEl);
+        if (v) {
+            try { endEl.showPicker(); } catch(e) { endEl.focus(); }
+        }
+    });
+
+    endEl.addEventListener('change', function() {
+        if (this.value && startEl.value && this.value <= startEl.value) {
+            this.value = '';
+        }
+        updateDualTimeState(wrap, startEl, endEl);
+    });
+}
+
+function updateDualTimeState(wrap, startEl, endEl) {
+    if (!wrap) return;
+    const hasVal = startEl.value || endEl.value;
+    wrap.classList.toggle('has-value', !!hasVal);
+}
+
+window.clearDualTime = function() {
+    const startEl = document.getElementById('taskStartTime');
+    const endEl   = document.getElementById('taskEndTime');
+    const wrap    = document.getElementById('dualTimeWrap');
+    if (startEl) { startEl.value = ''; startEl.min = ''; }
+    if (endEl)   { endEl.value = '';   endEl.min = '';   }
+    if (wrap)    wrap.classList.remove('has-value');
+};
+
+window.clearEditDualTime = function() {
+    const startEl = document.getElementById('editTaskStartTime');
+    const endEl   = document.getElementById('editTaskEndTime');
+    const wrap    = document.getElementById('editDualTimeWrap');
+    if (startEl) { startEl.value = ''; startEl.min = ''; }
+    if (endEl)   { endEl.value = '';   endEl.min = '';   }
+    if (wrap)    wrap.classList.remove('has-value');
+};
+
 window.addTask = function() {
-    const name = document.getElementById('taskName').value.trim();
-    const date = document.getElementById('taskDate').value;
-    const time = document.getElementById('taskTime').value;
-    const cat = document.getElementById('taskCat').value;
-    
-    if (!name || !date) {
-        alert('Please enter task name and date');
-        return;
+    const name      = document.getElementById('taskName').value.trim();
+    const date      = document.getElementById('taskDate').value;
+    const startTime = document.getElementById('taskStartTime').value;
+    const endTime   = document.getElementById('taskEndTime').value;
+    const cat       = document.getElementById('taskCat').value;
+
+    if (!name || !date) { alert('Please enter task name and date'); return; }
+    if (startTime && endTime && endTime <= startTime) {
+        alert('End time must be after start time'); return;
     }
-    
-    console.log(`[Add Task] Creating task: "${name}" on ${date} at ${time || 'no time'}`);
-    
+
     const taskId = Date.now().toString();
     const taskData = {
-        name,
-        date,
-        time: time || null,
-        cat,
-        completed: false,
-        completedAt: null
+        name, date, cat,
+        startTime: startTime || null,
+        endTime:   endTime   || null,
+        completed: false, completedAt: null
     };
-    
+
     set(ref(db, `users/${currentUserId}/tasks/${taskId}`), taskData);
-    
-    // Clear only task name and time, keep the date
+
     document.getElementById('taskName').value = '';
-    document.getElementById('taskTime').value = '';
+    clearDualTime();
 };
 
 window.toggleTask = function(id) {
@@ -2471,7 +2647,8 @@ window.editTask = function(id) {
     currentEditingTaskId = id;
     document.getElementById('editTaskName').value = task.name;
     document.getElementById('editTaskDate').value = task.date;
-    document.getElementById('editTaskTime').value = task.time || '';
+    document.getElementById('editTaskStartTime').value = task.startTime || task.time || '';
+    document.getElementById('editTaskEndTime').value   = task.endTime || '';
     document.getElementById('editTaskCat').value = task.cat;
     
     // Set minimum date to today (prevent editing to past dates)
@@ -2490,21 +2667,21 @@ window.saveEditedTask = function(event) {
     
     if (!currentEditingTaskId) return;
     
-    const name = document.getElementById('editTaskName').value.trim();
-    const date = document.getElementById('editTaskDate').value;
-    const time = document.getElementById('editTaskTime').value;
-    const cat = document.getElementById('editTaskCat').value;
-    
-    if (!name || !date) {
-        alert('Please enter task name and date');
-        return;
+    const name      = document.getElementById('editTaskName').value.trim();
+    const date      = document.getElementById('editTaskDate').value;
+    const startTime = document.getElementById('editTaskStartTime').value;
+    const endTime   = document.getElementById('editTaskEndTime').value;
+    const cat       = document.getElementById('editTaskCat').value;
+
+    if (!name || !date) { alert('Please enter task name and date'); return; }
+    if (startTime && endTime && endTime <= startTime) {
+        alert('End time must be after start time'); return;
     }
-    
+
     const updates = {
-        name,
-        date,
-        time: time || null,
-        cat
+        name, date, cat,
+        startTime: startTime || null,
+        endTime:   endTime   || null
     };
     
     update(ref(db, `users/${currentUserId}/tasks/${currentEditingTaskId}`), updates);
@@ -2587,6 +2764,18 @@ window.goToTodayWeek = function() {
     barGraphWeekOffset = 0;  // Reset to current week
     renderTasks();
     updateBarGraphWeekLabel();
+};
+
+// Navigate trends graph month
+window.navigateTrendsMonth = function(direction) {
+    trendsMonthOffset += direction;
+    renderTrendsGraph();
+};
+
+// Jump to current month
+window.goToCurrentMonth = function() {
+    trendsMonthOffset = 0;  // Reset to current month
+    renderTrendsGraph();
 };
 
 // Update bar graph week label
@@ -2893,15 +3082,17 @@ function renderTasks() {
         // Skip completed tasks
         if (t.completed) return;
         
-        // Check if today's task with time is overdue
+        // Overdue: past the END time if set, otherwise past the START time
         const isOverdue = () => {
-            if (t.date < todayStr) return true; // Past date
-            if (t.date === todayStr && t.time) {
-                const now = new Date();
-                const [hours, minutes] = t.time.split(':').map(Number);
-                const taskDateTime = new Date();
-                taskDateTime.setHours(hours, minutes, 0, 0);
-                return now > taskDateTime;
+            if (t.date < todayStr) return true;
+            if (t.date === todayStr) {
+                const overdueAt = t.endTime || t.startTime || t.time;
+                if (overdueAt) {
+                    const now = new Date();
+                    const [hours, minutes] = overdueAt.split(':').map(Number);
+                    const dt = new Date(); dt.setHours(hours, minutes, 0, 0);
+                    return now > dt;
+                }
             }
             return false;
         };
@@ -2936,10 +3127,12 @@ function renderTasks() {
         
         // Sort tasks by time (earliest first), tasks without time come last
         const sortedTasks = overdueByDate[date].sort((a, b) => {
-            if (!a.time && !b.time) return 0;
-            if (!a.time) return 1;
-            if (!b.time) return -1;
-            return a.time.localeCompare(b.time);
+            const at = a.startTime || a.time;
+            const bt = b.startTime || b.time;
+            if (!at && !bt) return 0;
+            if (!at) return 1;
+            if (!bt) return -1;
+            return at.localeCompare(bt);
         });
         
         // Render tasks for this date
@@ -3035,7 +3228,11 @@ function createTaskElement(t) {
     const li = document.createElement('li');
     li.style.borderLeftColor = `var(--cat-${t.cat})`;
     
-    const timeDisplay = t.time ? ` <span style="font-size: 11px; opacity: 0.7;">(${t.time})</span>` : '';
+    const _st = t.startTime || t.time;  // backwards-compatible
+    const _et = t.endTime || null;
+    const timeDisplay = _st
+        ? ` <span style="font-size: 11px; opacity: 0.7;">(${_st}${_et ? ' → ' + _et : ''})</span>`
+        : '';
     
     li.innerHTML = `<div><input type="checkbox" ${t.completed?'checked':''} onchange="toggleTask('${t.id}')">
         <span style="${t.completed ? 'text-decoration: line-through; opacity: 0.5;' : ''}">${t.name}${timeDisplay}</span></div>
@@ -3075,16 +3272,46 @@ function renderTrendsGraph() {
     canvas.width = isMobile ? Math.max(800, container.clientWidth) : container.clientWidth;
     canvas.height = container.clientHeight;
     
-    // Calculate current month's daily completion rates (only up to today)
-    const days = [];
+    // Calculate month to display based on offset
     const today = new Date();
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    const todayDate = today.getDate();
+    const viewYear = today.getFullYear();
+    const viewMonth = today.getMonth() + trendsMonthOffset;
     
-    // Only show days from 1st to today
-    for (let i = 1; i <= todayDate; i++) {
-        const day = new Date(year, month, i);
+    // Adjust year if month offset goes to different year
+    const displayDate = new Date(viewYear, viewMonth, 1);
+    const displayYear = displayDate.getFullYear();
+    const displayMonth = displayDate.getMonth();
+    
+    // Get last day of the display month
+    const lastDayOfMonth = new Date(displayYear, displayMonth + 1, 0).getDate();
+    
+    // If viewing current month, only show up to today, otherwise show full month
+    const isCurrentMonth = (displayYear === today.getFullYear() && displayMonth === today.getMonth());
+    const lastDay = isCurrentMonth ? today.getDate() : lastDayOfMonth;
+    
+    // Update month label
+    const monthLabel = document.getElementById('trendsMonthLabel');
+    if (monthLabel) {
+        const monthName = displayDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        monthLabel.textContent = `📈 ${monthName} Completion Trends`;
+    }
+    
+    // Show/hide next button (can't go to future months)
+    const nextBtn = document.getElementById('trendsNextBtn');
+    if (nextBtn) {
+        nextBtn.style.visibility = trendsMonthOffset >= 0 ? 'hidden' : 'visible';
+    }
+    
+    // Show/hide Today button (only show when not on current month)
+    const todayBtn = document.getElementById('trendsTodayBtn');
+    if (todayBtn) {
+        todayBtn.style.display = trendsMonthOffset === 0 ? 'none' : 'inline-block';
+    }
+    
+    // Calculate daily completion rates for the display month
+    const days = [];
+    for (let i = 1; i <= lastDay; i++) {
+        const day = new Date(displayYear, displayMonth, i);
         const dayStr = day.toLocaleDateString('en-CA');
         
         const dayTasks = allTasks.filter(t => t.date === dayStr);
@@ -3092,7 +3319,7 @@ function renderTrendsGraph() {
         const total = dayTasks.length;
         const percentage = total > 0 ? (completed / total) * 100 : 0;
         
-        const isToday = i === todayDate;
+        const isToday = isCurrentMonth && (i === today.getDate());
         
         days.push({
             day: i,
@@ -3121,44 +3348,73 @@ function renderTrendsGraph() {
         }
     }
     
-    // Calculate consecutive streak - days in a row with 100% completion
-    // Don't break on today if day isn't over yet!
+    // Calculate consecutive streak - ACROSS ALL TIME (not just this month!)
     let consecutiveStreak = 0;
     let bestStreak = 0;
-    let currentStreakCount = 0;
     
-    // Calculate current streak (don't include today if it's incomplete)
-    for (let i = todayDate - 1; i >= 0; i--) {
-        const isToday = (i === todayDate - 1);
+    // Get all tasks sorted by date (newest first)
+    const allTasksSorted = [...allTasks].sort((a, b) => b.date.localeCompare(a.date));
+    
+    // Build a map of date -> completion percentage
+    const dateCompletionMap = {};
+    allTasksSorted.forEach(task => {
+        if (!dateCompletionMap[task.date]) {
+            const dateTasks = allTasks.filter(t => t.date === task.date);
+            const total = dateTasks.length;
+            const completed = dateTasks.filter(t => t.completed).length;
+            dateCompletionMap[task.date] = {
+                percentage: total > 0 ? (completed / total) * 100 : 0,
+                total: total
+            };
+        }
+    });
+    
+    // Calculate current streak starting from today going backwards
+    const todayStr = today.toLocaleDateString('en-CA');
+    let checkDate = new Date(today);
+    let foundIncomplete = false;
+    
+    while (!foundIncomplete) {
+        const dateStr = checkDate.toLocaleDateString('en-CA');
+        const dateData = dateCompletionMap[dateStr];
         
-        if (isToday && days[i].total > 0 && days[i].percentage === 100) {
-            // Today is complete at 100%, count it!
-            consecutiveStreak++;
-        } else if (isToday) {
-            // Today is not 100% yet, but day isn't over - skip it, don't break streak
-            continue;
-        } else if (days[i].total > 0 && days[i].percentage === 100) {
-            // Past day with 100%, count it
-            consecutiveStreak++;
-        } else if (days[i].total > 0) {
-            // Past day with <100%, streak ends
-            break;
+        // Check if this is today and it's incomplete
+        const isTodayCheck = dateStr === todayStr;
+        
+        if (dateData && dateData.total > 0) {
+            if (dateData.percentage === 100) {
+                consecutiveStreak++;
+            } else if (!isTodayCheck) {
+                // Past day with <100%, streak ends
+                foundIncomplete = true;
+                break;
+            } else {
+                // Today is incomplete, skip it (day not over yet)
+                checkDate.setDate(checkDate.getDate() - 1);
+                continue;
+            }
         }
         // Days with no tasks don't break the streak
+        
+        // Go to previous day
+        checkDate.setDate(checkDate.getDate() - 1);
+        
+        // Safety limit: don't go back more than 365 days
+        const daysDiff = Math.floor((today - checkDate) / (1000 * 60 * 60 * 24));
+        if (daysDiff > 365) break;
     }
     
-    // Calculate best streak in the month (scan all days)
-    for (let i = 0; i < todayDate; i++) {
+    // Calculate best streak in the DISPLAYED month only
+    let currentStreakCount = 0;
+    for (let i = 0; i < days.length; i++) {
         if (days[i].total > 0 && days[i].percentage === 100) {
             currentStreakCount++;
             if (currentStreakCount > bestStreak) {
                 bestStreak = currentStreakCount;
             }
         } else if (days[i].total > 0) {
-            // Reset on non-perfect day
             currentStreakCount = 0;
         }
-        // Days with no tasks don't reset the count
     }
     
     // Update stats display
@@ -3773,4 +4029,4 @@ console.log('📱 Mobile: Swipe left (next) / right (prev)');
 console.log('💻 Laptop: Horizontal touchpad scroll');
 </script>
 </body>
-</html>
+</html>s
