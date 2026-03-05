@@ -480,7 +480,6 @@ Apple does not support automatic PWA install prompts. You must install manually:
 - Service Worker requires HTTPS (GitHub Pages provides this)
 
 ### Planned Features
-- [ ] Recurring tasks (daily/weekly/monthly)
 - [ ] Task priority levels
 - [ ] Drag-and-drop reordering
 - [ ] Export to CSV/JSON
