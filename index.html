@@ -1439,6 +1439,7 @@
             font-weight: 600; margin-left: 6px;
         }
     </style>
+    <script src="config.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <script type="text/javascript">emailjs.init("kJuFSp_hUldogi5Ky");</script>
 </head>
@@ -4601,7 +4602,7 @@ window.sendAIMessage = async function() {
     try {
         // Gemini 1.5 Flash — free tier, no proxy needed
         // Replace YOUR_GEMINI_API_KEY with your key from aistudio.google.com
-        const GEMINI_KEY = 'AIzaSyD1yTv_Tn40cCMOjvKxfZ43GGJ1Ezl-GM0';
+        const GEMINI_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.GEMINI_KEY : '';
         const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
 
         // Convert aiHistory (Anthropic format) to Gemini format
