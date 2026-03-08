@@ -1,3 +1,3 @@
 const CONFIG = {
-    GEMINI_KEY: 'AIzaSyD1yTv_Tn40cCMOjvKxfZ43GGJ1Ezl-GM0'
+    GEMINI_KEY: 'AIzaSyCSMTyWOeQ1w209BHZi3FjomLjt6NPYQbM'
 };
