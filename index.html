@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Mission Control Pro</title>
+    <title>Workflow Pro</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#27ae60">
@@ -1396,11 +1396,55 @@
         }
         .ai-send:hover { opacity: 0.85; transform: scale(1.06); }
         .ai-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+        /* ── Email verification popup ── */
+        .verify-popup-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 5000; display: flex;
+            align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s;
+        }
+        .verify-popup-overlay.show { opacity: 1; pointer-events: all; }
+        .verify-popup {
+            background: var(--card-bg); border-radius: 20px;
+            padding: 28px 24px; max-width: 320px; width: 90%;
+            text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            transform: scale(0.9); transition: transform 0.25s cubic-bezier(.34,1.56,.64,1);
+        }
+        .verify-popup-overlay.show .verify-popup { transform: scale(1); }
+        .verify-popup h3 { margin: 12px 0 8px; font-size: 16px; }
+        .verify-popup p  { font-size: 13px; opacity: 0.7; line-height: 1.5; margin-bottom: 18px; }
+        .verify-popup .vp-btn {
+            background: var(--primary); color: #fff;
+            border: none; border-radius: 12px;
+            padding: 10px 24px; font-size: 14px;
+            font-family: inherit; font-weight: 600;
+            cursor: pointer; width: 100%;
+        }
+        .verify-popup .vp-skip {
+            background: none; border: none;
+            color: var(--text); opacity: 0.5;
+            font-size: 12px; margin-top: 10px;
+            cursor: pointer; font-family: inherit;
+        }
+        /* verified badge */
+        .verified-badge {
+            font-size: 11px; color: var(--primary);
+            font-weight: 600; margin-left: 6px;
+        }
+        .unverified-badge {
+            font-size: 11px; color: var(--overdue);
+            font-weight: 600; margin-left: 6px;
+        }
     </style>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+    <script type="text/javascript">emailjs.init("kJuFSp_hUldogi5Ky");</script>
 </head>
 <body data-theme="light">
     <div id="splash-screen">
-        <h1>🚀 Mission Control Pro</h1>
+        <h1>🚀 Workflow Pro</h1>
     </div>
 
     <div id="auth-screen">
@@ -1413,7 +1457,32 @@
             </div>
             <button id="authBtn" class="btn-login" onclick="handleAuth()">LOGIN</button>
             <p id="auth-error" style="color:var(--overdue); margin-top:10px; font-size:12px;"></p>
-            <p id="toggle-text" style="font-size:12px; margin-top:15px; color:var(--text);"><span style='color:var(--text);'>New user?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span></p>
+            <p id="forgot-pw-text" style="font-size:12px; margin-top:8px; color:var(--text);">
+                <span onclick="handleForgotPassword()" style="color:var(--primary); cursor:pointer;">Forgot password?</span>
+            </p>
+            <p id="forgot-pw-msg" style="font-size:12px; margin-top:6px; display:none;"></p>
+
+            <!-- Forgot password OTP + new password steps -->
+            <div id="forgotOtpSection" style="display:none; margin-top:10px;">
+                <input type="text" id="forgotOtpInput" class="auth-input"
+                    placeholder="Enter 6-digit OTP"
+                    style="letter-spacing:4px; text-align:center;">
+                <button class="btn-login" style="margin-top:8px;" onclick="verifyForgotOTP()">Verify OTP</button>
+                <p id="forgotOtpErr" style="color:var(--overdue); font-size:12px; margin-top:6px;"></p>
+            </div>
+
+            <div id="forgotNewPassSection" style="display:none; margin-top:10px;">
+                <div class="auth-input-container">
+                    <input type="password" id="forgotNewPass" class="auth-input" placeholder="New password (min 6 chars)">
+                </div>
+                <div class="auth-input-container">
+                    <input type="password" id="forgotConfirmPass" class="auth-input" placeholder="Confirm new password">
+                </div>
+                <button class="btn-login" style="margin-top:8px;" onclick="saveForgotNewPassword()">Set New Password</button>
+                <p id="forgotPassErr" style="color:var(--overdue); font-size:12px; margin-top:6px;"></p>
+            </div>
+
+            <p id="toggle-text" style="font-size:12px; margin-top:10px; color:var(--text);"><span style='color:var(--text);'>New user?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span></p>
         </div>
     </div>
 
@@ -1681,6 +1750,22 @@
                     <button class="profile-subform-btn" onclick="saveNewPassword()">Update Password</button>
                 </div>
 
+                <!-- Recovery Email -->
+                <div class="profile-row" onclick="toggleSubform('recoveryEmailForm')">
+                    <div class="profile-row-icon icon-blue">📧</div>
+                    <div class="profile-row-content">
+                        <div class="profile-row-label">Recovery Email <span id="recoveryEmailBadge"></span></div>
+                        <div class="profile-row-sub" id="recoveryEmailSub">Add email for forgot password</div>
+                    </div>
+                    <div class="profile-row-right" id="recoveryEmailArrow">›</div>
+                </div>
+                <div class="profile-subform" id="recoveryEmailForm">
+                    <input type="email" id="recoveryEmailInput" placeholder="Your real email address" autocomplete="email">
+                    <div class="profile-subform-err" id="reErr"></div>
+                    <div class="profile-subform-ok"  id="reOk"></div>
+                    <button class="profile-subform-btn" onclick="saveRecoveryEmail()">Save & Send Verification</button>
+                </div>
+
                 <!-- NOTIFICATIONS -->
                 <div class="profile-section-title">Notifications</div>
 
@@ -1781,8 +1866,8 @@
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, deleteUser } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-import { getDatabase, ref, set, onValue, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, deleteUser, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getDatabase, ref, set, get, onValue, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
 const firebaseConfig = {
     apiKey: "AIzaSyA-mhIz79hzRvTbVZKeDPEfv2uv5jh-iSA",
@@ -2383,6 +2468,167 @@ if (savedTheme) {
 // =====================================================================
 // AUTH
 // =====================================================================
+// Forgot password — looks up recovery email from DB, sends Firebase reset link
+// Store forgot password state
+let forgotPwUsername   = null;
+let forgotPwOtp        = null;
+let forgotPwOtpExpiry  = null;
+
+window.handleForgotPassword = async function() {
+    const username = document.getElementById('username').value.trim();
+    const msgEl    = document.getElementById('forgot-pw-msg');
+
+    if (!username) {
+        msgEl.style.display = 'block';
+        msgEl.style.color   = 'var(--overdue)';
+        msgEl.textContent   = 'Enter your username above first.';
+        return;
+    }
+
+    msgEl.style.display = 'block';
+    msgEl.style.color   = 'var(--text)';
+    msgEl.textContent   = 'Looking up account…';
+
+    try {
+        const usernameLower = username.toLowerCase();
+        const indexSnap = await new Promise(resolve =>
+            onValue(ref(db, `userIndex/${usernameLower}`), resolve, { onlyOnce: true })
+        );
+        const indexData = indexSnap.val();
+
+        if (!indexData) {
+            msgEl.style.color = 'var(--overdue)';
+            msgEl.textContent = 'No account found with that username.';
+            return;
+        }
+
+        if (!indexData.verified || !indexData.recoveryEmail) {
+            msgEl.style.color = 'var(--overdue)';
+            msgEl.textContent = '⚠️ No verified recovery email. Log in and add one in Profile → Account.';
+            return;
+        }
+
+        // Generate OTP
+        const otp     = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiry  = Date.now() + 10 * 60 * 1000;
+        const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+        // Store in memory
+        forgotPwUsername  = username;
+        forgotPwOtp       = otp;
+        forgotPwOtpExpiry = expiry;
+
+        // Send via EmailJS
+        await emailjs.send('service_bteypnw', 'template_gkikd99', {
+            to_email: indexData.recoveryEmail,
+            username: username,
+            otp:      otp,
+            time:     timeStr
+        });
+
+        msgEl.style.color = 'var(--primary)';
+        msgEl.textContent = `✅ OTP sent to ${indexData.recoveryEmail}`;
+
+        // Show OTP input
+        document.getElementById('forgotOtpSection').style.display = 'block';
+        document.getElementById('forgotNewPassSection').style.display = 'none';
+        document.getElementById('forgotOtpInput').value = '';
+        document.getElementById('forgotOtpErr').textContent = '';
+
+    } catch(e) {
+        msgEl.style.color = 'var(--overdue)';
+        msgEl.textContent = e.message || 'Something went wrong.';
+    }
+};
+
+window.verifyForgotOTP = function() {
+    const entered = document.getElementById('forgotOtpInput').value.trim();
+    const errEl   = document.getElementById('forgotOtpErr');
+    errEl.textContent = '';
+
+    if (!entered) { errEl.textContent = 'Enter the OTP.'; return; }
+    if (!forgotPwOtp) { errEl.textContent = 'Request a new OTP first.'; return; }
+    if (Date.now() > forgotPwOtpExpiry) { errEl.textContent = 'OTP expired. Try again.'; return; }
+    if (entered !== forgotPwOtp) { errEl.textContent = 'Incorrect OTP.'; return; }
+
+    // OTP correct — show new password fields
+    document.getElementById('forgotOtpSection').style.display = 'none';
+    document.getElementById('forgotNewPassSection').style.display = 'block';
+    document.getElementById('forgotNewPass').value = '';
+    document.getElementById('forgotConfirmPass').value = '';
+    document.getElementById('forgotPassErr').textContent = '';
+};
+
+window.saveForgotNewPassword = async function() {
+    const newPass  = document.getElementById('forgotNewPass').value;
+    const confirm  = document.getElementById('forgotConfirmPass').value;
+    const errEl    = document.getElementById('forgotPassErr');
+    errEl.textContent = '';
+
+    if (!newPass || !confirm) { errEl.textContent = 'Fill both fields.'; return; }
+    if (newPass.length < 6)   { errEl.textContent = 'Password must be at least 6 characters.'; return; }
+    if (newPass !== confirm)   { errEl.textContent = 'Passwords do not match.'; return; }
+
+    const btn = document.querySelector('#forgotNewPassSection .btn-login');
+    if (btn) { btn.textContent = 'Updating…'; btn.disabled = true; }
+
+    try {
+        // Store reset request in Firebase DB — cloud function will update the password
+        const resetKey = forgotPwUsername.toLowerCase();
+        const resetRef = ref(db, `passwordResets/${resetKey}`);
+        await set(resetRef, {
+            newPassword: newPass,
+            requestedAt: Date.now(),
+            status: 'pending'
+        });
+
+        // Use onValue to react instantly when cloud function updates the status
+        const unsubReset = onValue(resetRef, async (snap) => {
+            const data = snap.val();
+            console.log('[PasswordReset] status update:', data?.status);
+
+            if (data?.status === 'done') {
+                unsubReset();
+                await set(resetRef, null); // clean up
+                const authEmail = `${forgotPwUsername}@missioncontrol.com`;
+                await signInWithEmailAndPassword(auth, authEmail, newPass);
+                forgotPwOtp = null;
+                forgotPwUsername = null;
+            } else if (data?.status === 'error') {
+                unsubReset();
+                if (btn) { btn.textContent = 'Set New Password'; btn.disabled = false; }
+                errEl.textContent = data.error || 'Failed to update password.';
+            } else if (!data) {
+                // Entry was deleted — means function already completed before we subscribed
+                // Try signing in directly with new password
+                unsubReset();
+                try {
+                    const authEmail = `${forgotPwUsername}@missioncontrol.com`;
+                    await signInWithEmailAndPassword(auth, authEmail, newPass);
+                    forgotPwOtp = null;
+                    forgotPwUsername = null;
+                } catch(e) {
+                    if (btn) { btn.textContent = 'Set New Password'; btn.disabled = false; }
+                    errEl.textContent = 'Password updated! Please log in manually.';
+                }
+            }
+        });
+
+        // Timeout after 15 seconds
+        setTimeout(() => {
+            unsubReset();
+            if (btn) { btn.textContent = 'Set New Password'; btn.disabled = false; }
+            // Try signing in anyway — function may have succeeded
+            signInWithEmailAndPassword(auth, `${forgotPwUsername}@missioncontrol.com`, newPass)
+                .catch(() => { errEl.textContent = 'Timed out. Please try logging in manually.'; });
+        }, 15000);
+
+    } catch(e) {
+        if (btn) { btn.textContent = 'Set New Password'; btn.disabled = false; }
+        errEl.textContent = e.message;
+    }
+};
+
 window.togglePassword = () => {
     const p = document.getElementById('password'), b = document.getElementById('togglePassBtn');
     p.type = p.type === 'password' ? 'text' : 'password';
@@ -2393,14 +2639,26 @@ window.handleAuth = async () => {
     const u = document.getElementById('username').value, p = document.getElementById('password').value;
     const email = `${u}@missioncontrol.com`;
     try {
-        if (isLoginMode) await signInWithEmailAndPassword(auth, email, p);
-        else             await createUserWithEmailAndPassword(auth, email, p);
+        if (isLoginMode) {
+            const loginCred = await signInWithEmailAndPassword(auth, email, p);
+            // Ensure userIndex exists for existing users
+            await set(ref(db, `userIndex/${u.toLowerCase()}`), { uid: loginCred.user.uid });
+        } else {
+            const cred = await createUserWithEmailAndPassword(auth, email, p);
+            // Save username to settings + public index for forgot-password
+            await set(ref(db, `users/${cred.user.uid}/settings/username`), u);
+            await set(ref(db, `userIndex/${u.toLowerCase()}`), { uid: cred.user.uid });
+            // Show recovery email nudge after signup
+            setTimeout(() => showVerifyPopup(), 800);
+        }
     } catch (e) { document.getElementById('auth-error').innerText = e.message; }
 };
 
 window.toggleAuthMode = () => {
     isLoginMode = !isLoginMode;
     document.getElementById('auth-title').innerText = isLoginMode ? "Login" : "Sign Up";
+    const forgotEl = document.getElementById('forgot-pw-text');
+    if (forgotEl) forgotEl.style.display = isLoginMode ? 'block' : 'none';
     document.getElementById('authBtn').innerText     = isLoginMode ? "LOGIN" : "SIGN UP";
     document.getElementById('toggle-text').innerHTML = isLoginMode
         ? `<span style='color:var(--text);'>New user?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span>`
@@ -2448,6 +2706,7 @@ function populateProfileUI() {
     document.getElementById('toggleDarkMode').checked = document.body.getAttribute('data-theme') === 'dark';
     document.getElementById('weekStartSelect').value = userSettings.weekStart || 0;
     document.getElementById('defaultTaskTime').value = userSettings.defaultTaskTime || '';
+    loadRecoveryEmailBadge();
 }
 
 function loadUserSettings() {
@@ -2601,6 +2860,8 @@ onAuthStateChanged(auth, (user) => {
         loadTasks();
         loadUserSettings();
         checkNotificationBanner();
+        // Sync recovery email to userIndex on every login
+        setTimeout(() => loadRecoveryEmailBadge(), 1000);
         
         // Auto-subscribe to push notifications if permission already granted
         if (Notification.permission === 'granted') {
@@ -4260,7 +4521,7 @@ let aiLoading     = false;
 let aiHistory     = [];          // multi-turn: [{role, content}]
 let aiPendingTasks = [];         // tasks waiting for user confirmation
 
-const AI_SYSTEM = `You are a productivity assistant built into a task manager app called Mission Control Pro.
+const AI_SYSTEM = `You are a productivity assistant built into a task manager app called Workflow Pro.
 The user manages tasks with these fields: name, date (YYYY-MM-DD), startTime (HH:MM, optional), endTime (HH:MM, optional), cat (work/home/personal/urgent), recur (daily/weekly/monthly or null).
 
 Today's date is always provided in the user message.
@@ -4518,6 +4779,173 @@ window.cancelAITasks = function() {
     appendAIMessage('ai', 'Cancelled. Want to try a different goal or adjust the plan?');
 };
 
+
+// ═══════════════════════════════════════════════════════════════════════
+// RECOVERY EMAIL & VERIFICATION
+// ═══════════════════════════════════════════════════════════════════════
+
+// Show post-signup popup
+function showVerifyPopup() {
+    document.getElementById('verifyPopupOverlay').classList.add('show');
+}
+window.closeVerifyPopup = function() {
+    document.getElementById('verifyPopupOverlay').classList.remove('show');
+};
+window.goToEmailVerify = function() {
+    closeVerifyPopup();
+    openProfile();
+    // Auto-open recovery email subform
+    setTimeout(() => toggleSubform('recoveryEmailForm'), 300);
+};
+
+// Save recovery email to Firebase DB + send verification via EmailJS-free workaround:
+// We store the email + a generated OTP, then use a mailto link as fallback.
+// Actually we use Firebase's own sendEmailVerification on a temp secondary approach —
+// Simplest free method: store email in DB, send OTP via a free email API (emailjs.com)
+// For now: store email + mark unverified, show OTP input after user clicks verify link.
+
+window.saveRecoveryEmail = async function() {
+    const email  = document.getElementById('recoveryEmailInput').value.trim();
+    const errEl  = document.getElementById('reErr');
+    const okEl   = document.getElementById('reOk');
+    errEl.style.display = 'none';
+    okEl.style.display  = 'none';
+
+    if (!email || !email.includes('@')) {
+        errEl.textContent = 'Please enter a valid email address.';
+        errEl.style.display = 'block'; return;
+    }
+
+    // Show loading state
+    const saveBtn = document.querySelector('#recoveryEmailForm .profile-subform-btn');
+    if (saveBtn) { saveBtn.textContent = 'Sending…'; saveBtn.disabled = true; }
+
+    try {
+        // Generate 6-digit OTP
+        const otp    = Math.floor(100000 + Math.random() * 900000).toString();
+        const expiry = Date.now() + 10 * 60 * 1000; // 10 min
+        const now    = new Date();
+        const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+
+        // Save to Firebase DB
+        await set(ref(db, `users/${currentUserId}/recoveryEmail`), {
+            email,
+            verified: false,
+            otp,
+            otpExpiry: expiry
+        });
+
+        // Get username for email
+        const username = auth.currentUser.email.replace('@missioncontrol.com', '').replace('@workflowpro.com', '');
+
+        // Send OTP via EmailJS
+        await emailjs.send('service_bteypnw', 'template_gkikd99', {
+            to_email: email,
+            username:  username,
+            otp:       otp,
+            time:      timeStr
+        });
+
+        if (saveBtn) { saveBtn.textContent = 'Save & Send Verification'; saveBtn.disabled = false; }
+        okEl.innerHTML = `✅ OTP sent to <strong>${email}</strong>. Check your inbox.`;
+        okEl.style.display = 'block';
+
+        // Inject OTP verify UI below the button
+        let otpDiv = document.getElementById('otpVerifySection');
+        if (!otpDiv) {
+            otpDiv = document.createElement('div');
+            otpDiv.id = 'otpVerifySection';
+            otpDiv.style.cssText = 'margin-top:10px;';
+            document.getElementById('recoveryEmailForm').appendChild(otpDiv);
+        }
+        otpDiv.innerHTML = `
+            <input type="text" id="otpInput" placeholder="Enter 6-digit OTP"
+                style="width:100%;padding:10px;border:1px solid var(--border);border-radius:10px;
+                background:var(--bg-main);color:var(--text);font-family:inherit;font-size:14px;
+                letter-spacing:3px;text-align:center;outline:none;box-sizing:border-box;">
+            <button onclick="verifyOTP()" style="margin-top:8px;width:100%;padding:10px;
+                background:var(--primary);color:#fff;border:none;border-radius:10px;
+                font-family:inherit;font-weight:600;cursor:pointer;">Verify OTP</button>
+            <div id="otpErr" style="font-size:12px;color:var(--overdue);margin-top:6px;display:none;"></div>`;
+
+    } catch(e) {
+        console.error('saveRecoveryEmail error:', e);
+        if (saveBtn) { saveBtn.textContent = 'Save & Send Verification'; saveBtn.disabled = false; }
+        errEl.textContent = e.message || 'Something went wrong. Check console.';
+        errEl.style.display = 'block';
+    }
+};
+
+window.verifyOTP = async function() {
+    const entered = document.getElementById('otpInput').value.trim();
+    const otpErr  = document.getElementById('otpErr');
+    otpErr.style.display = 'none';
+
+    if (!entered) { otpErr.textContent = 'Enter the OTP.'; otpErr.style.display = 'block'; return; }
+
+    try {
+        const snap = await new Promise(resolve =>
+            onValue(ref(db, `users/${currentUserId}/recoveryEmail`), resolve, { onlyOnce: true })
+        );
+        const data = snap.val();
+
+        if (!data) { otpErr.textContent = 'No OTP found. Try saving email again.'; otpErr.style.display = 'block'; return; }
+        if (Date.now() > data.otpExpiry) { otpErr.textContent = 'OTP expired. Save email again to get a new one.'; otpErr.style.display = 'block'; return; }
+        if (entered !== data.otp) { otpErr.textContent = 'Incorrect OTP.'; otpErr.style.display = 'block'; return; }
+
+        // Mark verified in user record + update public index
+        await update(ref(db, `users/${currentUserId}/recoveryEmail`), { verified: true, otp: null, otpExpiry: null });
+        const uname = auth.currentUser.email.replace('@missioncontrol.com','').replace('@workflowpro.com','');
+        await update(ref(db, `userIndex/${uname}`), { recoveryEmail: data.email, verified: true });
+
+        // Update UI
+        document.getElementById('otpVerifySection').innerHTML =
+            '<div style="color:var(--primary);font-weight:600;font-size:13px;">✅ Email verified successfully!</div>';
+        updateRecoveryEmailBadge(data.email, true);
+
+    } catch(e) {
+        otpErr.textContent = e.message; otpErr.style.display = 'block';
+    }
+};
+
+function updateRecoveryEmailBadge(email, verified) {
+    const badge  = document.getElementById('recoveryEmailBadge');
+    const sub    = document.getElementById('recoveryEmailSub');
+    const input  = document.getElementById('recoveryEmailInput');
+    if (badge) badge.innerHTML = verified
+        ? '<span class="verified-badge">✓ Verified</span>'
+        : '<span class="unverified-badge">! Unverified</span>';
+    if (sub)   sub.textContent = email || 'Add email for forgot password';
+    if (input) input.value     = email || '';
+}
+
+// Called from populateProfileUI to load recovery email badge
+function loadRecoveryEmailBadge() {
+    if (!currentUserId) return;
+    onValue(ref(db, `users/${currentUserId}/recoveryEmail`), async (snap) => {
+        const data = snap.val();
+        console.log('[RecoveryEmail] DB data:', data);
+        if (data) {
+            updateRecoveryEmailBadge(data.email, data.verified);
+            if (data.verified && data.email) {
+                const username = auth.currentUser.email.replace('@missioncontrol.com','').replace('@workflowpro.com','');
+                console.log('[RecoveryEmail] Syncing to userIndex:', username, data.email);
+                try {
+                    await update(ref(db, `userIndex/${username}`), {
+                        recoveryEmail: data.email,
+                        verified: true
+                    });
+                    console.log('[RecoveryEmail] userIndex sync ✅');
+                } catch(e) {
+                    console.error('[RecoveryEmail] userIndex sync failed:', e.message);
+                }
+            }
+        } else {
+            console.log('[RecoveryEmail] No recovery email in DB yet');
+        }
+    }, { onlyOnce: true });
+}
+
 </script>
 
     <!-- ═══════════════════════════════════════
@@ -4539,5 +4967,16 @@ window.cancelAITasks = function() {
         </div>
     </div>
 
+
+    <!-- ── Email verification nudge popup (shown after signup) ── -->
+    <div class="verify-popup-overlay" id="verifyPopupOverlay">
+        <div class="verify-popup">
+            <div style="font-size:40px;">📧</div>
+            <h3>Add a Recovery Email</h3>
+            <p>To enable <strong>Forgot Password</strong>, add and verify your real email in Profile → Account.</p>
+            <button class="vp-btn" onclick="goToEmailVerify()">Go to Profile →</button>
+            <button class="vp-skip" onclick="closeVerifyPopup()">Skip for now</button>
+        </div>
+    </div>
 </body>
 </html>
