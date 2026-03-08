@@ -1,7 +1,7 @@
-# 🚀 Mission Control Pro
-### *The Ultimate Cloud-Synced Productivity Command Center with Push Notifications*
+# 🚀 Workflow Pro
+### *The Ultimate Cloud-Synced Productivity App with Push Notifications & AI Assistant*
 
-**Mission Control Pro** is a next-generation task management application engineered with a "Mission Command" aesthetic. Built on a robust offline-first architecture with Firebase cloud synchronization and **real-time push notifications**, it delivers seamless productivity wrapped in a fluid, animated UI that transforms task management into an immersive experience.
+**Workflow Pro** is a next-generation task management application built with a sleek, modern aesthetic. Built on a robust offline-first architecture with Firebase cloud synchronization, **real-time push notifications**, and an **AI-powered task assistant**, it delivers seamless productivity wrapped in a fluid, animated UI.
 
 **Live Deployment** → [aquaimmortal7.github.io/Task-Planner/](https://aquaimmortal7.github.io/Task-Planner/)
 
@@ -17,16 +17,37 @@
 ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
 ![PWA](https://img.shields.io/badge/PWA-5A0FC8?style=for-the-badge&logo=pwa&logoColor=white)
 ![Service Worker](https://img.shields.io/badge/Service_Worker-000000?style=for-the-badge&logo=pwa&logoColor=white)
+![Gemini AI](https://img.shields.io/badge/Gemini_AI-4285F4?style=for-the-badge&logo=google&logoColor=white)
+![EmailJS](https://img.shields.io/badge/EmailJS-FF6B35?style=for-the-badge&logo=gmail&logoColor=white)
 ![GitHub Pages](https://img.shields.io/badge/github%20pages-121013?style=for-the-badge&logo=github&logoColor=white)
 
 ---
 
 ## ✨ Key Features
 
+### 🤖 AI Task Assistant
+* **Floating AI Panel**: Tap the ✦ button to open a slide-in AI chat panel
+* **Goal → Roadmap**: Tell the AI your goal (e.g. "I want to learn Java") and it generates a full structured task roadmap with dates, categories, and recurrence
+* **Preview Before Adding**: Review all suggested tasks, remove any you don't want, then add all with one tap
+* **Multi-Turn Conversation**: AI remembers the full session — ask it to modify, extend, or revise the roadmap
+* **Powered by Gemini 2.5 Flash**: Free tier, no proxy needed, runs directly from the browser
+
+### 🔐 Account Security & Recovery
+* **Recovery Email**: Add and verify a real email in Profile → Account for account recovery
+* **OTP Verification**: 6-digit OTP sent to your Gmail via EmailJS to verify your recovery email
+* **Forgot Password Flow**:
+  1. Enter username → OTP sent to verified recovery email
+  2. Enter OTP → new password fields appear
+  3. Set new password → automatically logged in
+* **Cloud Function Password Reset**: Firebase Admin SDK securely updates password server-side
+* **Re-authentication**: Current password required before changing password in Profile
+* **Post-Signup Nudge**: Popup after signup encourages adding a recovery email immediately
+
 ### 👤 Profile & Settings Panel
-* **Slide-In Profile Panel**: Full-featured settings panel that slides in from the right with a smooth animation
+* **Slide-In Profile Panel**: Full-featured settings panel that slides in from the right with smooth animation
 * **Avatar System**: Auto-generated avatar from username initial shown in the top nav and panel header
 * **Change Password**: Secure inline password change with re-authentication before applying
+* **Recovery Email Row**: Shows ✓ Verified or ! Unverified badge with OTP verify flow inline
 * **Notification Controls**:
   - Toggle daily morning summary on/off
   - Set your preferred daily summary time (defaults to 7:00 AM)
@@ -39,13 +60,17 @@
 * **Account Actions**: Logout with confirmation, delete account with password verification
 * **Cloud-Persisted Settings**: All preferences saved to `users/{userId}/settings` in Firebase — sync across devices
 
+### 🔁 Recurring Tasks
+* **Repeat Options**: No Repeat, Daily, Weekly, Monthly
+* **Auto-Spawn**: On task completion, next occurrence is automatically created with the correct date
+* **Visual Badges**: 🔁 daily, 📅 weekly, 🗓️ monthly shown on task cards
+* **UTC-Safe Date Logic**: Uses local date parts (not `toISOString()`) to avoid timezone shift bugs
+
 ### 🌅 Smart Daily Morning Summary
-* **7 AM Briefing**: Single push notification every morning listing all of today's tasks
-* **Replaces Midnight Notification**: No more useless 12 AM alerts — get your summary when you actually start your day
-* **User-Configurable Time**: Set your own preferred summary time from the Profile panel
-* **Smart Body**: Shows up to 5 tasks with times, then "…and N more" if there are additional tasks
-* **Dual Delivery**: Fires from the Firebase Cloud Function (when app is closed) and a `setTimeout` scheduler (when app is open)
-* **Toggleable**: Can be fully disabled from Profile settings
+* **Configurable Time**: Set your own briefing time (default 7:00 AM)
+* **Smart Body**: Shows up to 5 tasks with times, then "…and N more"
+* **Dual Delivery**: Fires from Firebase Cloud Function (app closed) and `setTimeout` (app open)
+* **Toggleable**: Can be fully disabled from Profile
 
 ### 🌐 Offline-First Architecture
 * **Local-First Performance**: All operations write to IndexedDB instantly for zero-latency interaction
@@ -58,28 +83,33 @@
 ### 🔔 Cloud-Powered Push Notifications
 * **Background Notifications**: Receive task reminders even when the app is closed
 * **Intelligent Scheduling**:
-  - 🌅 **7 AM Daily Summary**: All of today's tasks in one morning briefing
+  - 🌅 **Daily Summary**: Configurable morning briefing of all today's tasks
   - ⏰ **1-Hour Warning**: 55–65 min window before task is due
-  - ⚡ **10-Minute Warning**: 8–12 min window before task is due (tightened for accuracy)
+  - ⚡ **10-Minute Warning**: 8–12 min window before task is due
 * **Firebase Cloud Functions**: Serverless backend checks tasks every 5 minutes
 * **Cross-Device Support**: Notifications on desktop, mobile PWA, and tablets
-* **Timezone-Aware**: Runs on Asia/Kolkata (UTC+5:30) time
+* **Timezone-Aware**: Runs on Asia/Kolkata (UTC+5:30)
 * **VAPID Authentication**: Secure web push protocol implementation
 * **Auto-Subscribe**: Seamless push subscription on notification permission grant
 * **Stale Subscription Cleanup**: Invalid subscriptions automatically removed (410/404 responses)
 
+### ⏰ Dual Time Widget
+* **Start → End Time**: Set both start and end times per task with a clean `__:__ → __:__` widget
+* **Flexible Entry**: Start only, end only, or both — all combinations supported
+* **Smart Display**: Shows `(09:00 → 10:30)`, `(start: 09:00)`, or `(end: 10:30)` on task cards
+
 ### 📊 Weekly Visual Dashboard
-* **Week Start Setting**: Bar graph and weekly cards restructure instantly when week start is changed to Monday
+* **Week Start Setting**: Bar graph and weekly cards restructure instantly when week start is changed
 * **Week View Toggle**: Switch between Today View and Week View with one click
 * **Circular Progress Indicators**: Beautiful SVG-based completion circles for each day
 * **7-Day Overview**: Cards showing daily task completion for the configured week
-* **Interactive Task Lists**: Themed scrollbar — view and complete tasks directly from week cards
+* **Interactive Task Lists**: View and complete tasks directly from week cards
 * **Smooth Animations**: Staggered card animations (100ms delay cascade), progress circles fill with cubic-bezier easing
 * **Real-Time Updates**: Progress updates smoothly without page reload
 * **Category Filtering**: Works seamlessly with category filters
 
 ### 🎯 Smart Task Management
-* **Time-Based Scheduling**: Add specific times to tasks (HH:MM format)
+* **Time-Based Scheduling**: Add specific start and end times to tasks
 * **Default Task Time**: Set a preferred time that pre-fills when adding tasks (configurable in Profile)
 * **Overdue Detection**: Tasks with passed times automatically move to "Overdue" column
 * **Three-Column Kanban**:
@@ -128,12 +158,25 @@
 * **Category Filtering**: Filter tasks across all views
 
 ### 📱 Progressive Web App (PWA)
-* **Installable**:
-  - 🤖 **Android (Chrome)**: A native **"Install App"** banner appears automatically — one tap installs it like a real app with no extra steps needed
-  - 🍎 **iOS (Safari)**: Manual process required — tap Share ⬆️ then "Add to Home Screen" (Apple does not support automatic install prompts)
 * **Full-Screen Experience**: Runs without browser chrome after installation
 * **Service Worker**: Handles caching and push notifications
 * **Offline Capable**: Core functionality without internet
+* **Swipe Navigation**: Swipe left/right to navigate weeks on mobile
+
+#### 🤖 Android (Chrome) — Automatic
+Chrome detects the PWA manifest and shows a native **"Install App"** banner at the bottom of the screen automatically. Tap it and the app installs instantly.
+
+> If the banner was dismissed, tap the browser menu ⋮ → **"Install App"** to trigger it manually.
+
+#### 🍎 iOS (Safari) — Manual Steps Required
+Apple does not support automatic PWA install prompts. Install manually:
+
+1. Open the site in **Safari** (not Chrome — Chrome on iOS cannot install PWAs)
+2. Tap the **Share** button ⬆️ at the bottom of the screen
+3. Scroll down and tap **"Add to Home Screen"**
+4. Confirm the name and tap **"Add"**
+
+> **Note**: Push notifications on iOS PWAs require iOS 16.4+ with the PWA installed to the home screen.
 
 ---
 
@@ -154,11 +197,45 @@ Firebase Cloud Functions (Every 5 min, Asia/Kolkata)
          ↓
     For each user:
          ↓
-    ┌─── Is it 7:00–7:05 AM? ───► Send daily summary of all today's tasks
+    ┌─── Is it summary time window? ──► Send daily summary
     │
     └─── For each task due today with a time:
               ├── 55–65 min away? ──► "⏰ Task Due in 1 Hour"
               └── 8–12 min away?  ──► "⚡ Task Due in 10 Minutes"
+```
+
+### Forgot Password Flow
+```
+User enters username
+         ↓
+App reads userIndex/{username} (public Firebase node)
+         ↓
+Finds verified recovery email
+         ↓
+EmailJS sends 6-digit OTP to Gmail
+         ↓
+User enters OTP → verified in memory
+         ↓
+User sets new password
+         ↓
+App writes passwordResets/{username} to Firebase DB
+         ↓
+Cloud Function (handlePasswordReset) picks it up
+         ↓
+admin.auth().updateUser() — secure server-side update
+         ↓
+App signs in automatically with new password
+```
+
+### AI Assistant Flow
+```
+User describes goal
+         ↓
+Gemini 2.5 Flash generates JSON task roadmap
+         ↓
+App parses JSON → renders preview cards
+         ↓
+User removes unwanted tasks → Add all → Firebase
 ```
 
 ### Profile Settings Flow
@@ -233,8 +310,6 @@ $$
 \text{weekStart} = today - \text{offset} + (weekOffset \times 7)
 $$
 
-Applies to bar graph, weekly dashboard cards, week header date range, and completion percentage ring.
-
 ### 4. Weekly Progress Calculation
 
 $$
@@ -244,6 +319,12 @@ $$
 ### 5. Timezone Normalization
 ```javascript
 const indiaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+```
+
+### 6. Recurring Task Next Date
+```javascript
+// Uses local date parts — NOT toISOString() — to avoid UTC timezone shift
+const nextDate = new Date(year, month, day + 1); // for daily
 ```
 
 ---
@@ -264,18 +345,24 @@ const indiaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata
         "pushSubscriptions": {
           ".read": "$uid === auth.uid",
           ".write": "$uid === auth.uid"
-        },
-        "settings": {
-          ".read": "$uid === auth.uid",
-          ".write": "$uid === auth.uid"
         }
+      }
+    },
+    "userIndex": {
+      "$username": {
+        ".read": true,
+        ".write": "auth !== null"
+      }
+    },
+    "passwordResets": {
+      "$username": {
+        ".read": true,
+        ".write": true
       }
     }
   }
 }
 ```
-
-> ⚠️ Add the `settings` node to your existing rules if upgrading from v2.
 
 ---
 
@@ -289,18 +376,26 @@ const indiaTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata
 4. Enable **Authentication** → Email/Password
 5. Upgrade to **Blaze Plan** (pay-as-you-go, free tier sufficient for personal use)
 
-#### Configure Firebase in `index.html`
+### 2. Gemini AI Setup (Free)
+
+1. Go to [aistudio.google.com](https://aistudio.google.com) → Get API Key → Create API key in new project
+2. In `index.html`, replace:
 ```javascript
-const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_PROJECT.firebaseapp.com",
-    databaseURL: "https://YOUR_PROJECT.asia-southeast1.firebasedatabase.app",
-    projectId: "YOUR_PROJECT_ID",
-    appId: "YOUR_APP_ID"
-};
+const GEMINI_KEY = 'YOUR_GEMINI_API_KEY';
 ```
 
-### 2. Cloud Functions Setup
+### 3. EmailJS Setup (Free — 200 emails/month)
+
+1. Sign up at [emailjs.com](https://emailjs.com) → connect Gmail service
+2. Create email template with variables `{{to_email}}`, `{{username}}`, `{{otp}}`, `{{time}}`
+3. Copy **Service ID**, **Template ID**, **Public Key**
+4. Update in `index.html`:
+```javascript
+emailjs.init("YOUR_PUBLIC_KEY");
+await emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', { ... });
+```
+
+### 4. Cloud Functions Setup
 
 ```bash
 npm install -g firebase-tools
@@ -320,25 +415,8 @@ Update `functions/index.js` and `index.html` with your VAPID keys, then deploy:
 firebase deploy --only functions
 ```
 
-### 3. GitHub Pages Hosting
-Push `index.html`, `sw.js`, `manifest.json`, and icons to your repo, then enable Pages from **Settings → Pages → main branch**.
-
-### 4. PWA Installation
-
-#### 🤖 Android (Chrome) — Automatic
-Chrome detects the PWA manifest and shows a native **"Install App"** banner at the bottom of the screen automatically. Tap it and the app installs instantly — no menus, no steps.
-
-> If the banner was dismissed, tap the browser menu ⋮ → **"Install App"** to trigger it manually.
-
-#### 🍎 iOS (Safari) — Manual Steps Required
-Apple does not support automatic PWA install prompts. You must install manually:
-
-1. Open the site in **Safari** (not Chrome — Chrome on iOS cannot install PWAs)
-2. Tap the **Share** button ⬆️ at the bottom of the screen
-3. Scroll down and tap **"Add to Home Screen"**
-4. Confirm the name and tap **"Add"**
-
-> **Note**: Push notifications on iOS PWAs have limited support due to Apple restrictions. Full notification support requires iOS 16.4+ with the PWA installed to the home screen.
+### 5. GitHub Pages Hosting
+Push `index.html`, `sw.js`, `manifest.json`, and icons to your repo → enable Pages from **Settings → Pages → main branch**.
 
 ---
 
@@ -348,12 +426,15 @@ Apple does not support automatic PWA install prompts. You must install manually:
 ```javascript
 {
   id: "1738764523000",
-  name: "Deploy Mission Alpha",
+  name: "Learn Java basics",
   cat: "work",              // work | home | personal | urgent
-  date: "2025-02-14",
-  time: "14:30",            // optional
+  date: "2026-03-10",
+  startTime: "09:00",       // optional
+  endTime: "10:30",         // optional
+  recur: "weekly",          // daily | weekly | monthly | null
   completed: false,
-  completedAt: null
+  completedAt: null,
+  notifSent: { "1hr": true, "10min": true }
 }
 ```
 
@@ -362,11 +443,12 @@ Apple does not support automatic PWA install prompts. You must install manually:
 // Stored at: users/{userId}/settings
 {
   dailySummaryEnabled: true,
-  dailySummaryTime: "07:00",   // user-configurable morning briefing time
+  dailySummaryTime: "07:00",
   notify1Hour: true,
   notify10Min: true,
-  weekStart: 0,               // 0 = Sunday, 1 = Monday
-  defaultTaskTime: "09:00"    // pre-fills task time input
+  weekStart: 0,             // 0 = Sunday, 1 = Monday
+  defaultTaskTime: "09:00",
+  username: "ankit"
 }
 ```
 
@@ -377,6 +459,27 @@ Apple does not support automatic PWA install prompts. You must install manually:
   endpoint: "https://fcm.googleapis.com/fcm/send/...",
   expirationTime: null,
   keys: { p256dh: "...", auth: "..." }
+}
+```
+
+### Recovery Email Object
+```javascript
+// Stored at: users/{userId}/recoveryEmail
+{
+  email: "user@gmail.com",
+  verified: true,
+  otp: null,
+  otpExpiry: null
+}
+```
+
+### User Index (Public — for forgot password)
+```javascript
+// Stored at: userIndex/{username}
+{
+  uid: "firebase_user_uid",
+  recoveryEmail: "user@gmail.com",
+  verified: true
 }
 ```
 
@@ -396,7 +499,7 @@ Apple does not support automatic PWA install prompts. You must install manually:
 ### Notification Schedule
 | Notification | When | Configurable |
 |---|---|:---:|
-| 🌅 Daily Summary | 7 AM (user-set time) | ✅ |
+| 🌅 Daily Summary | User-set time (default 7 AM) | ✅ |
 | ⏰ 1-Hour Reminder | 55–65 min before task | ✅ |
 | ⚡ 10-Min Reminder | 8–12 min before task | ✅ |
 
@@ -410,55 +513,6 @@ Apple does not support automatic PWA install prompts. You must install manually:
 
 ---
 
-## 👨‍💻 About the Developer
-
-| | |
-| :--- | :--- |
-| **Name** | Ankit Raj |
-| **Education** | 1st Year B.Tech CSE at **Galgotias University** |
-| **Core Expertise** | Backend Development, Cloud Functions, Real-Time Systems |
-| **YouTube** | [AQUAIMMORTAL Official Channel](https://youtube.com/@AQUAIMMORTAL) |
-| **GitHub** | [aquaimmortal7](https://github.com/aquaimmortal7) |
-
----
-
-## 📝 Version History
-
-### v3.0.0 — Profile, Settings & Smart Notifications (Feb 2026)
-
-**New Features:**
-- ✅ **Profile Panel**: Slide-in settings panel with avatar, password change, and all preferences
-- ✅ **Daily 7 AM Summary**: Replaced midnight notification with a useful morning briefing
-- ✅ **User-Configurable Summary Time**: Pick your own morning briefing time
-- ✅ **Notification Toggles**: Individually enable/disable daily summary, 1-hour, and 10-min reminders
-- ✅ **Week Start Setting**: Choose Sunday or Monday — bar graph and weekly cards restructure instantly
-- ✅ **Default Task Time**: Set a preferred time that pre-fills when adding tasks
-- ✅ **Themed Scrollbar**: Task list scrollbar in week cards matches the primary green theme
-- ✅ **Account Deletion**: Full Firebase data wipe with password confirmation
-- ✅ **Secure Password Change**: Re-authentication required before updating password
-
-**Technical Improvements:**
-- ⚡ Tightened 10-min notification window from 5–15 min to 8–12 min for accuracy
-- ⚡ All settings persisted to `users/{uid}/settings` — sync across devices
-- ⚡ Week start calculation now uses `(currentDay - weekStartDay + 7) % 7` across all 4 render paths
-- ⚡ Daily summary fires from both Cloud Function (background) and `setTimeout` (when app open)
-- ⚡ Firebase security rules updated to cover new `settings` node
-
-### v2.0.0 — Push Notifications & Weekly Dashboard (Feb 2026)
-- ✅ Firebase Cloud Functions — serverless push notification backend
-- ✅ Web Push API with VAPID authentication
-- ✅ Weekly Dashboard with circular SVG progress indicators
-- ✅ Time-based task categorization (overdue/current/incoming)
-- ✅ View toggle system (Today / Week)
-
-### v1.0.0 — Core Task Management (Jan 2025)
-- Basic task CRUD with Firebase Realtime Database
-- Category filtering
-- Dark/Light theme toggle
-- Weekly bar graph analytics
-
----
-
 ## 💰 Cost Analysis
 
 | Service | Monthly Usage | Free Tier | Cost |
@@ -467,8 +521,53 @@ Apple does not support automatic PWA install prompts. You must install manually:
 | Realtime Database | Read/Write ops | 100GB/month | ✅ FREE |
 | Authentication | User sign-ins | Unlimited | ✅ FREE |
 | Hosting (GitHub Pages) | Static files | Unlimited | ✅ FREE |
+| Gemini 2.5 Flash | AI requests | 250/day | ✅ FREE |
+| EmailJS | OTP emails | 200/month | ✅ FREE |
 
 **Estimated Monthly Cost: $0.00**
+
+---
+
+## 📝 Version History
+
+### v4.0.0 — AI Assistant, Account Recovery & Workflow Pro Rebrand (Mar 2026)
+
+**New Features:**
+- ✅ **AI Assistant**: Gemini 2.5 Flash powered goal → task roadmap generator
+- ✅ **Forgot Password**: Full OTP-based flow — username → OTP → new password → auto login
+- ✅ **Recovery Email**: Add and verify real Gmail in Profile for account recovery
+- ✅ **EmailJS Integration**: OTP emails sent directly to user's Gmail (free tier)
+- ✅ **Cloud Function Password Reset**: `handlePasswordReset` uses Firebase Admin SDK
+- ✅ **Post-Signup Recovery Email Nudge**: Popup encourages adding recovery email immediately
+- ✅ **Recurring Tasks**: Daily, weekly, monthly with auto-spawn on completion
+- ✅ **Dual Time Widget**: Start → End time picker on every task
+- ✅ **App Renamed**: Mission Control Pro → **Workflow Pro**
+
+**Technical Improvements:**
+- ⚡ `userIndex` public node for O(1) username lookup without scanning all users
+- ⚡ Username normalized to lowercase in all index operations
+- ⚡ UTC timezone bugs fixed — all date operations use local date parts
+- ⚡ Best streak calculation scans all-time data (not just current month)
+- ⚡ AI JSON parser handles truncated responses gracefully
+
+### v3.0.0 — Profile, Settings & Smart Notifications (Feb 2026)
+- ✅ Profile Panel with avatar, password change, and all preferences
+- ✅ Daily 7 AM Summary with configurable time
+- ✅ Notification toggles (daily summary, 1-hour, 10-min)
+- ✅ Week Start setting — bar graph and cards restructure instantly
+- ✅ Default Task Time pre-fill
+- ✅ Account deletion with password confirmation
+
+### v2.0.0 — Push Notifications & Weekly Dashboard (Feb 2026)
+- ✅ Firebase Cloud Functions — serverless push notification backend
+- ✅ Web Push API with VAPID authentication
+- ✅ Weekly Dashboard with circular SVG progress indicators
+- ✅ Time-based task categorization (overdue/current/incoming)
+
+### v1.0.0 — Core Task Management (Jan 2025)
+- Basic task CRUD with Firebase Realtime Database
+- Category filtering, dark/light theme
+- Weekly bar graph analytics
 
 ---
 
@@ -478,8 +577,13 @@ Apple does not support automatic PWA install prompts. You must install manually:
 - iOS PWA has limited background notification support (Apple restriction)
 - Push notifications require installed PWA on mobile (not browser tabs)
 - Service Worker requires HTTPS (GitHub Pages provides this)
+- EmailJS free tier limited to 200 emails/month
+- Gemini free tier limited to 250 AI requests/day
 
 ### Planned Features
+- [ ] Natural language task add ("meeting tomorrow at 3pm")
+- [ ] Smart AI category/time suggestions
+- [ ] Daily AI debrief at 9 PM
 - [ ] Task priority levels
 - [ ] Drag-and-drop reordering
 - [ ] Export to CSV/JSON
@@ -488,6 +592,18 @@ Apple does not support automatic PWA install prompts. You must install manually:
 - [ ] Snooze notification feature
 - [ ] Custom notification sound
 - [ ] Task templates
+
+---
+
+## 👨‍💻 About the Developer
+
+| | |
+| :--- | :--- |
+| **Name** | Ankit Raj |
+| **Education** | 1st Year B.Tech CSE at **Galgotias University** |
+| **Core Expertise** | Backend Development, Cloud Functions, Real-Time Systems |
+| **YouTube** | [AQUAIMMORTAL Official Channel](https://youtube.com/@AQUAIMMORTAL) |
+| **GitHub** | [aquaimmortal7](https://github.com/aquaimmortal7) |
 
 ---
 
@@ -523,9 +639,9 @@ Licensed under the [MIT License](./LICENSE).
 
 **Built with 💚 by Ankit Raj**
 
-*"Transform chaos into clarity, one mission at a time."*
+*"Stop planning, start doing."*
 
-**Powered by Firebase Cloud Functions • Web Push API • Service Workers**
+**Powered by Firebase · Gemini AI · EmailJS · Web Push API · Service Workers**
 
 ⭐ Star this repo if it helped you!
 
