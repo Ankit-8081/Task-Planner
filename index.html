@@ -1255,7 +1255,8 @@
         /* ═══════════════════════════════════════════
            AI ASSISTANT — FAB + PANEL
         ═══════════════════════════════════════════ */
-        .ai-fab {
+        .ai-fab { display: none; } /* hidden until logged in */
+        .ai-fab.visible {
             position: fixed; bottom: 28px; right: 24px;
             width: 56px; height: 56px; border-radius: 50%;
             background: var(--bg-gradient);
@@ -2863,6 +2864,8 @@ onAuthStateChanged(auth, (user) => {
         checkNotificationBanner();
         // Sync recovery email to userIndex on every login
         setTimeout(() => loadRecoveryEmailBadge(), 1000);
+        // Show AI fab now that user is logged in
+        document.getElementById('aiFab').classList.add('visible');
         
         // Auto-subscribe to push notifications if permission already granted
         if (Notification.permission === 'granted') {
@@ -2874,6 +2877,7 @@ onAuthStateChanged(auth, (user) => {
         currentUserId = null;
         document.getElementById('auth-screen').style.display = 'flex';
         document.getElementById('app-dashboard').style.display = 'none';
+        document.getElementById('aiFab').classList.remove('visible');
         allTasks = [];
     }
 });
