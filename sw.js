@@ -115,7 +115,7 @@ self.addEventListener('fetch', (event) => {
           
           // If requesting HTML and nothing cached, return offline page
           if (request.headers.get('accept').includes('text/html')) {
-            return caches.match('./index_test.html');
+            return caches.match('./index.html');
           }
         });
       })
