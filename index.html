@@ -2592,8 +2592,14 @@ window.saveForgotNewPassword = async function() {
             if (data?.status === 'done') {
                 unsubReset();
                 await set(resetRef, null); // clean up
-                const authEmail = `${forgotPwUsername}@missioncontrol.com`;
-                await signInWithEmailAndPassword(auth, authEmail, newPass);
+                let authEmail;
+                try {
+                    await signInWithEmailAndPassword(auth, `${forgotPwUsername}@workflowpro.app`, newPass);
+                    authEmail = `${forgotPwUsername}@workflowpro.app`;
+                } catch {
+                    await signInWithEmailAndPassword(auth, `${forgotPwUsername}@missioncontrol.com`, newPass);
+                    authEmail = `${forgotPwUsername}@missioncontrol.com`;
+                }
                 forgotPwOtp = null;
                 forgotPwUsername = null;
             } else if (data?.status === 'error') {
@@ -2605,8 +2611,14 @@ window.saveForgotNewPassword = async function() {
                 // Try signing in directly with new password
                 unsubReset();
                 try {
-                    const authEmail = `${forgotPwUsername}@missioncontrol.com`;
-                    await signInWithEmailAndPassword(auth, authEmail, newPass);
+                    let authEmail;
+                    try {
+                        await signInWithEmailAndPassword(auth, `${forgotPwUsername}@workflowpro.app`, newPass);
+                        authEmail = `${forgotPwUsername}@workflowpro.app`;
+                    } catch(e) {
+                        await signInWithEmailAndPassword(auth, `${forgotPwUsername}@missioncontrol.com`, newPass);
+                        authEmail = `${forgotPwUsername}@missioncontrol.com`;
+                    }
                     forgotPwOtp = null;
                     forgotPwUsername = null;
                 } catch(e) {
@@ -2621,7 +2633,8 @@ window.saveForgotNewPassword = async function() {
             unsubReset();
             if (btn) { btn.textContent = 'Set New Password'; btn.disabled = false; }
             // Try signing in anyway — function may have succeeded
-            signInWithEmailAndPassword(auth, `${forgotPwUsername}@missioncontrol.com`, newPass)
+            signInWithEmailAndPassword(auth, `${forgotPwUsername}@workflowpro.app`, newPass).catch(() =>
+            signInWithEmailAndPassword(auth, `${forgotPwUsername}@missioncontrol.com`, newPass))
                 .catch(() => { errEl.textContent = 'Timed out. Please try logging in manually.'; });
         }, 15000);
 
@@ -2639,13 +2652,19 @@ window.togglePassword = () => {
 
 window.handleAuth = async () => {
     const u = document.getElementById('username').value, p = document.getElementById('password').value;
-    const email = `${u}@missioncontrol.com`;
     try {
         if (isLoginMode) {
-            const loginCred = await signInWithEmailAndPassword(auth, email, p);
+            // Try @workflowpro.app first (new users), fallback to @missioncontrol.com (old users)
+            let loginCred;
+            try {
+                loginCred = await signInWithEmailAndPassword(auth, `${u}@workflowpro.app`, p);
+            } catch(e1) {
+                loginCred = await signInWithEmailAndPassword(auth, `${u}@missioncontrol.com`, p);
+            }
             // Ensure userIndex exists for existing users
             await set(ref(db, `userIndex/${u.toLowerCase()}`), { uid: loginCred.user.uid });
         } else {
+            const email = `${u}@workflowpro.app`;
             const cred = await createUserWithEmailAndPassword(auth, email, p);
             // Save username to settings + public index for forgot-password
             await set(ref(db, `users/${cred.user.uid}/settings/username`), u);
@@ -2694,7 +2713,7 @@ function populateProfileUI() {
     if (!user) return;
 
     // Avatar: first letter of username (email prefix)
-    const username = user.email.replace('@missioncontrol.com', '');
+    const username = user.email.replace('@workflowpro.app', '').replace('@missioncontrol.com', '');
     document.getElementById('profileAvatar').textContent = username.charAt(0);
     document.getElementById('profileUsername').textContent = username;
     document.getElementById('profileEmailDisplay').textContent = user.email;
@@ -2721,7 +2740,7 @@ function loadUserSettings() {
         // Update profile nav avatar once loaded
         const user = auth.currentUser;
         if (user) {
-            const username = user.email.replace('@missioncontrol.com', '');
+            const username = user.email.replace('@workflowpro.app', '').replace('@missioncontrol.com', '');
             const btn = document.getElementById('profileNavBtn');
             if (btn) btn.textContent = username.charAt(0);
         }
@@ -4604,18 +4623,16 @@ window.sendAIMessage = async function() {
     const typingId = appendAIMessage('ai', '…', true);
 
     try {
-        // Gemini 1.5 Flash — free tier, no proxy needed
-        // Replace YOUR_GEMINI_API_KEY with your key from aistudio.google.com
-        const GEMINI_KEY = (typeof CONFIG !== 'undefined') ? CONFIG.GEMINI_KEY : '';
-        const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_KEY}`;
+        // Call Gemini via Firebase Cloud Function proxy (key never exposed to browser)
+        const PROXY_URL = 'https://asia-southeast1-task-list-tracker-e80d4.cloudfunctions.net/geminiProxy';
 
-        // Convert aiHistory (Anthropic format) to Gemini format
+        // Convert aiHistory to Gemini format
         const geminiContents = aiHistory.map(msg => ({
             role: msg.role === 'assistant' ? 'model' : 'user',
             parts: [{ text: msg.content }]
         }));
 
-        const response = await fetch(GEMINI_URL, {
+        const response = await fetch(PROXY_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -4841,7 +4858,7 @@ window.saveRecoveryEmail = async function() {
         });
 
         // Get username for email
-        const username = auth.currentUser.email.replace('@missioncontrol.com', '').replace('@workflowpro.com', '');
+        const username = auth.currentUser.email.replace('@missioncontrol.com', '').replace('@workflowpro.app', '');
 
         // Send OTP via EmailJS
         await emailjs.send('service_bteypnw', 'template_gkikd99', {
@@ -4900,7 +4917,7 @@ window.verifyOTP = async function() {
 
         // Mark verified in user record + update public index
         await update(ref(db, `users/${currentUserId}/recoveryEmail`), { verified: true, otp: null, otpExpiry: null });
-        const uname = auth.currentUser.email.replace('@missioncontrol.com','').replace('@workflowpro.com','');
+        const uname = auth.currentUser.email.replace('@missioncontrol.com','').replace('@workflowpro.app','');
         await update(ref(db, `userIndex/${uname}`), { recoveryEmail: data.email, verified: true });
 
         // Update UI
@@ -4933,7 +4950,7 @@ function loadRecoveryEmailBadge() {
         if (data) {
             updateRecoveryEmailBadge(data.email, data.verified);
             if (data.verified && data.email) {
-                const username = auth.currentUser.email.replace('@missioncontrol.com','').replace('@workflowpro.com','');
+                const username = auth.currentUser.email.replace('@missioncontrol.com','').replace('@workflowpro.app','');
                 console.log('[RecoveryEmail] Syncing to userIndex:', username, data.email);
                 try {
                     await update(ref(db, `userIndex/${username}`), {
