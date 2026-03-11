@@ -1,4 +1,4 @@
-const CACHE_NAME = 'mission-control-v1.2.0';
+const CACHE_NAME = 'workflow-pro-v1.3.0';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -115,7 +115,7 @@ self.addEventListener('fetch', (event) => {
           
           // If requesting HTML and nothing cached, return offline page
           if (request.headers.get('accept').includes('text/html')) {
-            return caches.match('./index.html');
+            return caches.match('./index_test.html');
           }
         });
       })
@@ -231,7 +231,7 @@ self.addEventListener('push', (event) => {
   
   if (event.data) {
     const data = event.data.json();
-    const title = data.title || 'Mission Control';
+    const title = data.title || 'Workflow Pro';
     const options = {
       body: data.body || 'You have a new notification',
       icon: data.icon || '/icon-192.png',
