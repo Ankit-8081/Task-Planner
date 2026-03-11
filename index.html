@@ -3167,11 +3167,17 @@ window.saveEditedTask = function(event) {
         alert('End time must be after start time'); return;
     }
 
+    // Find original task to check if time changed
+    const origTask = allTasks.find(t => t.id === currentEditingTaskId);
+    const timeChanged = origTask && (origTask.startTime !== (startTime || null));
+
     const updates = {
         name, date, cat,
         startTime: startTime || null,
         endTime:   endTime   || null,
-        recur:     recur     || null
+        recur:     recur     || null,
+        // Clear notifSent flags if time changed so reminders fire again
+        notifSent: timeChanged ? null : (origTask?.notifSent || null)
     };
     
     update(ref(db, `users/${currentUserId}/tasks/${currentEditingTaskId}`), updates);
