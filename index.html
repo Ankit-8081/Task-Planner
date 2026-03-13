@@ -1335,7 +1335,45 @@
             border-bottom-left-radius: 4px;
         }
         .ai-msg.ai.typing {
-            opacity: 0.6; font-style: italic;
+            background: transparent !important;
+            padding: 4px 0 !important;
+            box-shadow: none !important;
+        }
+        .ai-thinking {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .ai-thinking-icon {
+            position: relative; width: 32px; height: 32px; flex-shrink: 0;
+        }
+        .ai-thinking-icon svg {
+            width: 32px; height: 32px;
+        }
+        .ai-thinking-ring {
+            position: absolute; top: 0; left: 0;
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            border-top-color: var(--primary);
+            border-right-color: var(--primary);
+            animation: ai-spin 1s linear infinite;
+        }
+        @keyframes ai-spin {
+            to { transform: rotate(360deg); }
+        }
+        .ai-thinking-dots {
+            display: flex; gap: 4px; align-items: center;
+        }
+        .ai-thinking-dots span {
+            width: 6px; height: 6px; border-radius: 50%;
+            background: var(--primary); opacity: 0.3;
+            animation: ai-dot-pulse 1.4s ease-in-out infinite;
+        }
+        .ai-thinking-dots span:nth-child(1) { animation-delay: 0s; }
+        .ai-thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .ai-thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes ai-dot-pulse {
+            0%, 80%, 100% { opacity: 0.2; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1.2); }
         }
 
         /* Task preview cards inside AI message */
@@ -1397,6 +1435,45 @@
         }
         .ai-send:hover { opacity: 0.85; transform: scale(1.06); }
         .ai-send:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+        .ai-img-btn {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: var(--bg-card); color: var(--text-sub);
+            border: 1px solid var(--border); cursor: pointer; font-size: 16px;
+            display: flex; align-items: center; justify-content: center;
+            align-self: flex-end; flex-shrink: 0;
+            transition: background 0.2s, color 0.2s;
+        }
+        .ai-img-btn:hover { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .ai-img-preview {
+            padding: 8px 14px 4px;
+            display: none;
+            border-top: 1px solid var(--border);
+        }
+        .ai-img-preview-row {
+            display: inline-flex; align-items: flex-start; gap: 6px;
+            position: relative;
+        }
+        .ai-img-preview img {
+            max-height: 72px; max-width: 100px;
+            border-radius: 10px; display: block;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        .ai-img-remove {
+            position: absolute; top: -6px; right: -6px;
+            background: var(--text); color: var(--bg-main);
+            border: none; border-radius: 50%;
+            width: 18px; height: 18px; font-size: 10px;
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; font-weight: bold;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+        }
+        /* Image in chat bubble */
+        .ai-chat-img {
+            max-width: 200px; max-height: 160px;
+            border-radius: 10px; display: block;
+            margin-bottom: 4px; object-fit: cover;
+        }
 
         /* ── Email verification popup ── */
         .verify-popup-overlay {
@@ -2429,6 +2506,29 @@ document.addEventListener('DOMContentLoaded', () => {
     if (taskNameInput)      taskNameInput.addEventListener('keypress', addTaskOnEnter);
     if (taskDateInput)      taskDateInput.addEventListener('keypress', addTaskOnEnter);
     if (taskStartTimeInput) taskStartTimeInput.addEventListener('keypress', addTaskOnEnter);
+
+    // AI image upload
+    const aiImgBtn = document.getElementById('aiImgBtn');
+    const aiImageInput = document.getElementById('aiImageInput');
+    if (aiImgBtn && aiImageInput) {
+        aiImgBtn.addEventListener('click', () => aiImageInput.click());
+        aiImageInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const dataUrl = e.target.result;
+                const base64 = dataUrl.split(',')[1];
+                const mimeType = file.type || 'image/jpeg';
+                aiPendingImage = { data: base64, mimeType };
+                document.getElementById('aiImgThumb').src = dataUrl;
+                document.getElementById('aiImgPreview').style.display = 'block';
+                // Auto-focus textarea
+                document.getElementById('aiInput').focus();
+            };
+            reader.readAsDataURL(file);
+        });
+    }
 
     // Summary time save button
     const summaryTimeEl = document.getElementById('summaryTimeInput');
@@ -4591,6 +4691,7 @@ console.log('💻 Laptop: Horizontal touchpad scroll');
 let aiPanelOpen   = false;
 let aiLoading     = false;
 let aiHistory     = [];          // multi-turn: [{role, content}]
+let aiPendingImage = null;       // base64 image waiting to be sent
 let aiPendingTasks = [];         // tasks waiting for user confirmation
 
 const AI_SYSTEM = `You are a productivity assistant built into a task manager app called Workflow Pro.
@@ -4627,9 +4728,7 @@ window.toggleAIPanel = function() {
 };
 
 function showAIWelcome() {
-    appendAIMessage('ai',
-        '👋 Hi! I can help you build a task roadmap from any goal.\n\nTry: <em>"My goal is to become expert in Java"</em> or <em>"I want to run a 5K in 3 months"</em>'
-    );
+    appendAIMessage('ai', 'Hi! Describe a goal or upload a schedule image to get started.');
 }
 
 window.clearAIChat = function() {
@@ -4651,34 +4750,60 @@ window.autoResizeAI = function(el) {
     el.style.height = Math.min(el.scrollHeight, 90) + 'px';
 };
 
+window.removeAIImage = function() {
+    aiPendingImage = null;
+    document.getElementById('aiImgPreview').style.display = 'none';
+    document.getElementById('aiImgThumb').src = '';
+    document.getElementById('aiImageInput').value = '';
+};
+
 window.sendAIMessage = async function() {
     if (aiLoading) return;
     const input = document.getElementById('aiInput');
     const text  = input.value.trim();
-    if (!text) return;
+    if (!text && !aiPendingImage) return;  // allow send with image only
 
     input.value = '';
     input.style.height = 'auto';
 
-    appendAIMessage('user', text);
+    // Show user message with image in chat bubble if present
+    if (aiPendingImage) {
+        const imgHtml = `<img class="ai-chat-img" src="data:${aiPendingImage.mimeType};base64,${aiPendingImage.data}" alt="uploaded image">${text ? '<div style="margin-top:4px;">' + text + '</div>' : ''}`;
+        appendAIMessage('user', imgHtml);
+    } else {
+        appendAIMessage('user', text);
+    }
 
     const todayStr = getTodayStr();
-    const userContent = `Today's date: ${todayStr}\n\n${text}`;
+    const userContent = `Today's date: ${todayStr}\n\n${text || 'Please analyze this schedule image and suggest tasks.'}`;
+
+    // Build Gemini parts — text + optional image
+    const userParts = [];
+    if (aiPendingImage) {
+        userParts.push({ inlineData: { mimeType: aiPendingImage.mimeType, data: aiPendingImage.data } });
+    }
+    userParts.push({ text: userContent });
 
     aiHistory.push({ role: 'user', content: userContent });
+
+    // Clear image after sending
+    const hadImage = !!aiPendingImage;
+    removeAIImage();
 
     setAILoading(true);
     const typingId = appendAIMessage('ai', '…', true);
 
     try {
-        // Call Gemini via Firebase Cloud Function proxy (key never exposed to browser)
         const PROXY_URL = 'https://asia-southeast1-task-list-tracker-e80d4.cloudfunctions.net/geminiProxy';
 
-        // Convert aiHistory to Gemini format
-        const geminiContents = aiHistory.map(msg => ({
-            role: msg.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: msg.content }]
-        }));
+        // Build contents — previous history as text, current message with image
+        const geminiContents = [
+            ...aiHistory.slice(0, -1).map(msg => ({
+                role: msg.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: msg.content }]
+            })),
+            { role: 'user', parts: userParts }
+        ];
 
         const response = await fetch(PROXY_URL, {
             method: 'POST',
@@ -4753,8 +4878,24 @@ function appendAIMessage(role, html, isTyping = false) {
     const div = document.createElement('div');
     div.id        = id;
     div.className = `ai-msg ${role}${isTyping ? ' typing' : ''}`;
-    // Convert newlines to <br>, allow safe html for welcome italic
-    div.innerHTML = html.replace(/\n/g, '<br>');
+    if (isTyping) {
+        div.innerHTML = `
+            <div class="ai-thinking">
+                <div class="ai-thinking-icon">
+                    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="16" cy="16" r="14" fill="var(--bg-card)"/>
+                        <text x="16" y="21" text-anchor="middle" font-size="14" fill="var(--primary)">✦</text>
+                    </svg>
+                    <div class="ai-thinking-ring"></div>
+                </div>
+                <div class="ai-thinking-dots">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>`;
+    } else {
+        // Convert newlines to <br>, allow safe html for welcome italic
+        div.innerHTML = html.replace(/\n/g, '<br>');
+    }
     document.getElementById('aiMessages').appendChild(div);
     div.scrollIntoView({ behavior: 'smooth', block: 'end' });
     return id;
@@ -5030,8 +5171,21 @@ function loadRecoveryEmailBadge() {
             <button class="ai-clear" onclick="clearAIChat()">Clear chat</button>
         </div>
         <div class="ai-messages" id="aiMessages"></div>
+        <div class="ai-img-preview" id="aiImgPreview">
+            <div class="ai-img-preview-row">
+                <img id="aiImgThumb" src="" alt="schedule">
+                <button class="ai-img-remove" onclick="removeAIImage()" title="Remove image">✕</button>
+            </div>
+        </div>
         <div class="ai-input-row">
-            <textarea id="aiInput" placeholder="e.g. My goal is to become expert in Java…" rows="1"
+            <input type="file" id="aiImageInput" accept="image/*" style="display:none">
+            <button class="ai-img-btn" id="aiImgBtn" title="Upload image">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                </svg>
+            </button>
+            <textarea id="aiInput" placeholder="e.g. Describe your goal or upload an image…" rows="1"
                 onkeydown="aiInputKeydown(event)" oninput="autoResizeAI(this)"></textarea>
             <button class="ai-send" id="aiSend" onclick="sendAIMessage()">➤</button>
         </div>
