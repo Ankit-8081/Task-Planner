@@ -1789,8 +1789,12 @@
                         <div class="profile-row-label">Summary Time</div>
                         <div class="profile-row-sub">When to receive the morning briefing</div>
                     </div>
-                    <input type="time" id="summaryTimeInput" class="profile-inline-input"
-                        value="07:00" onchange="saveSetting('dailySummaryTime', this.value)">
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <input type="time" id="summaryTimeInput" class="profile-inline-input"
+                            value="07:00">
+                        <button id="summaryTimeSaveBtn"
+                            style="display:none;padding:5px 12px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
+                    </div>
                 </div>
 
                 <div class="profile-row no-hover">
@@ -2426,6 +2430,24 @@ document.addEventListener('DOMContentLoaded', () => {
     if (taskDateInput)      taskDateInput.addEventListener('keypress', addTaskOnEnter);
     if (taskStartTimeInput) taskStartTimeInput.addEventListener('keypress', addTaskOnEnter);
 
+    // Summary time save button
+    const summaryTimeEl = document.getElementById('summaryTimeInput');
+    const summaryTimeSaveBtn = document.getElementById('summaryTimeSaveBtn');
+    if (summaryTimeEl) {
+        summaryTimeEl.addEventListener('change', function() {
+            const saved = userSettings.dailySummaryTime || '07:00';
+            console.log('[SummaryTime] changed to:', this.value, '| saved:', saved);
+            if (summaryTimeSaveBtn) summaryTimeSaveBtn.style.display = this.value !== saved ? 'inline-block' : 'none';
+        });
+    }
+    if (summaryTimeSaveBtn) {
+        summaryTimeSaveBtn.addEventListener('click', function() {
+            const val = document.getElementById('summaryTimeInput').value;
+            saveSetting('dailySummaryTime', val);
+            summaryTimeSaveBtn.style.display = 'none';
+        });
+    }
+
     const taskEndTimeInput = document.getElementById('taskEndTime');
     if (taskEndTimeInput)   taskEndTimeInput.addEventListener('keypress', addTaskOnEnter);
 
@@ -2721,7 +2743,9 @@ function populateProfileUI() {
 
     // Apply saved settings to UI
     document.getElementById('toggleDailySummary').checked = userSettings.dailySummaryEnabled !== false;
-    document.getElementById('summaryTimeInput').value = userSettings.dailySummaryTime || '07:00';
+    const summaryInput = document.getElementById('summaryTimeInput');
+    summaryInput.value = userSettings.dailySummaryTime || '07:00';
+    summaryInput.dataset.original = userSettings.dailySummaryTime || '07:00';
     document.getElementById('toggle1Hour').checked = userSettings.notify1Hour !== false;
     document.getElementById('toggle10Min').checked = userSettings.notify10Min !== false;
     document.getElementById('toggleDarkMode').checked = document.body.getAttribute('data-theme') === 'dark';
@@ -2761,6 +2785,23 @@ function loadUserSettings() {
             );
         }
     }, { onlyOnce: false });
+}
+
+function onSummaryTimeChange(newVal) {
+    const saved = userSettings.dailySummaryTime || '07:00';
+    const btn = document.getElementById('summaryTimeSaveBtn');
+    console.log('[SummaryTime] changed to:', newVal, '| saved:', saved);
+    if (btn) {
+        btn.style.display = newVal !== saved ? 'inline-block' : 'none';
+    }
+}
+
+function saveSummaryTime() {
+    const input = document.getElementById('summaryTimeInput');
+    const val = input.value;
+    saveSetting('dailySummaryTime', val);
+    const btn = document.getElementById('summaryTimeSaveBtn');
+    if (btn) btn.style.display = 'none';
 }
 
 function saveSetting(key, value) {
@@ -3689,8 +3730,9 @@ function renderTasks() {
     const weekStartStr = pctWeekStart.toLocaleDateString('en-CA');
     const weekEndStr = pctWeekEnd.toLocaleDateString('en-CA');
     
-    // Only count tasks within this specific week (matches bar graph logic)
-    const relevantTasks = allTasksForStats.filter(t => t.date >= weekStartStr && t.date <= weekEndStr);
+    // Only count tasks up to and including today (can't complete future tasks)
+    const todayForPct = getTodayStr();
+    const relevantTasks = allTasksForStats.filter(t => t.date >= weekStartStr && t.date <= weekEndStr && t.date <= todayForPct);
     
     const total = relevantTasks.length;
     const done = relevantTasks.filter(t => t.completed).length;
