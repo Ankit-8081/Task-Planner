@@ -1292,82 +1292,220 @@
         }
         
         /* Completed History Modal */
+        /* keep the missed modal overlay styles (reused) */
         .completed-modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); z-index: 2000;
+            align-items: center; justify-content: center;
         }
-        .completed-modal-overlay.show {
-            display: flex;
-        }
+        .completed-modal-overlay.show { display: flex; }
         .completed-modal {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 30px;
-            width: 90%;
-            max-width: 700px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            background: var(--card-bg); border-radius: 20px; padding: 30px;
+            width: 90%; max-width: 700px; max-height: 80vh; overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
         }
         .completed-modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;
+        }
+        .completed-modal-header h2 { margin: 0; color: var(--text); font-size: 24px; }
+        .close-modal-btn {
+            background: var(--col-bg); border: none; font-size: 24px;
+            cursor: pointer; padding: 5px 12px; border-radius: 8px; color: var(--text);
+        }
+
+        /* ══ COMPLETED PAGE ══════════════════════════════════════════ */
+
+        /* Header */
+        .cp-header {
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 14px;
+            background: var(--card-bg);
+            border-radius: 16px; padding: 20px 24px;
+            margin-bottom: 20px;
+            border-left: 4px solid var(--primary);
+            box-shadow: var(--card-shadow);
+        }
+        .cp-header-left { display: flex; align-items: center; gap: 16px; }
+        .cp-header-icon {
+            width: 52px; height: 52px; border-radius: 14px;
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem;
+            box-shadow: 0 4px 14px rgba(39,174,96,0.35);
+            flex-shrink: 0;
+        }
+        .cp-header-title {
+            font-size: 1.3rem; font-weight: 800; color: var(--text); letter-spacing: -.3px;
+        }
+        .cp-header-sub { font-size: .8rem; color: var(--text-secondary); margin-top: 2px; }
+        .cp-header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .cp-search-wrap { position: relative; }
+        .cp-search-icon {
+            position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+            font-size: .85rem; pointer-events: none;
+        }
+        .cp-search {
+            padding: 9px 14px 9px 32px; border-radius: 20px;
+            border: 1.5px solid var(--border); background: var(--bg-main);
+            color: var(--text); font-family: 'Poppins', sans-serif; font-size: .82rem;
+            outline: none; width: 200px; transition: border-color .2s, box-shadow .2s;
+        }
+        .cp-search:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+        .cp-clear-btn {
+            padding: 9px 16px; border-radius: 20px;
+            background: rgba(231,76,60,.1); border: 1.5px solid rgba(231,76,60,.3);
+            color: #e74c3c; font-family: 'Poppins', sans-serif;
+            font-size: .82rem; font-weight: 700; cursor: pointer;
+            transition: all .2s; white-space: nowrap;
+        }
+        .cp-clear-btn:hover { background: #e74c3c; color: white; border-color: #e74c3c; }
+
+        /* Stats row */
+        .cp-stats-row {
+            display: grid; grid-template-columns: repeat(4, 1fr);
+            gap: 14px; margin-bottom: 20px;
+        }
+        .cp-stat {
+            background: var(--card-bg); border-radius: 14px;
+            padding: 18px 16px; text-align: center;
+            box-shadow: var(--card-shadow); border: 1px solid var(--border);
+            transition: transform .2s, box-shadow .2s;
+        }
+        .cp-stat:hover { transform: translateY(-3px); box-shadow: var(--card-shadow-hover); }
+        .cp-stat-icon { font-size: 1.6rem; margin-bottom: 8px; }
+        .cp-stat-value {
+            font-size: 1.6rem; font-weight: 800; color: var(--primary);
+            font-family: 'Poppins', sans-serif; line-height: 1;
+        }
+        .cp-stat-label { font-size: .7rem; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+
+        /* Category filter bar */
+        .cp-filter-bar {
+            display: flex; gap: 8px; flex-wrap: wrap;
             margin-bottom: 20px;
         }
-        .completed-modal-header h2 {
-            margin: 0;
-            color: var(--text);
-            font-size: 24px;
+        .cp-filter-btn {
+            padding: 7px 16px; border-radius: 20px;
+            border: 1.5px solid var(--border); background: var(--card-bg);
+            color: var(--text-secondary); font-family: 'Poppins', sans-serif;
+            font-size: .78rem; font-weight: 600; cursor: pointer;
+            transition: all .18s; white-space: nowrap;
         }
-        .close-modal-btn {
-            background: var(--col-bg);
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            padding: 5px 12px;
-            border-radius: 8px;
-            color: var(--text);
+        .cp-filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+        .cp-filter-btn.active {
+            background: var(--primary); border-color: var(--primary);
+            color: white; box-shadow: 0 3px 10px var(--primary-glow);
         }
-        
+
+        /* Date range row */
+        .cp-date-range {
+            display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+            background: var(--card-bg); border-radius: 12px;
+            padding: 12px 16px; margin-bottom: 20px;
+            border: 1px solid var(--border);
+            box-shadow: var(--card-shadow);
+        }
+        .cp-date-label { font-size: .78rem; font-weight: 700; color: var(--text-secondary); white-space: nowrap; }
+        .cp-date-input {
+            padding: 7px 10px; border-radius: 8px;
+            border: 1.5px solid var(--border); background: var(--bg-main);
+            color: var(--text); font-family: 'Poppins', sans-serif; font-size: .82rem;
+            outline: none; cursor: pointer;
+            transition: border-color .2s;
+        }
+        .cp-date-input:focus { border-color: var(--primary); }
+        [data-theme="dark"] .cp-date-input::-webkit-calendar-picker-indicator { filter: invert(1); }
+        .cp-date-sep { font-size: .85rem; font-weight: 700; color: var(--primary); }
+        .cp-date-clear {
+            padding: 7px 14px; border-radius: 20px;
+            border: 1.5px solid var(--border); background: transparent;
+            color: var(--text-secondary); font-family: 'Poppins', sans-serif;
+            font-size: .75rem; font-weight: 600; cursor: pointer;
+            transition: all .18s; white-space: nowrap; display: none;
+        }
+        .cp-date-clear.visible { display: inline-flex; align-items: center; gap: 4px; }
+        .cp-date-clear:hover { border-color: var(--overdue); color: var(--overdue); }
+
+        /* Date group */
+        .cp-group { margin-bottom: 28px; }
+        .cp-group-header {
+            display: flex; align-items: center; gap: 10px;
+            margin-bottom: 12px;
+        }
+        .cp-group-date {
+            font-size: .75rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .8px; color: var(--text-secondary);
+        }
+        .cp-group-badge {
+            padding: 2px 10px; border-radius: 20px;
+            background: var(--primary-glow); color: var(--primary);
+            font-size: .7rem; font-weight: 700;
+        }
+        .cp-group-line { flex: 1; height: 1px; background: var(--border); }
+
+        /* Task card */
+        .cp-task {
+            background: var(--card-bg); border-radius: 12px;
+            padding: 14px 16px; margin-bottom: 10px;
+            display: flex; align-items: center; gap: 14px;
+            border-left: 4px solid var(--primary);
+            box-shadow: var(--card-shadow);
+            transition: transform .2s, box-shadow .2s, opacity .2s;
+            animation: slideIn .25s ease-out;
+        }
+        .cp-task:hover { transform: translateX(4px); box-shadow: var(--card-shadow-hover); }
+        .cp-task-check {
+            accent-color: var(--primary); cursor: pointer;
+            width: 16px; height: 16px; flex-shrink: 0;
+        }
+        .cp-task-body { flex: 1; min-width: 0; }
+        .cp-task-name {
+            font-size: .9rem; font-weight: 600; color: var(--text);
+            text-decoration: line-through; opacity: .65;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .cp-task-meta {
+            display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap;
+        }
+        .cp-task-time { font-size: .72rem; color: var(--text-secondary); }
+        .cp-task-cat {
+            font-size: .65rem; font-weight: 700; text-transform: uppercase;
+            padding: 2px 8px; border-radius: 10px; letter-spacing: .4px;
+        }
+        .cp-task-actions { display: flex; gap: 4px; flex-shrink: 0; }
+
+        /* Empty state */
+        .cp-empty {
+            text-align: center; padding: 80px 20px;
+        }
+        .cp-empty-icon { font-size: 4rem; margin-bottom: 16px; opacity: .4; }
+        .cp-empty-title { font-size: 1.1rem; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+        .cp-empty-sub { font-size: .85rem; color: var(--text-secondary); }
+
         .clear-all-btn {
-            background: #e74c3c;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            background: #e74c3c; color: white; border: none;
+            padding: 8px 16px; border-radius: 8px; cursor: pointer;
+            font-size: 14px; font-weight: 600; transition: all 0.3s;
+            display: flex; align-items: center; gap: 5px;
         }
-        
-        .clear-all-btn:hover {
-            background: #c0392b;
-            transform: scale(1.05);
-        }
-        
-        .completed-group {
-            margin-bottom: 25px;
-        }
+        .clear-all-btn:hover { background: #c0392b; transform: scale(1.05); }
+
+        .completed-group { margin-bottom: 25px; }
         .completed-date-header {
-            background: var(--primary);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 10px;
-            font-weight: 600;
-            margin-bottom: 10px;
+            background: var(--primary); color: white;
+            padding: 10px 15px; border-radius: 10px;
+            font-weight: 600; margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .cp-stats-row { grid-template-columns: repeat(2, 1fr); }
+            .cp-header { flex-direction: column; align-items: flex-start; }
+            .cp-header-right { width: 100%; }
+            .cp-search { width: 100%; }
+            .cp-search-wrap { flex: 1; }
+            .cp-date-range { flex-wrap: wrap; gap: 8px; }
+            .cp-date-input { flex: 1; min-width: 120px; }
         }
         
         @media (max-width: 768px) {
@@ -2204,7 +2342,7 @@
         <div class="view-toggle">
             <button class="view-btn" id="view-week" onclick="switchView('week')">Week View</button>
             <button class="view-btn active" id="view-today" onclick="switchView('today')">Today View</button>
-            <button class="view-btn" onclick="showCompletedHistory()">Completed</button>
+            <button class="view-btn" id="view-completed" onclick="switchView('completed')">Completed</button>
         </div>
 
         <div class="category-bar" id="categoryBar">
@@ -2256,6 +2394,55 @@
                 <ul id="up"></ul>
             </div>
         </div>
+
+        <!-- ═══════════════════════════════════════
+             COMPLETED PAGE (full inline view)
+        ═══════════════════════════════════════ -->
+        <div id="completedPage" style="display:none;">
+
+            <!-- Header bar -->
+            <div class="cp-header">
+                <div class="cp-header-left">
+                    <div>
+                        <div class="cp-header-title">Completed Tasks</div>
+                        <div class="cp-header-sub" id="cpSubtitle">All your finished tasks</div>
+                    </div>
+                </div>
+                <div class="cp-header-right">
+                    <div class="cp-search-wrap">
+                        <span class="cp-search-icon">🔍</span>
+                        <input type="text" id="cpSearch" class="cp-search" placeholder="Search completed…" oninput="renderCompletedPage()">
+                    </div>
+                    <button class="cp-clear-btn" onclick="clearAllCompletedTasks()">🗑️ Clear All</button>
+                </div>
+            </div>
+
+            <!-- Stats row -->
+            <div class="cp-stats-row" id="cpStatsRow"></div>
+
+            <!-- Filter tabs -->
+            <div class="cp-filter-bar" id="cpFilterBar"></div>
+
+            <!-- Date range -->
+            <div class="cp-date-range">
+                <span class="cp-date-label">📅 Date range:</span>
+                <input type="date" id="cpDateFrom" class="cp-date-input" onchange="renderCompletedPage()" title="From">
+                <span class="cp-date-sep">→</span>
+                <input type="date" id="cpDateTo" class="cp-date-input" onchange="renderCompletedPage()" title="To">
+                <button class="cp-date-clear" id="cpDateClearBtn" onclick="clearCpDateRange()" title="Clear date range">✕ Clear</button>
+            </div>
+
+            <!-- Task groups -->
+            <div id="cpContent"></div>
+
+            <!-- Empty state -->
+            <div id="cpEmpty" class="cp-empty" style="display:none;">
+                <div class="cp-empty-icon">🎯</div>
+                <div class="cp-empty-title">No completed tasks yet</div>
+                <div class="cp-empty-sub">Complete your first task and it will appear here.</div>
+            </div>
+
+        </div>
     </div>
 
     <!-- Edit Modal -->
@@ -2288,22 +2475,6 @@
                     <button type="submit" class="btn-save">Save</button>
                 </div>
             </form>
-        </div>
-    </div>
-
-    <!-- Completed History Modal -->
-    <div id="completedModal" class="completed-modal-overlay" onclick="closeModalOnOverlay(event)">
-        <div class="completed-modal">
-            <div class="completed-modal-header">
-                <h2>Completed Tasks</h2>
-                <div style="display: flex; gap: 10px; align-items: center;">
-                    <button class="clear-all-btn" onclick="clearAllCompletedTasks()" title="Delete all completed tasks">
-                        🗑️ Clear All
-                    </button>
-                    <button class="close-modal-btn" onclick="closeCompletedModal()">×</button>
-                </div>
-            </div>
-            <div id="completedHistoryContent"></div>
         </div>
     </div>
 
@@ -3682,21 +3853,23 @@ function loadTasks() {
         const tasksCountChanged = previousTasks.length !== allTasks.length;
         
         if (tasksCountChanged || previousTasks.length === 0) {
-            // Full render needed
             if (currentView === 'week') {
                 renderWeeklyDashboard();
+            } else if (currentView === 'completed') {
+                renderCompletedPage();
             } else {
                 renderTasks();
             }
-            renderTrendsGraph(); // Update trends graph
+            renderTrendsGraph();
         } else {
-            // Just update existing elements (for toggles)
             if (currentView === 'week') {
                 updateWeeklyDashboardProgress();
+            } else if (currentView === 'completed') {
+                renderCompletedPage();
             } else {
                 renderTasks();
             }
-            renderTrendsGraph(); // Update trends graph
+            renderTrendsGraph();
         }
         
         console.log(`[Tasks] Loaded ${allTasks.length} tasks, scheduling notifications...`);
@@ -3861,13 +4034,9 @@ window.toggleTask = function(id) {
         }
     }
     
-    // If unticking from completed modal, refresh the modal
-    const completedModal = document.getElementById('completedModal');
-    if (completedModal.classList.contains('show') && !newState) {
-        // Small delay to let Firebase update
-        setTimeout(() => {
-            showCompletedHistory();
-        }, 200);
+    // If on completed page, refresh it
+    if (currentView === 'completed') {
+        setTimeout(() => renderCompletedPage(), 200);
     }
 };
 
@@ -3875,10 +4044,8 @@ window.deleteTask = function(id) {
     if (confirm('Delete this task?')) {
         remove(ref(db, `users/${currentUserId}/tasks/${id}`));
         clearTaskNotifications(id);
-        // If completed history modal is open, refresh it after Firebase removes the task
-        const completedModal = document.getElementById('completedModal');
-        if (completedModal && completedModal.classList.contains('show')) {
-            setTimeout(() => showCompletedHistory(), 300);
+        if (currentView === 'completed') {
+            setTimeout(() => renderCompletedPage(), 300);
         }
     }
 };
@@ -3961,36 +4128,196 @@ window.changeWeek = function(direction) {
 window.switchView = function(view) {
     currentView = view;
     document.querySelectorAll('.view-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
-    const weeklyDashboard = document.getElementById('weeklyDashboard');
-    const kanbanBoard = document.getElementById('kanbanBoard');
-    const analyticsContainer = document.querySelector('.analytics-container');
-    const trendsContainer = document.querySelector('.trends-container');
-    const categoryBar = document.querySelector('.category-bar');
-    const inputBar = document.querySelector('.input-bar');
-    
+    document.getElementById('view-' + view)?.classList.add('active');
+
+    const weeklyDashboard     = document.getElementById('weeklyDashboard');
+    const kanbanBoard         = document.getElementById('kanbanBoard');
+    const completedPage       = document.getElementById('completedPage');
+    const analyticsContainer  = document.querySelector('.analytics-container');
+    const trendsContainer     = document.querySelector('.trends-container');
+    const categoryBar         = document.querySelector('.category-bar');
+    const inputBar            = document.querySelector('.input-bar');
+
+    // hide everything first
+    weeklyDashboard.style.display    = 'none';
+    kanbanBoard.style.display        = 'none';
+    completedPage.style.display      = 'none';
+    analyticsContainer.style.display = 'none';
+    trendsContainer.style.display    = 'none';
+    categoryBar.style.display        = 'none';
+    inputBar.style.display           = 'none';
+
     if (view === 'week') {
-        // Show weekly visual dashboard only
-        weekOffset = 0; // Reset to current week when entering week view
+        weekOffset = 0;
         weeklyDashboard.style.display = 'grid';
-        kanbanBoard.style.display = 'none';
-        analyticsContainer.style.display = 'none';
-        trendsContainer.style.display = 'none';
-        categoryBar.style.display = 'none';
-        inputBar.style.display = 'none';
         renderWeeklyDashboard();
+    } else if (view === 'completed') {
+        completedPage.style.display = 'block';
+        renderCompletedPage();
     } else {
-        // Show kanban board with all controls
-        weeklyDashboard.style.display = 'none';
-        kanbanBoard.style.display = 'grid';
+        kanbanBoard.style.display        = 'grid';
         analyticsContainer.style.display = 'block';
-        trendsContainer.style.display = 'block';
-        categoryBar.style.display = 'flex';
-        inputBar.style.display = 'grid';
+        trendsContainer.style.display    = 'block';
+        categoryBar.style.display        = 'flex';
+        inputBar.style.display           = 'grid';
         renderTasks();
         renderTrendsGraph();
     }
+};
+
+// =====================================================================
+// COMPLETED PAGE — render
+// =====================================================================
+let cpFilterCat = 'all';
+
+window.renderCompletedPage = function() {
+    const searchVal   = (document.getElementById('cpSearch')?.value || '').toLowerCase().trim();
+    const dateFrom    = document.getElementById('cpDateFrom')?.value || '';
+    const dateTo      = document.getElementById('cpDateTo')?.value || '';
+    const contentEl   = document.getElementById('cpContent');
+    const emptyEl     = document.getElementById('cpEmpty');
+    const subtitleEl  = document.getElementById('cpSubtitle');
+    const statsEl     = document.getElementById('cpStatsRow');
+    const filterBarEl = document.getElementById('cpFilterBar');
+    const clearBtn    = document.getElementById('cpDateClearBtn');
+
+    // show/hide date clear button
+    if (clearBtn) clearBtn.classList.toggle('visible', !!(dateFrom || dateTo));
+
+    const allCompleted = allTasks.filter(t => t.completed && t.completedAt);
+
+    // ── Stats (always off the full set) ──────────────────────────────
+    const total     = allCompleted.length;
+    const today     = getTodayStr();
+    const todayDone = allCompleted.filter(t => {
+        const d = new Date(t.completedAt);
+        return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` === today;
+    }).length;
+    const cats = ['work','home','personal','urgent'];
+    const mostCat = cats.reduce((a,b) =>
+        allCompleted.filter(t=>t.cat===a).length >= allCompleted.filter(t=>t.cat===b).length ? a : b, 'work');
+    const uniqueDays = new Set(allCompleted.map(t => {
+        const d = new Date(t.completedAt);
+        return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    })).size;
+
+    statsEl.innerHTML = `
+        <div class="cp-stat"><div class="cp-stat-icon">✅</div><div class="cp-stat-value">${total}</div><div class="cp-stat-label">Total Done</div></div>
+        <div class="cp-stat"><div class="cp-stat-icon">🔥</div><div class="cp-stat-value">${todayDone}</div><div class="cp-stat-label">Today</div></div>
+        <div class="cp-stat"><div class="cp-stat-icon">📅</div><div class="cp-stat-value">${uniqueDays}</div><div class="cp-stat-label">Active Days</div></div>
+        <div class="cp-stat"><div class="cp-stat-icon">🏆</div><div class="cp-stat-value">${total > 0 ? mostCat.charAt(0).toUpperCase()+mostCat.slice(1) : '—'}</div><div class="cp-stat-label">Top Category</div></div>
+    `;
+
+    // ── Category filter bar — use data-cat to avoid quote issues ────
+    const catColors = { all:'var(--primary)', work:'#0984e3', home:'#6c5ce7', personal:'#00b894', urgent:'#d63031' };
+    filterBarEl.innerHTML = ['all','work','home','personal','urgent'].map(c => {
+        const count   = c === 'all' ? allCompleted.length : allCompleted.filter(t => t.cat === c).length;
+        const isActive = cpFilterCat === c;
+        const activeStyle = isActive ? `background:${catColors[c]};border-color:${catColors[c]};color:#fff;` : '';
+        return `<button class="cp-filter-btn${isActive ? ' active' : ''}" data-cat="${c}" style="${activeStyle}">
+            ${c.charAt(0).toUpperCase()+c.slice(1)} <span style="opacity:.7">(${count})</span>
+        </button>`;
+    }).join('');
+
+    // Single delegated listener — remove old one first to avoid stacking
+    filterBarEl.onclick = function(e) {
+        const btn = e.target.closest('[data-cat]');
+        if (!btn) return;
+        cpFilterCat = btn.dataset.cat;
+        renderCompletedPage();
+    };
+
+    // ── Apply filters ────────────────────────────────────────────────
+    let filtered = allCompleted;
+
+    if (cpFilterCat !== 'all') {
+        filtered = filtered.filter(t => t.cat === cpFilterCat);
+    }
+    if (dateFrom) {
+        filtered = filtered.filter(t => t.date && t.date >= dateFrom);
+    }
+    if (dateTo) {
+        filtered = filtered.filter(t => t.date && t.date <= dateTo);
+    }
+    if (searchVal) {
+        filtered = filtered.filter(t => t.name.toLowerCase().includes(searchVal));
+    }
+
+    subtitleEl.textContent = `${filtered.length} of ${total} task${total !== 1 ? 's' : ''} completed`;
+
+    if (filtered.length === 0) {
+        contentEl.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+    }
+    emptyEl.style.display = 'none';
+
+    // ── Group by task date ────────────────────────────────────────────
+    const grouped = {};
+    filtered.forEach(t => {
+        const key = t.date || 'Unknown';
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(t);
+    });
+    const sortedKeys = Object.keys(grouped).sort((a,b) => b.localeCompare(a));
+
+    const catBg    = { work:'rgba(9,132,227,.12)', home:'rgba(108,92,231,.12)', personal:'rgba(0,184,148,.12)', urgent:'rgba(214,48,49,.12)' };
+    const catColor = { work:'#0984e3', home:'#6c5ce7', personal:'#00b894', urgent:'#d63031' };
+    const yesterday = (() => { const d = new Date(); d.setDate(d.getDate()-1); return d.toISOString().slice(0,10); })();
+
+    let html = '';
+    sortedKeys.forEach(dateKey => {
+        const dateObj = new Date(dateKey + 'T00:00:00');
+        const label   = dateKey === today     ? '🟢 Today'
+                      : dateKey === yesterday ? '🟡 Yesterday'
+                      : dateObj.toLocaleDateString('en-US', { weekday:'long', month:'short', day:'numeric', year:'numeric' });
+
+        const tasks = grouped[dateKey];
+        html += `<div class="cp-group">
+            <div class="cp-group-header">
+                <span class="cp-group-date">${label}</span>
+                <span class="cp-group-badge">${tasks.length} task${tasks.length!==1?'s':''}</span>
+                <span class="cp-group-line"></span>
+            </div>`;
+
+        tasks.forEach(t => {
+            const compDate = new Date(t.completedAt);
+            const compTime = compDate.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit', hour12:true });
+            const compDay  = compDate.toISOString().slice(0,10);
+            const lateNote = compDay !== t.date
+                ? `<span class="cp-task-time">✓ Done on ${new Date(compDay+'T00:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric'})} at ${compTime}</span>`
+                : `<span class="cp-task-time">✓ ${compTime}</span>`;
+            const timeStr  = t.startTime ? `<span class="cp-task-time">⏰ ${t.startTime}${t.endTime?' → '+t.endTime:''}</span>` : '';
+            const recurStr = t.recur ? `<span class="cp-task-time">🔁 ${t.recur}</span>` : '';
+            const col      = catColor[t.cat] || 'var(--primary)';
+
+            html += `<div class="cp-task" style="border-left-color:${col}">
+                <input type="checkbox" class="cp-task-check" checked onchange="toggleTask('${t.id}')" title="Untick to mark incomplete">
+                <div class="cp-task-body">
+                    <div class="cp-task-name">${t.name}</div>
+                    <div class="cp-task-meta">
+                        <span class="cp-task-cat" style="background:${catBg[t.cat]||'rgba(39,174,96,.12)'};color:${col}">${t.cat}</span>
+                        ${lateNote}${timeStr}${recurStr}
+                    </div>
+                </div>
+                <div class="cp-task-actions">
+                    <button class="btn-icon" onclick="editTask('${t.id}')" title="Edit">✏️</button>
+                    <button class="btn-icon" onclick="deleteTask('${t.id}')" title="Delete">🗑️</button>
+                </div>
+            </div>`;
+        });
+        html += '</div>';
+    });
+
+    contentEl.innerHTML = html;
+};
+
+window.clearCpDateRange = function() {
+    const from = document.getElementById('cpDateFrom');
+    const to   = document.getElementById('cpDateTo');
+    if (from) from.value = '';
+    if (to)   to.value   = '';
+    renderCompletedPage();
 };
 
 window.filterCategory = function(cat) {
@@ -4883,159 +5210,29 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // =====================================================================
-// COMPLETED HISTORY MODAL
+// COMPLETED PAGE helpers
 // =====================================================================
-window.showCompletedHistory = function() {
-    const modal = document.getElementById('completedModal');
-    const content = document.getElementById('completedHistoryContent');
-    
-    // Get all completed tasks
-    const completedTasks = allTasks.filter(t => t.completed && t.completedAt);
-    
-    if (completedTasks.length === 0) {
-        content.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 40px;">No completed tasks yet.</p>';
-        modal.classList.add('show');
-        return;
-    }
-    
-    // Group by ORIGINAL TASK DATE (not completion date)
-    const groupedByDate = {};
-    completedTasks.forEach(task => {
-        const taskDate = task.date; // Original task date (e.g., "2024-02-19")
-        if (!groupedByDate[taskDate]) {
-            groupedByDate[taskDate] = [];
-        }
-        groupedByDate[taskDate].push(task);
-    });
-    
-    // Sort dates in descending order
-    const sortedDates = Object.keys(groupedByDate).sort((a, b) => b.localeCompare(a));
-    
-    // Build HTML
-    let html = '';
-    sortedDates.forEach(date => {
-        const dateObj = new Date(date + 'T00:00:00');
-        const formattedDate = dateObj.toLocaleDateString('en-US', { 
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-        });
-        
-        const isToday = date === getTodayStr();
-        const dateLabel = isToday ? `Today - ${formattedDate}` : formattedDate;
-        
-        html += `<div class="completed-group">`;
-        html += `<div class="completed-date-header">${dateLabel}</div>`;
-        html += `<ul style="list-style: none; padding: 0;">`;
-        
-        groupedByDate[date].forEach(task => {
-            // Get completion date and time
-            let completedDate;
-            if (typeof task.completedAt === 'number') {
-                completedDate = new Date(task.completedAt);
-            } else {
-                completedDate = new Date(task.completedAt);
-            }
-            
-            const completedTime = completedDate.toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            });
-            
-            // Get completion date string (local date)
-            const completedYear = completedDate.getFullYear();
-            const completedMonth = String(completedDate.getMonth() + 1).padStart(2, '0');
-            const completedDay = String(completedDate.getDate()).padStart(2, '0');
-            const completedDateStr = `${completedYear}-${completedMonth}-${completedDay}`;
-            
-            // Check if completion date is different from task date
-            const isDifferentDate = completedDateStr !== task.date;
-            
-            // Format completion date for display
-            let completionNote = '';
-            if (isDifferentDate) {
-                const completedDateObj = new Date(completedDateStr + 'T00:00:00');
-                const formattedCompletedDate = completedDateObj.toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                });
-                completionNote = `<div style="font-size: 11px; color: var(--primary); margin-top: 4px; font-weight: 500;">
-                    ✓ Completed on ${formattedCompletedDate} at ${completedTime}
-                </div>`;
-            } else {
-                completionNote = `<div style="font-size: 11px; color: var(--text-secondary); margin-top: 4px;">
-                    Completed at ${completedTime}
-                </div>`;
-            }
-            
-            html += `<li style="background: var(--card-bg); color: var(--text); padding: 12px 15px; 
-                     border-radius: 10px; margin-bottom: 8px; display: flex; 
-                     justify-content: space-between; align-items: center; 
-                     border-left: 4px solid var(--cat-${task.cat});">
-                <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
-                    <input type="checkbox" checked onchange="toggleTask('${task.id}')" 
-                           style="accent-color: var(--primary); cursor: pointer;" 
-                           title="Untick to mark as incomplete">
-                    <div>
-                        <span style="text-decoration: line-through; opacity: 0.7;">${task.name}</span>
-                        ${completionNote}
-                    </div>
-                </div>
-                <div>
-                    <button class="btn-icon" onclick="editTask('${task.id}')" title="Edit">✏️</button>
-                    <button class="btn-icon" onclick="deleteTask('${task.id}')" title="Delete">🗑️</button>
-                </div>
-            </li>`;
-        });
-        
-        html += `</ul></div>`;
-    });
-    
-    content.innerHTML = html;
-    modal.classList.add('show');
-};
+// showCompletedHistory kept as alias for any legacy calls
+window.showCompletedHistory = function() { switchView('completed'); };
 
 window.closeCompletedModal = function() {
-    document.getElementById('completedModal').classList.remove('show');
+    // legacy — completed is now a full inline page, nothing to close
 };
 
 window.clearAllCompletedTasks = function() {
     const completedTasks = allTasks.filter(t => t.completed);
-    
-    if (completedTasks.length === 0) {
-        alert('No completed tasks to clear.');
-        return;
-    }
-    
-    const confirmed = confirm(`Are you sure you want to delete all ${completedTasks.length} completed task(s)? This action cannot be undone.`);
-    
+    if (completedTasks.length === 0) { alert('No completed tasks to clear.'); return; }
+    const confirmed = confirm(`Are you sure you want to delete all ${completedTasks.length} completed task(s)? This cannot be undone.`);
     if (confirmed) {
-        // Delete all completed tasks from Firebase
-        const deletePromises = completedTasks.map(task => {
-            return remove(ref(db, `users/${currentUserId}/tasks/${task.id}`));
-        });
-        
-        Promise.all(deletePromises)
-            .then(() => {
-                console.log(`Deleted ${completedTasks.length} completed tasks`);
-                // Close modal after deletion
-                closeCompletedModal();
-            })
-            .catch(error => {
-                console.error('Error deleting completed tasks:', error);
-                alert('Failed to delete some tasks. Please try again.');
-            });
+        Promise.all(completedTasks.map(task => remove(ref(db, `users/${currentUserId}/tasks/${task.id}`))))
+            .then(() => { if (currentView === 'completed') renderCompletedPage(); })
+            .catch(() => alert('Failed to delete some tasks. Please try again.'));
     }
 };
 
 window.closeModalOnOverlay = function(event, modalId) {
-    const targetId = modalId || 'completedModal';
-    if (event.target.id === targetId) {
-        if (targetId === 'missedModal') closeMissedModal();
-        else closeCompletedModal();
+    if (modalId === 'missedModal' && event.target.id === 'missedModal') {
+        closeMissedModal();
     }
 };
 
@@ -5125,13 +5322,7 @@ document.body.appendChild(rightIndicator);
 
 // Get current view helper
 function getCurrentViewState() {
-    const completedModal = document.getElementById('completedModal');
-    const isCompletedOpen = completedModal && completedModal.classList.contains('show');
-    
-    if (isCompletedOpen) {
-        return 'completed';
-    }
-    return currentView; // 'today' or 'week'
+    return currentView; // 'today', 'week', or 'completed'
 }
 
 // Set view with animation
@@ -5139,51 +5330,27 @@ function navigateToViewAnimated(direction) {
     const currentState = getCurrentViewState();
     const dashboard = document.getElementById('app-dashboard');
     
-    // Determine target view
     let targetView = null;
-    
     if (direction === 'next') {
-        // next = swipe left = moving right in layout: week → today → completed
-        if (currentState === 'week') {
-            targetView = 'today';
-        } else if (currentState === 'today') {
-            targetView = 'completed';
-        }
+        if (currentState === 'week')      targetView = 'today';
+        else if (currentState === 'today') targetView = 'completed';
     } else if (direction === 'prev') {
-        // prev = swipe right = moving left in layout: completed → today → week
-        if (currentState === 'completed') {
-            targetView = 'today';
-        } else if (currentState === 'today') {
-            targetView = 'week';
-        }
+        if (currentState === 'completed') targetView = 'today';
+        else if (currentState === 'today') targetView = 'week';
     }
     
-    // No navigation if at boundary
     if (!targetView) return;
     
-    // Animate out
     const animClass = direction === 'next' ? 'swipe-left' : 'swipe-right';
     dashboard.classList.add(animClass);
     
     setTimeout(() => {
-        // Switch view
-        if (targetView === 'week') {
-            document.getElementById('view-week').click();
-        } else if (targetView === 'today') {
-            if (currentState === 'completed') {
-                closeCompletedModal();
-            }
-            document.getElementById('view-today').click();
-        } else if (targetView === 'completed') {
-            showCompletedHistory();
-        }
+        document.getElementById('view-' + targetView)?.click();
         
-        // Remove animation class and reset
         dashboard.classList.remove(animClass);
         dashboard.style.transform = '';
         dashboard.style.opacity = '';
         
-        // Animate in
         dashboard.style.transform = direction === 'next' ? 'translateX(30%)' : 'translateX(-30%)';
         dashboard.style.opacity = '0';
         
