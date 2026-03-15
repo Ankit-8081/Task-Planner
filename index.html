@@ -5744,31 +5744,60 @@ let aiPendingTasks = [];         // tasks waiting for user confirmation
 const AI_SYSTEM = `You are a productivity assistant built into a task manager app called Workflow Pro.
 The user manages tasks with these fields: name, date (YYYY-MM-DD), startTime (HH:MM, optional), endTime (HH:MM, optional), cat (work/home/personal/urgent), completed (bool), recur (daily/weekly/monthly or null).
 
-At the start of each user message you will receive a JSON snapshot of the current page state — use it to answer questions and apply filters.
+At the start of each user message you will receive a JSON snapshot of the current page state including all task IDs — use them for actions.
 
-You have FOUR modes:
+You have FIVE modes:
 
 1. GOAL MODE: When user states a goal (e.g. "I want to learn Python"), generate a task roadmap.
    Output ONLY: {"type":"tasks","intro":"...","tasks":[{"name":"...","date":"YYYY-MM-DD","cat":"work","startTime":null,"endTime":null,"recur":null},...]}
 
-2. FILTER MODE: When user asks to show, filter, or find tasks (e.g. "show urgent tasks", "show tasks for today", "filter by work", "show overdue", "show completed"), apply a filter.
-   Output ONLY: {"type":"filter","message":"Showing your urgent tasks.","view":"today","category":"urgent","search":"","dateFrom":"","dateTo":""}
-   - view: "today" | "week" | "completed" (switch the main view)
-   - category: "all" | "work" | "home" | "personal" | "urgent"
-   - search: text to search task names (empty string = no search)
-   - dateFrom / dateTo: YYYY-MM-DD strings to filter completed tasks by date range (empty = no filter)
-   - Only include fields you want to change. Always include "message" to explain what you did.
+2. FILTER MODE: When user asks to show/filter/find tasks.
+   Output ONLY: {"type":"filter","message":"...","view":"today","category":"urgent","search":"","dateFrom":"","dateTo":""}
 
-3. SUMMARY MODE: When user asks "what are my tasks", "summarise my day", "how am I doing" etc — read the page snapshot and reply in plain conversational text with a useful summary.
+3. ACTION MODE: When user asks to add, edit, delete, complete, uncomplete, or reschedule tasks.
+   Output ONLY: {"type":"action","message":"...","ops":[...]}
+   
+   Each op in ops array is ONE of:
+   
+   ADD a new task:
+   {"op":"add","name":"...","date":"YYYY-MM-DD","cat":"work","startTime":null,"endTime":null,"recur":null}
+   
+   EDIT an existing task (use id from snapshot):
+   {"op":"edit","id":"TASK_ID","name":"...","date":"YYYY-MM-DD","cat":"work","startTime":null,"endTime":null,"recur":null}
+   
+   DELETE a task:
+   {"op":"delete","id":"TASK_ID","name":"TASK_NAME"}
+   
+   COMPLETE a task:
+   {"op":"complete","id":"TASK_ID","name":"TASK_NAME"}
+   
+   UNCOMPLETE a task:
+   {"op":"uncomplete","id":"TASK_ID","name":"TASK_NAME"}
+   
+   RESCHEDULE (shorthand edit for date only):
+   {"op":"reschedule","id":"TASK_ID","name":"TASK_NAME","date":"YYYY-MM-DD"}
 
-4. CHAT MODE: For anything else — goals, questions, editing task lists — reply in plain text.
+   Examples:
+   - "add a meeting tomorrow at 9am" → add op with tomorrow's date
+   - "delete the gym task" → delete op with that task's id from snapshot
+   - "mark all today's work tasks as done" → multiple complete ops
+   - "move all overdue tasks to tomorrow" → multiple reschedule ops
+   - "rename Buy groceries to Buy groceries and cook dinner" → edit op with new name
+   - "reschedule everything from next Monday to next Tuesday" → multiple reschedule ops
+   - Multiple ops can be in one response (e.g. delete 3 tasks = 3 delete ops in array)
+
+4. SUMMARY MODE: When user asks "what are my tasks", "how am I doing" etc — reply in conversational text.
+
+5. CHAT MODE: For anything else — reply in plain text.
 
 Rules:
-- Always output valid JSON for GOAL and FILTER modes — no markdown, no code fences, raw JSON only.
-- Dates must be YYYY-MM-DD.
+- Always output valid JSON for GOAL, FILTER, ACTION modes — no markdown, no code fences, raw JSON only.
+- Dates must be YYYY-MM-DD. Resolve relative dates (today, tomorrow, next Monday) using the today value in the snapshot.
 - Keep task names short (< 60 chars).
 - Never output partial JSON.
-- For recur: only "daily", "weekly", "monthly", or null.`;
+- For recur: only "daily", "weekly", "monthly", or null.
+- For ACTION mode, always set a clear "message" summarising what you are about to do.
+- If the user's request is ambiguous (e.g. "delete the meeting" but there are 3 meetings), list them and ask which one.`;
 
 // Build a snapshot of current page state to inject into every AI message
 function buildPageContext() {
@@ -5811,8 +5840,9 @@ window.toggleAIPanel = function() {
 };
 
 function showAIWelcome() {
-    appendAIMessage('ai', `Hi! I can help you with:<br>
-• <b>Filter tasks</b> — "show urgent tasks", "show today's tasks", "show completed"<br>
+    appendAIMessage('ai', `Hi! Here's what I can do:<br>
+• <b>Manage tasks</b> — "add a meeting tomorrow at 9am", "delete the gym task", "mark all work tasks done", "move overdue tasks to tomorrow"<br>
+• <b>Filter tasks</b> — "show urgent tasks", "show completed work tasks"<br>
 • <b>Summarise</b> — "how am I doing?", "what's overdue?"<br>
 • <b>Plan goals</b> — "I want to learn Python"<br>
 • <b>Upload a schedule image</b> to extract tasks`);
@@ -5918,15 +5948,14 @@ window.sendAIMessage = async function() {
 
         removeAIMessage(typingId);
 
-        // Extract JSON from response (handles tasks and filter types)
+        // Extract JSON from response (handles tasks, filter, and action types)
         let parsed = null;
-        const jsonMatch = raw.match(/\{\"type\"\s*:\s*\"(tasks|filter)\"[\s\S]*?\}/);
+        const jsonMatch = raw.match(/\{"type"\s*:\s*"(tasks|filter|action)"[\s\S]*?\}/);
         if (jsonMatch) {
             let jsonStr = raw.slice(raw.indexOf(jsonMatch[0]));
             try {
                 parsed = JSON.parse(jsonStr);
             } catch(e) {
-                // Try to recover truncated tasks JSON
                 const lastComma = jsonStr.lastIndexOf('},{"name"');
                 if (lastComma !== -1) {
                     jsonStr = jsonStr.slice(0, lastComma + 1) + ']}';
@@ -5935,8 +5964,10 @@ window.sendAIMessage = async function() {
             }
         }
 
-        if (parsed && parsed.type === 'filter') {
-            // Apply filter to the app
+        if (parsed && parsed.type === 'action' && Array.isArray(parsed.ops) && parsed.ops.length > 0) {
+            appendAIMessage('ai', parsed.message || 'Here\'s what I\'ll do:');
+            showAIActionPreview(parsed.ops);
+        } else if (parsed && parsed.type === 'filter') {
             applyAIFilter(parsed);
             appendAIMessage('ai', `🔍 ${parsed.message || 'Filter applied.'}`);
         } else if (parsed && parsed.type === 'tasks' && Array.isArray(parsed.tasks) && parsed.tasks.length > 0) {
@@ -5961,6 +5992,131 @@ function setAILoading(state) {
     document.getElementById('aiSend').disabled = state;
     document.getElementById('aiInput').disabled = state;
 }
+
+// ── Action preview & execution ────────────────────────────────────────
+const opIcon  = { add:'➕', edit:'✏️', delete:'🗑️', complete:'✅', uncomplete:'↩️', reschedule:'📅' };
+const opLabel = { add:'Add', edit:'Edit', delete:'Delete', complete:'Complete', uncomplete:'Uncomplete', reschedule:'Reschedule' };
+
+function showAIActionPreview(ops) {
+    const wrap = document.createElement('div');
+    wrap.className = 'ai-msg ai';
+    wrap.id = 'ai-action-preview-wrap';
+
+    ops.forEach((op, i) => {
+        const card = document.createElement('div');
+        card.className = 'ai-task-preview';
+        card.style.borderLeftColor = op.op === 'delete' ? '#e74c3c'
+            : op.op === 'add' ? 'var(--primary)'
+            : op.op === 'complete' ? '#2ecc71'
+            : '#f39c12';
+
+        let detail = op.name || '';
+        if (op.op === 'add')        detail = `${op.name} · ${op.date} · ${op.cat}`;
+        if (op.op === 'reschedule') detail = `${op.name} → ${op.date}`;
+        if (op.op === 'edit')       detail = `${op.name} · ${op.date}`;
+
+        card.innerHTML = `
+            <div>
+                <div class="atp-name">${opIcon[op.op] || '•'} ${opLabel[op.op] || op.op}: ${detail}</div>
+            </div>
+            <button class="atp-remove" onclick="removeAIActionOp(${i})" title="Remove">✕</button>`;
+        wrap.appendChild(card);
+    });
+
+    const bar = document.createElement('div');
+    bar.className = 'ai-confirm-bar';
+    bar.innerHTML = `
+        <button class="btn-add-all" onclick="confirmAIActions()">✅ Confirm (${ops.length})</button>
+        <button class="btn-cancel-tasks" onclick="cancelAIActions()">✕ Cancel</button>`;
+    wrap.appendChild(bar);
+
+    document.getElementById('aiMessages').appendChild(wrap);
+    wrap.scrollIntoView({ behavior: 'smooth', block: 'end' });
+
+    // Store ops globally
+    window._aiPendingOps = ops;
+}
+
+window.removeAIActionOp = function(index) {
+    if (!window._aiPendingOps) return;
+    window._aiPendingOps.splice(index, 1);
+    const wrap = document.getElementById('ai-action-preview-wrap');
+    if (wrap) wrap.remove();
+    if (window._aiPendingOps.length === 0) {
+        appendAIMessage('ai', 'All operations removed.');
+        return;
+    }
+    showAIActionPreview(window._aiPendingOps);
+};
+
+window.cancelAIActions = function() {
+    const wrap = document.getElementById('ai-action-preview-wrap');
+    if (wrap) wrap.remove();
+    window._aiPendingOps = [];
+    appendAIMessage('ai', 'Cancelled. Let me know if you want to do something else.');
+};
+
+window.confirmAIActions = async function() {
+    const ops = window._aiPendingOps || [];
+    if (!ops.length) return;
+    if (!currentUserId) { appendAIMessage('ai', '⚠️ Please sign in first.'); return; }
+
+    const wrap = document.getElementById('ai-action-preview-wrap');
+    if (wrap) wrap.remove();
+    window._aiPendingOps = [];
+
+    let done = 0, errors = 0;
+
+    for (const op of ops) {
+        try {
+            if (op.op === 'add') {
+                const id = Date.now().toString() + Math.random().toString(36).slice(2,6);
+                await set(ref(db, `users/${currentUserId}/tasks/${id}`), {
+                    name:       op.name,
+                    date:       op.date,
+                    cat:        op.cat        || 'personal',
+                    startTime:  op.startTime  || null,
+                    endTime:    op.endTime    || null,
+                    recur:      op.recur      || null,
+                    completed:  false,
+                    completedAt: null
+                });
+            } else if (op.op === 'edit') {
+                await update(ref(db, `users/${currentUserId}/tasks/${op.id}`), {
+                    name:      op.name,
+                    date:      op.date,
+                    cat:       op.cat       || 'personal',
+                    startTime: op.startTime || null,
+                    endTime:   op.endTime   || null,
+                    recur:     op.recur     || null
+                });
+            } else if (op.op === 'reschedule') {
+                await update(ref(db, `users/${currentUserId}/tasks/${op.id}`), { date: op.date });
+            } else if (op.op === 'delete') {
+                await remove(ref(db, `users/${currentUserId}/tasks/${op.id}`));
+                clearTaskNotifications(op.id);
+            } else if (op.op === 'complete') {
+                await update(ref(db, `users/${currentUserId}/tasks/${op.id}`), {
+                    completed: true, completedAt: Date.now()
+                });
+                clearTaskNotifications(op.id);
+            } else if (op.op === 'uncomplete') {
+                await update(ref(db, `users/${currentUserId}/tasks/${op.id}`), {
+                    completed: false, completedAt: null
+                });
+            }
+            done++;
+        } catch(e) {
+            console.error('AI action failed:', op, e);
+            errors++;
+        }
+    }
+
+    const summary = errors === 0
+        ? `✅ Done! ${done} action${done !== 1 ? 's' : ''} applied successfully.`
+        : `⚠️ ${done} succeeded, ${errors} failed. Check console for details.`;
+    appendAIMessage('ai', summary);
+};
 
 // Apply a filter action from the AI
 function applyAIFilter(f) {
