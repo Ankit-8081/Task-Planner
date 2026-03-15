@@ -2775,6 +2775,7 @@ const db = getDatabase(app);
 let allTasks = [];
 let currentView = 'today';
 let currentCategory = 'all';
+let aiSearchFilter = '';   // text search applied by AI across all views
 let trendsMonthOffset = 0; // 0 = current month, -1 = last month, 1 = next month (not used)
 let currentUserId = null;
 let currentEditingTaskId = null;
@@ -3241,18 +3242,112 @@ window.hideToast = function() {
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
         .then(reg => {
-            console.log('Service Worker registered:', reg);
-            
+            console.log('[SW] Registered:', reg);
+
+            // ── Detect a new SW installing after a deploy ────────────
+            reg.addEventListener('updatefound', () => {
+                const newWorker = reg.installing;
+                if (!newWorker) return;
+                newWorker.addEventListener('statechange', () => {
+                    // New SW is installed and waiting — old one still in control
+                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                        showUpdateToast(newWorker);
+                    }
+                });
+            });
+
+            // Also catch a SW that was already waiting when the page loaded
+            if (reg.waiting && navigator.serviceWorker.controller) {
+                showUpdateToast(reg.waiting);
+            }
+
+            // Once the new SW takes control, reload to get fresh files
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (!refreshing) { refreshing = true; window.location.reload(); }
+            });
+
             // Listen for messages from service worker
             navigator.serviceWorker.addEventListener('message', event => {
                 if (event.data && event.data.type === 'NOTIFICATION_CLICKED') {
-                    // Handle notification click
                     window.focus();
+                }
+                // SW_UPDATED fires after activate — soft reload hint
+                if (event.data && event.data.type === 'SW_UPDATED') {
+                    console.log('[SW] Update applied');
                 }
             });
         })
         .catch(err => console.error('Service Worker registration failed:', err));
 }
+
+// ── Update available toast ────────────────────────────────────────────
+function showUpdateToast(worker) {
+    // Build a dedicated update banner (separate from the task toast)
+    let banner = document.getElementById('sw-update-banner');
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'sw-update-banner';
+        banner.style.cssText = `
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg, #27ae60, #2ecc71);
+            color: white; padding: 14px 20px; border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(39,174,96,0.45);
+            display: flex; align-items: center; gap: 14px;
+            font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 600;
+            z-index: 99999; max-width: 340px; width: calc(100vw - 48px);
+            animation: swBannerIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+        `;
+        banner.innerHTML = `
+            <span style="font-size:22px;">🚀</span>
+            <div style="flex:1;line-height:1.35">
+                <div>New update available!</div>
+                <div style="font-size:11px;opacity:.85;font-weight:400">Tap Refresh to get the latest version.</div>
+            </div>
+            <button onclick="applyUpdate()" style="
+                background:white; color:#27ae60; border:none;
+                padding:8px 16px; border-radius:8px; font-family:'Poppins',sans-serif;
+                font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap;
+                box-shadow:0 2px 8px rgba(0,0,0,0.15);">
+                Refresh
+            </button>
+            <button onclick="this.parentElement.remove()" style="
+                background:rgba(255,255,255,0.2); color:white; border:none;
+                width:28px; height:28px; border-radius:50%; cursor:pointer;
+                font-size:16px; display:flex; align-items:center; justify-content:center;
+                flex-shrink:0; font-family:inherit;">
+                ✕
+            </button>
+        `;
+
+        // Add keyframe for the slide-up animation
+        if (!document.getElementById('sw-banner-style')) {
+            const style = document.createElement('style');
+            style.id = 'sw-banner-style';
+            style.textContent = `
+                @keyframes swBannerIn {
+                    from { opacity:0; transform:translateX(-50%) translateY(40px); }
+                    to   { opacity:1; transform:translateX(-50%) translateY(0); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(banner);
+    }
+
+    // Store reference to the waiting worker so Refresh can trigger it
+    window._swWaitingWorker = worker;
+}
+
+window.applyUpdate = function() {
+    const banner = document.getElementById('sw-update-banner');
+    if (banner) banner.remove();
+    if (window._swWaitingWorker) {
+        window._swWaitingWorker.postMessage({ type: 'SKIP_WAITING' });
+    }
+};
+
 
 // Check for missed notifications when app becomes visible again
 document.addEventListener('visibilitychange', () => {
@@ -4468,10 +4563,15 @@ window.clearCpDateRange = function() {
 
 window.filterCategory = function(cat) {
     currentCategory = cat;
+    // Clear any AI search filter when user manually picks a category
+    if (aiSearchFilter) {
+        aiSearchFilter = '';
+        const banner = document.getElementById('ai-filter-banner');
+        if (banner) banner.remove();
+    }
     document.querySelectorAll('.cat-tab').forEach(tab => tab.classList.remove('active'));
     event.target.classList.add('active');
     
-    // Refresh based on current view
     if (currentView === 'week') {
         renderWeeklyDashboard();
     } else {
@@ -4669,9 +4769,10 @@ function renderWeeklyDashboard() {
         const percentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
         
         // Filter by category if needed
-        const filteredTasks = currentCategory === 'all' 
+        const filteredTasks = (currentCategory === 'all' 
             ? dayTasks 
-            : dayTasks.filter(t => t.cat === currentCategory);
+            : dayTasks.filter(t => t.cat === currentCategory))
+            .filter(t => aiSearchFilter ? t.name.toLowerCase().includes(aiSearchFilter.toLowerCase()) : true);
         
         const card = document.createElement('div');
 
@@ -4798,6 +4899,7 @@ function renderTasks() {
     
     let filtered = [...allTasks];
     if (currentCategory !== 'all') filtered = filtered.filter(t => t.cat === currentCategory);
+    if (aiSearchFilter) filtered = filtered.filter(t => t.name.toLowerCase().includes(aiSearchFilter.toLowerCase()));
 
     // Calculate stats from ALL tasks for accurate bar graph
     let allTasksForStats = allTasks;
@@ -5640,27 +5742,63 @@ let aiPendingImage = null;       // base64 image waiting to be sent
 let aiPendingTasks = [];         // tasks waiting for user confirmation
 
 const AI_SYSTEM = `You are a productivity assistant built into a task manager app called Workflow Pro.
-The user manages tasks with these fields: name, date (YYYY-MM-DD), startTime (HH:MM, optional), endTime (HH:MM, optional), cat (work/home/personal/urgent), recur (daily/weekly/monthly or null).
+The user manages tasks with these fields: name, date (YYYY-MM-DD), startTime (HH:MM, optional), endTime (HH:MM, optional), cat (work/home/personal/urgent), completed (bool), recur (daily/weekly/monthly or null).
 
-Today's date is always provided in the user message.
+At the start of each user message you will receive a JSON snapshot of the current page state — use it to answer questions and apply filters.
 
-Your job:
-1. GOAL MODE: When user states a goal (e.g. "become expert in Java"), generate a realistic task roadmap.
-   - Spread tasks over weeks/months starting from today
-   - Each task should be concrete and actionable
-   - Output ONLY a JSON block like:
-   {"type":"tasks","intro":"Here is your Java learning roadmap:","tasks":[{"name":"...","date":"YYYY-MM-DD","cat":"work","startTime":null,"endTime":null,"recur":null},...]}
+You have FOUR modes:
 
-2. CHAT MODE: For anything else (questions, clarifications, edits to the task list), reply in plain conversational text.
-   - If user asks to remove/change a task from the proposed list, acknowledge it and output a revised JSON block with the full updated list.
-   - If user says "add all", "looks good", "confirm" or similar — reply with plain text confirming you've added them (the app handles the actual saving).
+1. GOAL MODE: When user states a goal (e.g. "I want to learn Python"), generate a task roadmap.
+   Output ONLY: {"type":"tasks","intro":"...","tasks":[{"name":"...","date":"YYYY-MM-DD","cat":"work","startTime":null,"endTime":null,"recur":null},...]}
+
+2. FILTER MODE: When user asks to show, filter, or find tasks (e.g. "show urgent tasks", "show tasks for today", "filter by work", "show overdue", "show completed"), apply a filter.
+   Output ONLY: {"type":"filter","message":"Showing your urgent tasks.","view":"today","category":"urgent","search":"","dateFrom":"","dateTo":""}
+   - view: "today" | "week" | "completed" (switch the main view)
+   - category: "all" | "work" | "home" | "personal" | "urgent"
+   - search: text to search task names (empty string = no search)
+   - dateFrom / dateTo: YYYY-MM-DD strings to filter completed tasks by date range (empty = no filter)
+   - Only include fields you want to change. Always include "message" to explain what you did.
+
+3. SUMMARY MODE: When user asks "what are my tasks", "summarise my day", "how am I doing" etc — read the page snapshot and reply in plain conversational text with a useful summary.
+
+4. CHAT MODE: For anything else — goals, questions, editing task lists — reply in plain text.
 
 Rules:
-- Always output valid JSON when proposing tasks — no markdown code fences, just raw JSON on its own line.
-- Dates must be YYYY-MM-DD format.
+- Always output valid JSON for GOAL and FILTER modes — no markdown, no code fences, raw JSON only.
+- Dates must be YYYY-MM-DD.
 - Keep task names short (< 60 chars).
 - Never output partial JSON.
-- For recur: only use "daily", "weekly", "monthly", or null.`;
+- For recur: only "daily", "weekly", "monthly", or null.`;
+
+// Build a snapshot of current page state to inject into every AI message
+function buildPageContext() {
+    const todayStr   = getTodayStr();
+    const total      = allTasks.length;
+    const done       = allTasks.filter(t => t.completed).length;
+    const todayTasks = allTasks.filter(t => t.date === todayStr);
+    const overdue    = allTasks.filter(t => !t.completed && t.date < todayStr);
+    const upcoming   = allTasks.filter(t => !t.completed && t.date > todayStr);
+
+    // Summarise tasks for AI (keep it concise)
+    const taskSummary = allTasks.slice(0, 60).map(t => ({
+        id: t.id,
+        name: t.name,
+        date: t.date,
+        cat: t.cat,
+        completed: t.completed,
+        startTime: t.startTime || null,
+        endTime: t.endTime || null,
+        recur: t.recur || null
+    }));
+
+    return JSON.stringify({
+        today: todayStr,
+        currentView: currentView,
+        currentCategory: currentCategory,
+        stats: { total, done, todayTotal: todayTasks.length, todayDone: todayTasks.filter(t=>t.completed).length, overdue: overdue.length, upcoming: upcoming.length },
+        tasks: taskSummary
+    });
+}
 
 window.toggleAIPanel = function() {
     aiPanelOpen = !aiPanelOpen;
@@ -5673,7 +5811,11 @@ window.toggleAIPanel = function() {
 };
 
 function showAIWelcome() {
-    appendAIMessage('ai', 'Hi! Describe a goal or upload a schedule image to get started.');
+    appendAIMessage('ai', `Hi! I can help you with:<br>
+• <b>Filter tasks</b> — "show urgent tasks", "show today's tasks", "show completed"<br>
+• <b>Summarise</b> — "how am I doing?", "what's overdue?"<br>
+• <b>Plan goals</b> — "I want to learn Python"<br>
+• <b>Upload a schedule image</b> to extract tasks`);
     aiHistory.push({ role: 'assistant', content: '__welcome__' });
 }
 
@@ -5721,7 +5863,8 @@ window.sendAIMessage = async function() {
     }
 
     const todayStr = getTodayStr();
-    const userContent = `Today's date: ${todayStr}\n\n${text || 'Please analyze this schedule image and suggest tasks.'}`;
+    const pageCtx  = buildPageContext();
+    const userContent = `Today's date: ${todayStr}\nPage context: ${pageCtx}\n\nUser message: ${text || 'Please analyze this schedule image and suggest tasks.'}`;
 
     // Build Gemini parts — text + optional image
     const userParts = [];
@@ -5775,27 +5918,28 @@ window.sendAIMessage = async function() {
 
         removeAIMessage(typingId);
 
-        // Check if reply contains a tasks JSON block
-        // Try to extract JSON even if response has surrounding text
+        // Extract JSON from response (handles tasks and filter types)
         let parsed = null;
-        const jsonStart = raw.indexOf('{"type":"tasks"');
-        if (jsonStart !== -1) {
-            // Try progressively shorter substrings until valid JSON found
-            let jsonStr = raw.slice(jsonStart);
+        const jsonMatch = raw.match(/\{\"type\"\s*:\s*\"(tasks|filter)\"[\s\S]*?\}/);
+        if (jsonMatch) {
+            let jsonStr = raw.slice(raw.indexOf(jsonMatch[0]));
             try {
                 parsed = JSON.parse(jsonStr);
             } catch(e) {
-                // JSON may be truncated — find last complete task entry
+                // Try to recover truncated tasks JSON
                 const lastComma = jsonStr.lastIndexOf('},{"name"');
                 if (lastComma !== -1) {
-                    // Close the tasks array and object
                     jsonStr = jsonStr.slice(0, lastComma + 1) + ']}';
                     try { parsed = JSON.parse(jsonStr); } catch(e2) { parsed = null; }
                 }
             }
         }
 
-        if (parsed && parsed.type === 'tasks' && Array.isArray(parsed.tasks) && parsed.tasks.length > 0) {
+        if (parsed && parsed.type === 'filter') {
+            // Apply filter to the app
+            applyAIFilter(parsed);
+            appendAIMessage('ai', `🔍 ${parsed.message || 'Filter applied.'}`);
+        } else if (parsed && parsed.type === 'tasks' && Array.isArray(parsed.tasks) && parsed.tasks.length > 0) {
             aiPendingTasks = parsed.tasks;
             appendAIMessage('ai', parsed.intro || 'Here are the tasks I suggest:');
             appendAITaskPreview(aiPendingTasks);
@@ -5817,6 +5961,113 @@ function setAILoading(state) {
     document.getElementById('aiSend').disabled = state;
     document.getElementById('aiInput').disabled = state;
 }
+
+// Apply a filter action from the AI
+function applyAIFilter(f) {
+    // 1. Set global search filter (works across all views)
+    if (f.search !== undefined) {
+        aiSearchFilter = f.search || '';
+    }
+
+    // 2. Switch view if requested
+    if (f.view && f.view !== currentView) {
+        const btn = document.getElementById('view-' + f.view);
+        if (btn) btn.click();
+    }
+
+    // 3. Apply category filter
+    if (f.category && f.category !== currentCategory) {
+        currentCategory = f.category;
+        const catColors = { all:'#34495e', work:'#0984e3', home:'#6c5ce7', personal:'#00b894', urgent:'#d63031' };
+        document.querySelectorAll('.cat-tab').forEach(tab => {
+            tab.classList.remove('active');
+            tab.style.background = '';
+            tab.style.color = '';
+            const tabCat = tab.getAttribute('onclick')?.match(/filterCategory\('(\w+)'\)/)?.[1];
+            if (tabCat === f.category) {
+                tab.classList.add('active');
+                tab.style.background = catColors[f.category] || '#34495e';
+                tab.style.color = 'white';
+            }
+        });
+    }
+
+    // 4. Apply completed-page date range / search
+    if (f.view === 'completed' || currentView === 'completed') {
+        if (f.search !== undefined) {
+            const s = document.getElementById('cpSearch');
+            if (s) s.value = f.search || '';
+        }
+        if (f.dateFrom !== undefined) {
+            const d = document.getElementById('cpDateFrom');
+            if (d) d.value = f.dateFrom || '';
+        }
+        if (f.dateTo !== undefined) {
+            const d = document.getElementById('cpDateTo');
+            if (d) d.value = f.dateTo || '';
+        }
+        if (typeof renderCompletedPage === 'function') renderCompletedPage();
+    }
+
+    // 5. Re-render current view
+    if (currentView === 'today') { renderTasks(); renderTrendsGraph(); }
+    else if (currentView === 'week') renderWeeklyDashboard();
+
+    // 6. Show active-filter banner so user can clear it
+    showAIFilterBanner(f);
+}
+
+function showAIFilterBanner(f) {
+    let banner = document.getElementById('ai-filter-banner');
+
+    // Build label
+    const parts = [];
+    if (aiSearchFilter) parts.push(`🔍 "${aiSearchFilter}"`);
+    if (f.category && f.category !== 'all') parts.push(`📂 ${f.category}`);
+    if (f.dateFrom || f.dateTo) parts.push(`📅 ${f.dateFrom || '…'} → ${f.dateTo || '…'}`);
+
+    if (parts.length === 0) {
+        if (banner) banner.remove();
+        return;
+    }
+
+    if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'ai-filter-banner';
+        banner.style.cssText = `
+            position: fixed; top: 72px; left: 50%; transform: translateX(-50%);
+            background: linear-gradient(135deg,#27ae60,#2ecc71);
+            color: white; padding: 8px 16px; border-radius: 20px;
+            font-family: 'Poppins',sans-serif; font-size: 12px; font-weight: 600;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 4px 16px rgba(39,174,96,0.4);
+            z-index: 5000; white-space: nowrap;
+            animation: swBannerIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+        `;
+        document.body.appendChild(banner);
+    }
+
+    banner.innerHTML = `
+        <span>AI Filter: ${parts.join(' · ')}</span>
+        <button onclick="clearAIFilter()" style="background:rgba(255,255,255,0.25);border:none;color:white;
+            border-radius:10px;padding:2px 8px;cursor:pointer;font-family:inherit;font-size:11px;font-weight:700;">
+            ✕ Clear
+        </button>
+    `;
+}
+
+window.clearAIFilter = function() {
+    aiSearchFilter = '';
+    const banner = document.getElementById('ai-filter-banner');
+    if (banner) banner.remove();
+    // Reset completed page search too
+    const s = document.getElementById('cpSearch');
+    if (s) s.value = '';
+    // Re-render
+    if (currentView === 'today') { renderTasks(); renderTrendsGraph(); }
+    else if (currentView === 'week') renderWeeklyDashboard();
+    else if (currentView === 'completed' && typeof renderCompletedPage === 'function') renderCompletedPage();
+};
 
 let aiMsgCounter = 0;
 function appendAIMessage(role, html, isTyping = false) {
