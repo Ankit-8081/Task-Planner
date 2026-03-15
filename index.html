@@ -378,12 +378,132 @@
             cursor: default;
         }
 
-        /* responsive */
+        /* ── MOBILE RESPONSIVE ── */
         @media (max-width: 780px) {
-            #auth-screen { flex-direction: column; }
+
+            /* hide branding panel, full-width form */
+            #auth-screen {
+                flex-direction: column;
+                background: #0b1a0f;
+                overflow-y: auto;
+                align-items: stretch;
+            }
             .auth-left { display: none; }
-            .auth-right { width: 100%; border-left: none; padding: 32px 24px; }
-            .auth-card { max-width: 100%; }
+            .auth-right {
+                width: 100%;
+                min-height: 100dvh;
+                border-left: none;
+                padding: 0;
+                background: transparent;
+                align-items: flex-start;
+                justify-content: flex-start;
+            }
+            .auth-card {
+                max-width: 100%;
+                width: 100%;
+                padding: 0 24px 40px;
+            }
+
+            /* top decorative header bar on mobile */
+            .auth-right::before {
+                content: '';
+                display: block;
+                width: 100%;
+                height: 6px;
+                background: linear-gradient(90deg, #27ae60, #2ecc71, #00e676);
+                flex-shrink: 0;
+            }
+
+            /* logo + title section */
+            .auth-form-logo {
+                margin-top: 36px;
+                margin-bottom: 8px;
+            }
+            .auth-form-logo img {
+                width: 64px;
+                height: 64px;
+                border-radius: 16px;
+            }
+            .auth-form-title {
+                font-size: 1.6rem;
+                margin-bottom: 6px;
+            }
+            .auth-form-sub {
+                font-size: .85rem;
+                margin-bottom: 24px;
+                color: rgba(255,255,255,.45);
+            }
+
+            /* tabs */
+            .auth-tabs {
+                margin-bottom: 20px;
+            }
+            .auth-tab {
+                font-size: .85rem;
+                padding: 10px 8px;
+            }
+
+            /* google button */
+            .auth-google-btn {
+                padding: 14px;
+                font-size: .9rem;
+            }
+
+            /* divider */
+            .auth-divider {
+                margin: 14px 0;
+            }
+
+            /* inputs — bigger tap targets */
+            .auth-input {
+                padding: 14px 14px 14px 44px;
+                font-size: 1rem;
+                border-radius: 12px;
+            }
+            .auth-input-icon {
+                height: 50px;
+                font-size: 1rem;
+            }
+            .auth-input.with-toggle { padding-right: 70px; }
+            .pass-toggle-btn {
+                height: 50px;
+                padding: 0 11px;
+                font-size: 11px;
+            }
+            .auth-field-label {
+                font-size: .75rem;
+                margin-bottom: 8px;
+            }
+            .auth-input-container {
+                margin-bottom: 16px;
+            }
+
+            /* main button */
+            .btn-login {
+                padding: 15px;
+                font-size: 1rem;
+                border-radius: 12px;
+                margin-top: 8px;
+            }
+
+            /* error & links */
+            #auth-error { font-size: .82rem; }
+            #forgot-pw-text { font-size: .82rem; margin-top: 10px; text-align: center; }
+            #toggle-text { font-size: .85rem; margin-top: 18px; }
+
+            /* OTP input larger on mobile */
+            #forgotOtpInput {
+                font-size: 1.2rem;
+                letter-spacing: 6px;
+                text-align: center;
+            }
+        }
+
+        /* very small phones */
+        @media (max-width: 360px) {
+            .auth-card { padding: 0 18px 32px; }
+            .auth-form-title { font-size: 1.4rem; }
+            .auth-tab { font-size: .78rem; padding: 9px 4px; }
         }
         #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: 0.8s; }
         #splash-screen h1 { font-size: 2.5rem; animation: pulse 1.5s infinite; text-align: center; padding: 0 20px; }
