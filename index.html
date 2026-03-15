@@ -1686,10 +1686,10 @@
         #profilePanel {
             position: fixed;
             top: 0; right: 0;
-            width: 100%; max-width: 420px;
+            width: 100%; max-width: 400px;
             height: 100%;
-            background: var(--card-bg);
-            box-shadow: -8px 0 40px rgba(0,0,0,0.18);
+            background: var(--bg-main);
+            box-shadow: -12px 0 48px rgba(0,0,0,0.18);
             z-index: 2000;
             transform: translateX(100%);
             transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
@@ -1700,54 +1700,107 @@
         #profilePanel.open { transform: translateX(0); }
         #profileOverlay {
             position: fixed; inset: 0;
-            background: rgba(0,0,0,0.4);
+            background: rgba(0,0,0,0.45);
             z-index: 1999;
             opacity: 0; pointer-events: none;
             transition: opacity 0.35s;
+            backdrop-filter: blur(2px);
         }
         #profileOverlay.open { opacity: 1; pointer-events: all; }
+
+        /* ── Header banner ── */
         .profile-header {
-            background: var(--bg-gradient);
-            padding: 30px 20px 24px;
-            display: flex; align-items: center; gap: 16px;
+            background: var(--col-header);
+            padding: 0;
+            position: relative;
+            flex-shrink: 0;
+        }
+        .profile-header-bg {
+            padding: 28px 20px 20px;
+            display: flex; align-items: flex-end; gap: 16px;
             position: relative;
         }
         .profile-close-btn {
             position: absolute; top: 14px; right: 14px;
-            background: rgba(255,255,255,0.2); border: none; color: white;
-            width: 32px; height: 32px; border-radius: 50%;
-            font-size: 18px; cursor: pointer;
+            background: rgba(255,255,255,0.18); border: none; color: white;
+            width: 30px; height: 30px; border-radius: 50%;
+            font-size: 16px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
             transition: background 0.2s;
         }
-        .profile-close-btn:hover { background: rgba(255,255,255,0.35); }
+        .profile-close-btn:hover { background: rgba(255,255,255,0.32); }
+
+        /* Avatar */
         .profile-avatar {
-            width: 68px; height: 68px; border-radius: 50%;
-            background: rgba(255,255,255,0.25);
-            border: 3px solid rgba(255,255,255,0.6);
+            width: 72px; height: 72px; border-radius: 50%;
+            background: rgba(255,255,255,0.22);
+            border: 3px solid rgba(255,255,255,0.55);
             display: flex; align-items: center; justify-content: center;
-            font-size: 28px; font-weight: 700; color: white; flex-shrink: 0;
+            font-size: 30px; font-weight: 800; color: white; flex-shrink: 0;
             text-transform: uppercase;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
         }
-        .profile-user-info { flex: 1; min-width: 0; }
+        .profile-user-info { flex: 1; min-width: 0; padding-bottom: 4px; }
         .profile-username {
-            font-size: 20px; font-weight: 700; color: white;
+            font-size: 18px; font-weight: 800; color: white;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            letter-spacing: -.3px;
+        }
+        .profile-email {
+            font-size: 11.5px; color: rgba(255,255,255,0.72); margin-top: 3px;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
         }
-        .profile-email { font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 2px; }
+
+        /* Quick stats strip inside header */
+        .profile-header-stats {
+            display: grid; grid-template-columns: repeat(3,1fr);
+            border-top: 1px solid rgba(255,255,255,0.15);
+        }
+        .profile-header-stat {
+            text-align: center; padding: 12px 8px;
+            border-right: 1px solid rgba(255,255,255,0.12);
+        }
+        .profile-header-stat:last-child { border-right: none; }
+        .profile-header-stat-val {
+            font-size: 1.25rem; font-weight: 800; color: white; line-height: 1;
+        }
+        .profile-header-stat-lbl {
+            font-size: .62rem; color: rgba(255,255,255,.6);
+            text-transform: uppercase; letter-spacing: .5px; margin-top: 3px; font-weight: 600;
+        }
+
+        /* ── Scrollable body ── */
         .profile-body {
-            flex: 1; overflow-y: auto; padding: 10px 0 20px;
-            scrollbar-width: thin; scrollbar-color: var(--primary) var(--col-bg);
+            flex: 1; overflow-y: auto; padding-bottom: 24px;
+            scrollbar-width: thin; scrollbar-color: var(--primary) transparent;
         }
-        .profile-body::-webkit-scrollbar { width: 4px; }
-        .profile-body::-webkit-scrollbar-track { background: var(--col-bg); }
+        .profile-body::-webkit-scrollbar { width: 3px; }
         .profile-body::-webkit-scrollbar-thumb { background: var(--primary); border-radius: 4px; }
+
+        /* Section title */
         .profile-section-title {
-            font-size: 10px; font-weight: 700; text-transform: uppercase;
-            letter-spacing: 1.2px; color: var(--primary); padding: 18px 20px 6px;
+            font-size: .68rem; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1.4px; color: var(--text-secondary);
+            padding: 20px 18px 8px;
+            display: flex; align-items: center; gap: 8px;
         }
+        .profile-section-title::after {
+            content: ''; flex: 1; height: 1px; background: var(--border);
+        }
+
+        /* Section card wrapper */
+        .profile-section-card {
+            background: var(--card-bg);
+            border-radius: 14px;
+            margin: 0 14px 4px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            box-shadow: var(--card-shadow);
+        }
+
+        /* Row */
         .profile-row {
-            display: flex; align-items: center; padding: 13px 20px; gap: 14px;
+            display: flex; align-items: center; padding: 13px 16px; gap: 13px;
             cursor: pointer; transition: background 0.15s;
             border-bottom: 1px solid var(--border);
         }
@@ -1755,10 +1808,11 @@
         .profile-row:hover { background: var(--col-bg); }
         .profile-row.no-hover { cursor: default; }
         .profile-row.no-hover:hover { background: transparent; }
+
         .profile-row-icon {
-            width: 36px; height: 36px; border-radius: 10px;
+            width: 34px; height: 34px; border-radius: 9px;
             display: flex; align-items: center; justify-content: center;
-            font-size: 17px; flex-shrink: 0;
+            font-size: 16px; flex-shrink: 0;
         }
         .icon-green  { background: rgba(39,174,96,0.12); }
         .icon-blue   { background: rgba(9,132,227,0.12); }
@@ -1766,62 +1820,84 @@
         .icon-orange { background: rgba(253,126,20,0.12); }
         .icon-red    { background: rgba(231,76,60,0.12); }
         .icon-yellow { background: rgba(253,203,110,0.2); }
+
         .profile-row-content { flex: 1; min-width: 0; }
-        .profile-row-label { font-size: 14px; font-weight: 600; color: var(--text); }
-        .profile-row-sub { font-size: 11px; color: var(--text); opacity: 0.55; margin-top: 1px; }
-        .profile-row-right { color: var(--text); opacity: 0.35; font-size: 16px; }
-        .profile-toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+        .profile-row-label { font-size: 13.5px; font-weight: 600; color: var(--text); }
+        .profile-row-sub { font-size: 11px; color: var(--text-secondary); margin-top: 1px; }
+        .profile-row-right { color: var(--text-secondary); font-size: 16px; transition: transform .2s; }
+        .profile-row:hover .profile-row-right { transform: translateX(2px); }
+
+        /* Toggle switch */
+        .profile-toggle { position: relative; width: 42px; height: 23px; flex-shrink: 0; }
         .profile-toggle input { display: none; }
         .profile-toggle-slider {
             position: absolute; inset: 0; background: var(--border);
-            border-radius: 24px; cursor: pointer; transition: background 0.25s;
+            border-radius: 23px; cursor: pointer; transition: background 0.25s;
         }
         .profile-toggle-slider::before {
             content: ''; position: absolute;
-            width: 18px; height: 18px; left: 3px; top: 3px;
+            width: 17px; height: 17px; left: 3px; top: 3px;
             background: white; border-radius: 50%;
-            transition: transform 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+            transition: transform 0.25s; box-shadow: 0 1px 4px rgba(0,0,0,0.25);
         }
         .profile-toggle input:checked + .profile-toggle-slider { background: var(--primary); }
-        .profile-toggle input:checked + .profile-toggle-slider::before { transform: translateX(20px); }
+        .profile-toggle input:checked + .profile-toggle-slider::before { transform: translateX(19px); }
+
+        /* Inline inputs */
         .profile-inline-input {
-            background: var(--col-bg); border: 1.5px solid var(--border);
-            border-radius: 8px; padding: 6px 10px; font-size: 13px;
-            font-family: 'Poppins', sans-serif; color: var(--text);
-            width: 100px; text-align: right; outline: none; transition: border-color 0.2s;
-        }
-        .profile-inline-input:focus { border-color: var(--primary); }
-        .profile-subform {
-            background: var(--col-bg); border-radius: 14px;
-            margin: 0 14px 4px; padding: 14px 16px;
-            display: none; flex-direction: column; gap: 10px;
-        }
-        .profile-subform.open { display: flex; }
-        .profile-subform input {
-            background: var(--card-bg); border: 1.5px solid var(--border);
-            border-radius: 8px; padding: 10px 12px; font-size: 13px;
+            background: var(--bg-main); border: 1.5px solid var(--border);
+            border-radius: 8px; padding: 6px 10px; font-size: 12.5px;
             font-family: 'Poppins', sans-serif; color: var(--text);
             outline: none; transition: border-color 0.2s;
         }
-        .profile-subform input:focus { border-color: var(--primary); }
+        .profile-inline-input:focus { border-color: var(--primary); }
+
+        /* Subform (expandable) */
+        .profile-subform {
+            background: var(--col-bg);
+            margin: 0; padding: 14px 16px;
+            display: none; flex-direction: column; gap: 10px;
+            border-top: 1px solid var(--border);
+            animation: subformOpen .2s ease;
+        }
+        @keyframes subformOpen { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+        .profile-subform.open { display: flex; }
+        .profile-subform input {
+            background: var(--card-bg); border: 1.5px solid var(--border);
+            border-radius: 9px; padding: 10px 12px; font-size: 13px;
+            font-family: 'Poppins', sans-serif; color: var(--text);
+            outline: none; transition: border-color 0.2s;
+        }
+        .profile-subform input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
         .profile-subform-btn {
             background: var(--primary); color: white; border: none;
-            border-radius: 8px; padding: 10px; font-size: 13px; font-weight: 600;
+            border-radius: 9px; padding: 10px; font-size: 13px; font-weight: 700;
             font-family: 'Poppins', sans-serif; cursor: pointer;
             transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 3px 10px var(--primary-glow);
         }
         .profile-subform-btn:hover { background: var(--primary-shadow); }
         .profile-subform-btn:active { transform: scale(0.97); }
         .profile-subform-err { font-size: 11px; color: var(--overdue); display: none; }
         .profile-subform-ok  { font-size: 11px; color: var(--primary); display: none; }
-        .profile-danger-btn {
-            margin: 8px 14px; width: calc(100% - 28px); padding: 13px;
-            border-radius: 12px; border: 2px solid var(--overdue);
-            background: transparent; color: var(--overdue);
-            font-size: 14px; font-weight: 600; font-family: 'Poppins', sans-serif;
-            cursor: pointer; transition: all 0.2s; display: block;
+
+        /* Danger zone */
+        .profile-danger-zone {
+            margin: 4px 14px 8px;
+            background: rgba(231,76,60,.05);
+            border: 1px solid rgba(231,76,60,.2);
+            border-radius: 14px; overflow: hidden;
         }
-        .profile-danger-btn:hover { background: var(--overdue); color: white; }
+        .profile-danger-btn {
+            width: 100%; padding: 13px 16px;
+            border: none; border-bottom: 1px solid rgba(231,76,60,.15);
+            background: transparent; color: var(--overdue);
+            font-size: 13.5px; font-weight: 600; font-family: 'Poppins', sans-serif;
+            cursor: pointer; transition: background 0.18s;
+            display: flex; align-items: center; gap: 10px; text-align: left;
+        }
+        .profile-danger-btn:last-child { border-bottom: none; }
+        .profile-danger-btn:hover { background: rgba(231,76,60,.1); }
 
 
         /* ═══════════════════════════════════════════
@@ -2496,150 +2572,163 @@
 
         <!-- Profile Panel -->
         <div id="profilePanel">
+
+            <!-- Header -->
             <div class="profile-header">
-                <div class="profile-avatar" id="profileAvatar">?</div>
-                <div class="profile-user-info">
-                    <div class="profile-username" id="profileUsername">Loading...</div>
-                    <div class="profile-email" id="profileEmailDisplay"></div>
+                <div class="profile-header-bg">
+                    <div class="profile-avatar" id="profileAvatar">?</div>
+                    <div class="profile-user-info">
+                        <div class="profile-username" id="profileUsername">Loading...</div>
+                        <div class="profile-email" id="profileEmailDisplay"></div>
+                    </div>
+                    <button class="profile-close-btn" onclick="closeProfile()">✕</button>
                 </div>
-                <button class="profile-close-btn" onclick="closeProfile()">✕</button>
+                <!-- Quick stats -->
+                <div class="profile-header-stats">
+                    <div class="profile-header-stat">
+                        <div class="profile-header-stat-val" id="profileStatTotal">—</div>
+                        <div class="profile-header-stat-lbl">Total Tasks</div>
+                    </div>
+                    <div class="profile-header-stat">
+                        <div class="profile-header-stat-val" id="profileStatDone">—</div>
+                        <div class="profile-header-stat-lbl">Completed</div>
+                    </div>
+                    <div class="profile-header-stat">
+                        <div class="profile-header-stat-val" id="profileStatStreak">—</div>
+                        <div class="profile-header-stat-lbl">Day Streak</div>
+                    </div>
+                </div>
             </div>
 
             <div class="profile-body">
 
                 <!-- ACCOUNT -->
                 <div class="profile-section-title">Account</div>
-
-                <div class="profile-row" onclick="toggleSubform('changePasswordForm')">
-                    <div class="profile-row-icon icon-blue">🔑</div>
-                    <div class="profile-row-content">
-                        <div class="profile-row-label">Change Password</div>
-                        <div class="profile-row-sub">Update your login password</div>
+                <div class="profile-section-card">
+                    <div class="profile-row" onclick="toggleSubform('changePasswordForm')">
+                        <div class="profile-row-icon icon-blue">🔑</div>
+                        <div class="profile-row-content">
+                            <div class="profile-row-label">Change Password</div>
+                            <div class="profile-row-sub">Update your login password</div>
+                        </div>
+                        <div class="profile-row-right" id="changePasswordArrow">›</div>
                     </div>
-                    <div class="profile-row-right" id="changePasswordArrow">›</div>
-                </div>
-                <div class="profile-subform" id="changePasswordForm">
-                    <input type="password" id="cpCurrentPass" placeholder="Current password" autocomplete="current-password">
-                    <input type="password" id="cpNewPass" placeholder="New password (min 6 chars)" autocomplete="new-password">
-                    <input type="password" id="cpConfirmPass" placeholder="Confirm new password" autocomplete="new-password">
-                    <div class="profile-subform-err" id="cpErr"></div>
-                    <div class="profile-subform-ok"  id="cpOk">✅ Password updated!</div>
-                    <button class="profile-subform-btn" onclick="saveNewPassword()">Update Password</button>
-                </div>
-
-                <!-- Recovery Email -->
-                <div class="profile-row" onclick="toggleSubform('recoveryEmailForm')">
-                    <div class="profile-row-icon icon-blue">📧</div>
-                    <div class="profile-row-content">
-                        <div class="profile-row-label">Recovery Email <span id="recoveryEmailBadge"></span></div>
-                        <div class="profile-row-sub" id="recoveryEmailSub">Add email for forgot password</div>
+                    <div class="profile-subform" id="changePasswordForm">
+                        <input type="password" id="cpCurrentPass" placeholder="Current password" autocomplete="current-password">
+                        <input type="password" id="cpNewPass" placeholder="New password (min 6 chars)" autocomplete="new-password">
+                        <input type="password" id="cpConfirmPass" placeholder="Confirm new password" autocomplete="new-password">
+                        <div class="profile-subform-err" id="cpErr"></div>
+                        <div class="profile-subform-ok" id="cpOk">✅ Password updated!</div>
+                        <button class="profile-subform-btn" onclick="saveNewPassword()">Update Password</button>
                     </div>
-                    <div class="profile-row-right" id="recoveryEmailArrow">›</div>
-                </div>
-                <div class="profile-subform" id="recoveryEmailForm">
-                    <input type="email" id="recoveryEmailInput" placeholder="Your real email address" autocomplete="email">
-                    <div class="profile-subform-err" id="reErr"></div>
-                    <div class="profile-subform-ok"  id="reOk"></div>
-                    <button class="profile-subform-btn" onclick="saveRecoveryEmail()">Save & Send Verification</button>
+
+                    <div class="profile-row" onclick="toggleSubform('recoveryEmailForm')">
+                        <div class="profile-row-icon icon-blue">📧</div>
+                        <div class="profile-row-content">
+                            <div class="profile-row-label">Recovery Email <span id="recoveryEmailBadge"></span></div>
+                            <div class="profile-row-sub" id="recoveryEmailSub">Add email for forgot password</div>
+                        </div>
+                        <div class="profile-row-right" id="recoveryEmailArrow">›</div>
+                    </div>
+                    <div class="profile-subform" id="recoveryEmailForm">
+                        <input type="email" id="recoveryEmailInput" placeholder="Your real email address" autocomplete="email">
+                        <div class="profile-subform-err" id="reErr"></div>
+                        <div class="profile-subform-ok" id="reOk"></div>
+                        <button class="profile-subform-btn" onclick="saveRecoveryEmail()">Save & Send Verification</button>
+                    </div>
                 </div>
 
                 <!-- NOTIFICATIONS -->
                 <div class="profile-section-title">Notifications</div>
-
-                <div class="profile-row no-hover">
-                    <div class="profile-row-icon icon-yellow">🌅</div>
-                    <div class="profile-row-content">
-                        <div class="profile-row-label">Daily Summary</div>
-                        <div class="profile-row-sub">Morning briefing of today's tasks</div>
+                <div class="profile-section-card">
+                    <div class="profile-row no-hover">
+                        <div class="profile-row-icon icon-yellow">🌅</div>
+                        <div class="profile-row-content">
+                            <div class="profile-row-label">Daily Summary</div>
+                            <div class="profile-row-sub">Morning briefing of today's tasks</div>
+                        </div>
+                        <label class="profile-toggle">
+                            <input type="checkbox" id="toggleDailySummary" onchange="saveSetting('dailySummaryEnabled', this.checked)">
+                            <span class="profile-toggle-slider"></span>
+                        </label>
                     </div>
-                    <label class="profile-toggle">
-                        <input type="checkbox" id="toggleDailySummary" onchange="saveSetting('dailySummaryEnabled', this.checked)">
-                        <span class="profile-toggle-slider"></span>
-                    </label>
-                </div>
-
-                <div class="profile-row no-hover">
-                    <div class="profile-row-icon icon-yellow">⏰</div>
-                    <div class="profile-row-content">
-                        <div class="profile-row-label">Summary Time</div>
-                        <div class="profile-row-sub">When to receive the morning briefing</div>
+                    <div class="profile-row no-hover">
+                        <div class="profile-row-icon icon-yellow">⏰</div>
+                        <div class="profile-row-content">
+                            <div class="profile-row-label">Summary Time</div>
+                            <div class="profile-row-sub">When to receive the morning briefing</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <input type="time" id="summaryTimeInput" class="profile-inline-input" value="07:00">
+                            <button id="summaryTimeSaveBtn" style="display:none;padding:5px 12px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">Save</button>
+                        </div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:8px;">
-                        <input type="time" id="summaryTimeInput" class="profile-inline-input"
-                            value="07:00">
-                        <button id="summaryTimeSaveBtn"
-                            style="display:none;padding:5px 12px;background:var(--primary);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">Save</button>
+                    <div class="profile-row no-hover">
+                        <div class="profile-row-icon icon-orange">⏰</div>
+                        <div class="profile-row-content">
+                            <div class="profile-row-label">1-Hour Reminder</div>
+                            <div class="profile-row-sub">Notify 1 hour before task starts</div>
+                        </div>
+                        <label class="profile-toggle">
+                            <input type="checkbox" id="toggle1Hour" onchange="saveSetting('notify1Hour', this.checked)">
+                            <span class="profile-toggle-slider"></span>
+                        </label>
                     </div>
-                </div>
-
-                <div class="profile-row no-hover">
-                    <div class="profile-row-icon icon-orange">⏰</div>
-                    <div class="profile-row-content">
-                        <div class="profile-row-label">1-Hour Reminder</div>
-                        <div class="profile-row-sub">Notify 1 hour before task is due</div>
+                    <div class="profile-row no-hover">
+                        <div class="profile-row-icon icon-orange">⚡</div>
+                        <div class="profile-row-content">
+                            <div class="profile-row-label">10-Minute Reminder</div>
+                            <div class="profile-row-sub">Notify 10 minutes before task starts</div>
+                        </div>
+                        <label class="profile-toggle">
+                            <input type="checkbox" id="toggle10Min" onchange="saveSetting('notify10Min', this.checked)">
+                            <span class="profile-toggle-slider"></span>
+                        </label>
                     </div>
-                    <label class="profile-toggle">
-                        <input type="checkbox" id="toggle1Hour" onchange="saveSetting('notify1Hour', this.checked)">
-                        <span class="profile-toggle-slider"></span>
-                    </label>
-                </div>
-
-                <div class="profile-row no-hover">
-                    <div class="profile-row-icon icon-orange">⚡</div>
-                    <div class="profile-row-content">
-                        <div class="profile-row-label">10-Minute Reminder</div>
-                        <div class="profile-row-sub">Notify 10 minutes before task is due</div>
-                    </div>
-                    <label class="profile-toggle">
-                        <input type="checkbox" id="toggle10Min" onchange="saveSetting('notify10Min', this.checked)">
-                        <span class="profile-toggle-slider"></span>
-                    </label>
                 </div>
 
                 <!-- PREFERENCES -->
                 <div class="profile-section-title">Preferences</div>
-
-                <div class="profile-row no-hover">
-                    <div class="profile-row-icon icon-purple">🌙</div>
-                    <div class="profile-row-content">
-                        <div class="profile-row-label">Dark Mode</div>
-                        <div class="profile-row-sub">Switch between light and dark theme</div>
+                <div class="profile-section-card">
+                    <div class="profile-row no-hover">
+                        <div class="profile-row-icon icon-purple">🌙</div>
+                        <div class="profile-row-content">
+                            <div class="profile-row-label">Dark Mode</div>
+                            <div class="profile-row-sub">Switch between light and dark theme</div>
+                        </div>
+                        <label class="profile-toggle">
+                            <input type="checkbox" id="toggleDarkMode" onchange="toggleThemeFromProfile(this.checked)">
+                            <span class="profile-toggle-slider"></span>
+                        </label>
                     </div>
-                    <label class="profile-toggle">
-                        <input type="checkbox" id="toggleDarkMode" onchange="toggleThemeFromProfile(this.checked)">
-                        <span class="profile-toggle-slider"></span>
-                    </label>
-                </div>
-
-                <div class="profile-row no-hover">
-                    <div class="profile-row-icon icon-green">📅</div>
-                    <div class="profile-row-content">
-                        <div class="profile-row-label">Week Starts On</div>
-                        <div class="profile-row-sub">First day of your week</div>
+                    <div class="profile-row no-hover">
+                        <div class="profile-row-icon icon-green">📅</div>
+                        <div class="profile-row-content">
+                            <div class="profile-row-label">Week Starts On</div>
+                            <div class="profile-row-sub">First day of your week</div>
+                        </div>
+                        <select id="weekStartSelect" class="profile-inline-input"
+                            onchange="saveSetting('weekStart', this.value)" style="cursor:pointer;">
+                            <option value="0">Sunday</option>
+                            <option value="1">Monday</option>
+                        </select>
                     </div>
-                    <select id="weekStartSelect" class="profile-inline-input"
-                        onchange="saveSetting('weekStart', this.value)" style="width:90px; text-align:left; cursor:pointer;">
-                        <option value="0">Sunday</option>
-                        <option value="1">Monday</option>
-                    </select>
-                </div>
-
-                <div class="profile-row no-hover">
-                    <div class="profile-row-icon icon-blue">🕐</div>
-                    <div class="profile-row-content">
-                        <div class="profile-row-label">Default Task Time</div>
-                        <div class="profile-row-sub">Pre-fill time when adding tasks</div>
+                    <div class="profile-row no-hover">
+                        <div class="profile-row-icon icon-blue">🕐</div>
+                        <div class="profile-row-content">
+                            <div class="profile-row-label">Default Task Time</div>
+                            <div class="profile-row-sub">Pre-fill time when adding tasks</div>
+                        </div>
+                        <input type="time" id="defaultTaskTime" class="profile-inline-input"
+                            onchange="saveSetting('defaultTaskTime', this.value)">
                     </div>
-                    <input type="time" id="defaultTaskTime" class="profile-inline-input"
-                        onchange="saveSetting('defaultTaskTime', this.value)">
                 </div>
 
                 <!-- DANGER ZONE -->
                 <div class="profile-section-title">Account Actions</div>
-
-                <div style="padding: 4px 14px;">
-                    <button class="profile-danger-btn" onclick="confirmLogout()">🚪 Logout</button>
-                    <button class="profile-danger-btn" onclick="confirmDeleteAccount()" style="margin-top:8px;">🗑️ Delete Account</button>
+                <div class="profile-danger-zone">
+                    <button class="profile-danger-btn" onclick="confirmLogout()">🚪 Sign Out</button>
+                    <button class="profile-danger-btn" onclick="confirmDeleteAccount()">🗑️ Delete Account</button>
                 </div>
 
             </div>
@@ -3625,10 +3714,46 @@ function populateProfileUI() {
 
     // Avatar: first letter of username (email prefix)
     const username = user.email.replace('@workflowpro.app', '').replace('@missioncontrol.com', '');
-    document.getElementById('profileAvatar').textContent = username.charAt(0);
+    document.getElementById('profileAvatar').textContent = username.charAt(0).toUpperCase();
     document.getElementById('profileUsername').textContent = username;
     document.getElementById('profileEmailDisplay').textContent = user.email;
-    document.getElementById('profileNavBtn').textContent = username.charAt(0);
+    document.getElementById('profileNavBtn').textContent = username.charAt(0).toUpperCase();
+
+    // Header stats
+    const total     = allTasks.length;
+    const done      = allTasks.filter(t => t.completed).length;
+    // Consecutive streak (same logic as trends graph)
+    const today     = getTodayStr();
+    const dateMap   = {};
+    allTasks.forEach(t => {
+        if (t.completed && t.completedAt && t.date) {
+            if (!dateMap[t.date]) dateMap[t.date] = { total:0, done:0 };
+            dateMap[t.date].total++;
+            dateMap[t.date].done++;
+        }
+        if (!t.completed && t.date) {
+            if (!dateMap[t.date]) dateMap[t.date] = { total:0, done:0 };
+            dateMap[t.date].total++;
+        }
+    });
+    let streak = 0;
+    let d = new Date(); d.setDate(d.getDate()-1);
+    while (true) {
+        const key = d.toISOString().slice(0,10);
+        const day = dateMap[key];
+        if (day && day.total > 0 && day.done === day.total) { streak++; d.setDate(d.getDate()-1); }
+        else break;
+    }
+    // Count today too if fully done
+    const todayDay = dateMap[today];
+    if (todayDay && todayDay.total > 0 && todayDay.done === todayDay.total) streak++;
+
+    const statTotal  = document.getElementById('profileStatTotal');
+    const statDone   = document.getElementById('profileStatDone');
+    const statStreak = document.getElementById('profileStatStreak');
+    if (statTotal)  statTotal.textContent  = total;
+    if (statDone)   statDone.textContent   = done;
+    if (statStreak) statStreak.textContent = streak + (streak === 1 ? ' day' : ' days');
 
     // Apply saved settings to UI
     document.getElementById('toggleDailySummary').checked = userSettings.dailySummaryEnabled !== false;
