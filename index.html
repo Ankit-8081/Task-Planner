@@ -24,6 +24,8 @@
             --col-bg: #ebedef;
             --border: #dfe6e9;
             --cat-work: #0984e3; --cat-home: #6c5ce7; --cat-personal: #00b894; --cat-urgent: #d63031;
+            --transition: all 0.3s ease;
+            --text-secondary: #636e72;
         }
         [data-theme="dark"] {
             --primary: #2ecc71; 
@@ -36,6 +38,7 @@
             --glass: rgba(30, 30, 30, 0.95);
             --col-bg: #252525;
             --border: #333333;
+            --text-secondary: #b2bec3;
         }
         
         body { 
@@ -71,14 +74,317 @@
         
         .logout-btn { color: var(--overdue); border-color: var(--overdue); }
         .logout-btn:hover { background: var(--overdue); color: white; }
-        #auth-screen { display: flex; height: 100vh; width: 100%; background: var(--bg-gradient); flex-direction: column; align-items: center; justify-content: center; }
-        .auth-card { background: var(--glass); padding: 40px; border-radius: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); width: 340px; text-align: center; }
-        .auth-input-container { position: relative; width: 100%; margin-bottom: 15px; }
-        .auth-input { width: 100%; padding: 14px; padding-right: 70px; border-radius: 12px; border: 2px solid var(--border); background: var(--card-bg); color: var(--text); outline: none; box-sizing: border-box; }
-        
-        .pass-toggle-btn { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--col-bg); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 600; cursor: pointer; color: var(--text); }
-        .btn-login { background: var(--primary); color: white; border: none; padding: 14px; border-radius: 12px; width: 100%; font-weight: 600; cursor: pointer; text-transform: uppercase; }
-        .btn-login:hover { background: var(--primary-shadow); transform: scale(1.02); }
+
+        /* ═══════════════════════════════════════
+           AUTH SCREEN — SPLIT PANEL
+        ═══════════════════════════════════════ */
+        #auth-screen {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; overflow: hidden;
+            background: #0b1a0f;
+        }
+        #auth-screen.hidden { display: none; }
+
+        /* ── LEFT: branding panel ── */
+        .auth-left {
+            flex: 1;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: flex-start;
+            padding: 48px 52px;
+            position: relative; overflow: hidden;
+            background: linear-gradient(145deg, #071a0c 0%, #0e2d14 45%, #081a10 100%);
+        }
+        /* orb 1 — green */
+        .auth-left::before {
+            content: ''; position: absolute;
+            width: 560px; height: 560px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(39,174,96,.18) 0%, transparent 70%);
+            top: -160px; left: -140px;
+            animation: authOrbFloat 9s ease-in-out infinite;
+        }
+        /* orb 2 — teal */
+        .auth-left::after {
+            content: ''; position: absolute;
+            width: 440px; height: 440px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(46,204,113,.12) 0%, transparent 70%);
+            bottom: -100px; right: -80px;
+            animation: authOrbFloat 11s ease-in-out infinite reverse;
+        }
+        @keyframes authOrbFloat {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50%       { transform: translateY(-28px) scale(1.04); }
+        }
+        /* orb 3 — lime, mid */
+        .auth-orb3 {
+            position: absolute; width: 300px; height: 300px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,200,100,.09) 0%, transparent 70%);
+            top: 40%; right: -60px;
+            animation: authOrbFloat 13s ease-in-out infinite;
+            pointer-events: none;
+        }
+        /* floating particles */
+        .auth-particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        .auth-particle {
+            position: absolute; border-radius: 50%;
+            background: rgba(255,255,255,.3);
+            animation: authParticleDrift linear infinite;
+        }
+        @keyframes authParticleDrift {
+            0%   { transform: translateY(0) translateX(0);    opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: .5; }
+            100% { transform: translateY(-100vh) translateX(30px); opacity: 0; }
+        }
+
+        .auth-left-inner { position: relative; z-index: 1; width: 100%; }
+
+        /* brand row */
+        .auth-brand { display: flex; align-items: center; gap: 14px; margin-bottom: 28px; }
+        .auth-brand-icon {
+            width: 48px; height: 48px;
+            border-radius: 13px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+            overflow: hidden;
+            box-shadow: 0 8px 28px rgba(0,0,0,.4);
+        }
+        .auth-brand-name {
+            font-size: 1.4rem; font-weight: 800;
+            background: linear-gradient(90deg, #fff, #b8f5d0);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .auth-hero-title {
+            font-size: 2.6rem; font-weight: 800;
+            line-height: 1.18; letter-spacing: -.8px; color: #fff; margin-bottom: 10px;
+        }
+        .auth-hero-title span {
+            background: linear-gradient(90deg, #2ecc71, #27ae60, #00e676);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .auth-hero-sub { font-size: .9rem; color: rgba(255,255,255,.42); line-height: 1.6; margin-bottom: 28px; }
+
+        /* feature pills grid */
+        .auth-features {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;
+            margin-bottom: 28px;
+        }
+        .auth-feature {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.07);
+            border-radius: 10px; padding: 12px 14px;
+            animation: authFeatFadeIn .6s ease both;
+        }
+        .auth-feature:nth-child(1){animation-delay:.1s;}
+        .auth-feature:nth-child(2){animation-delay:.2s;}
+        .auth-feature:nth-child(3){animation-delay:.3s;}
+        .auth-feature:nth-child(4){animation-delay:.4s;}
+        @keyframes authFeatFadeIn {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .auth-feature-icon {
+            width: 32px; height: 32px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: .9rem; flex-shrink: 0;
+        }
+        .auth-feature-text { font-size: .78rem; color: rgba(255,255,255,.52); font-weight: 500; line-height: 1.35; }
+        .auth-feature-text strong { color: rgba(255,255,255,.82); font-weight: 700; display: block; }
+
+        /* scrolling word strip */
+        .auth-code-strip {
+            position: relative; overflow: hidden; height: 52px; margin-bottom: 4px;
+            mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);
+            -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 10%, black 90%, transparent 100%);
+        }
+        .auth-code-track {
+            display: flex; gap: 28px; white-space: nowrap;
+            animation: authCodeScroll 30s linear infinite;
+        }
+        @keyframes authCodeScroll {
+            0%   { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+        .auth-code-word {
+            display: inline-flex; align-items: center; gap: 8px;
+            font-size: 1.4rem; font-weight: 800; letter-spacing: -.4px;
+            opacity: .18; user-select: none; flex-shrink: 0;
+        }
+
+        /* ── RIGHT: form panel ── */
+        .auth-right {
+            width: 420px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            padding: 36px 40px;
+            background: #0d1a10;
+            border-left: 1px solid rgba(39,174,96,.12);
+            overflow-y: auto;
+        }
+        .auth-card { width: 100%; max-width: 360px; background: none; padding: 0; border-radius: 0; box-shadow: none; text-align: left; }
+
+        /* form header */
+        .auth-form-logo { font-size: 2rem; text-align: center; margin-bottom: 4px; }
+        .auth-form-title {
+            font-size: 1.55rem; font-weight: 800;
+            text-align: center; letter-spacing: -.4px;
+            background: linear-gradient(135deg, #e8f5e9, #a5d6a7);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            margin-bottom: 4px;
+        }
+        .auth-form-sub { font-size: .82rem; color: rgba(255,255,255,.38); text-align: center; margin-bottom: 26px; }
+
+        /* tabs */
+        .auth-tabs {
+            display: flex; background: rgba(255,255,255,.04);
+            border: 1px solid rgba(255,255,255,.08);
+            border-radius: 11px; padding: 4px; margin-bottom: 22px; gap: 4px;
+        }
+        .auth-tab {
+            flex: 1; padding: 9px; border: none; border-radius: 8px;
+            background: transparent; color: rgba(255,255,255,.4);
+            font-family: 'Poppins', sans-serif; font-size: .88rem; font-weight: 700; cursor: pointer;
+            transition: all .18s;
+        }
+        .auth-tab.active {
+            background: linear-gradient(135deg, rgba(39,174,96,.25), rgba(46,204,113,.2));
+            border: 1px solid rgba(39,174,96,.35);
+            color: #fff;
+        }
+
+        /* divider */
+        .auth-divider {
+            display: flex; align-items: center; gap: 10px;
+            margin: 16px 0; color: rgba(255,255,255,.3);
+            font-size: .75rem; letter-spacing: .5px; text-transform: uppercase;
+        }
+        .auth-divider::before, .auth-divider::after {
+            content: ''; flex: 1; height: 1px;
+            background: rgba(255,255,255,.08);
+        }
+
+        /* input fields */
+        .auth-input-container { position: relative; width: 100%; margin-bottom: 14px; }
+        .auth-field-label {
+            display: block; font-size: .72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: .9px;
+            color: rgba(255,255,255,.35); margin-bottom: 7px;
+        }
+        .auth-input {
+            width: 100%; padding: 12px 14px 12px 42px;
+            border-radius: 11px;
+            border: 1px solid rgba(255,255,255,.09);
+            background: rgba(255,255,255,.04);
+            color: #e8f5e9;
+            font-family: 'Poppins', sans-serif; font-size: .95rem;
+            outline: none; box-sizing: border-box;
+            transition: border-color .15s, box-shadow .15s, background .15s;
+        }
+        .auth-input:focus {
+            border-color: #27ae60;
+            background: rgba(39,174,96,.07);
+            box-shadow: 0 0 0 3px rgba(39,174,96,.15);
+        }
+        .auth-input::placeholder { color: rgba(255,255,255,.2); }
+        .auth-input-icon {
+            position: absolute; left: 13px;
+            /* sit in the middle of the input itself, not the whole container */
+            bottom: 0;
+            height: 46px; /* matches input height (padding 12+12 + font ~22) */
+            display: flex; align-items: center;
+            font-size: .95rem; pointer-events: none;
+        }
+        /* password input has show/hide button so less right padding */
+        .auth-input.with-toggle { padding-right: 66px; }
+        .pass-toggle-btn {
+            position: absolute; right: 10px;
+            bottom: 0; height: 46px;
+            display: flex; align-items: center;
+            background: rgba(39,174,96,.15); border: 1px solid rgba(39,174,96,.25);
+            padding: 0 9px; border-radius: 6px; font-size: 10px; font-weight: 700;
+            cursor: pointer; color: #6ddb9a; transition: background .15s;
+        }
+        .pass-toggle-btn:hover { background: rgba(39,174,96,.25); }
+
+        /* main action button */
+        .btn-login {
+            width: 100%; padding: 13px; border: none; border-radius: 11px;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 60%, #00e676 100%);
+            color: #fff; font-family: 'Poppins', sans-serif;
+            font-size: 1rem; font-weight: 800; cursor: pointer; margin-top: 6px;
+            transition: opacity .18s, transform .18s, box-shadow .18s;
+            box-shadow: 0 4px 24px rgba(39,174,96,.35);
+            letter-spacing: .2px; text-transform: uppercase;
+        }
+        .btn-login:hover { opacity: .92; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(39,174,96,.45); }
+        .btn-login:active { transform: translateY(0); }
+        .btn-login:disabled { opacity: .4; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* error / links */
+        #auth-error { color: #ff8a80; font-size: .8rem; margin-top: 8px; min-height: 18px; }
+        .auth-link { color: #6ddb9a; cursor: pointer; font-weight: 600; }
+        .auth-link:hover { color: #2ecc71; text-decoration: underline; }
+        #toggle-text { font-size: .82rem; color: rgba(255,255,255,.38); text-align: center; margin-top: 14px; }
+        #forgot-pw-text { font-size: .8rem; color: rgba(255,255,255,.35); margin-top: 6px; }
+        #forgot-pw-msg { font-size: .8rem; margin-top: 6px; }
+
+        /* OTP / new-pass sub-sections */
+        #forgotOtpSection, #forgotNewPassSection { margin-top: 12px; }
+
+        /* ── Google sign-in button ── */
+        .auth-google-btn {
+            width: 100%; padding: 12px;
+            border: 1px solid rgba(255,255,255,.1);
+            border-radius: 11px;
+            background: rgba(255,255,255,.04);
+            color: #e8f5e9;
+            font-family: 'Poppins', sans-serif; font-size: .92rem; font-weight: 600;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 10px;
+            transition: all .18s;
+            position: relative; overflow: hidden;
+            margin-bottom: 4px;
+        }
+        .auth-google-btn::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(39,174,96,.08), rgba(46,204,113,.08));
+            opacity: 0; transition: opacity .18s;
+        }
+        .auth-google-btn:hover { border-color: rgba(39,174,96,.45); box-shadow: 0 0 14px rgba(39,174,96,.15); }
+        .auth-google-btn:hover::before { opacity: 1; }
+        .auth-google-btn:disabled { opacity: .45; cursor: not-allowed; }
+
+        /* ── hover glow on feature pills ── */
+        .auth-feature {
+            transition: transform .2s, box-shadow .2s, border-color .2s, background .2s;
+            cursor: default;
+        }
+        .auth-feature:hover {
+            transform: translateY(-3px);
+            background: rgba(39,174,96,.08);
+            border-color: rgba(39,174,96,.35);
+            box-shadow: 0 0 18px rgba(39,174,96,.18), 0 4px 16px rgba(0,0,0,.3);
+        }
+        .auth-feature:hover .auth-feature-icon {
+            filter: drop-shadow(0 0 6px rgba(39,174,96,.6));
+        }
+
+        /* ── hover glow on scrolling words ── */
+        .auth-code-word {
+            transition: opacity .3s, text-shadow .3s;
+        }
+        .auth-code-word:hover {
+            opacity: .75 !important;
+            text-shadow: 0 0 12px currentColor, 0 0 24px currentColor;
+            cursor: default;
+        }
+
+        /* responsive */
+        @media (max-width: 780px) {
+            #auth-screen { flex-direction: column; }
+            .auth-left { display: none; }
+            .auth-right { width: 100%; border-left: none; padding: 32px 24px; }
+            .auth-card { max-width: 100%; }
+        }
         #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: 0.8s; }
         #splash-screen h1 { font-size: 2.5rem; animation: pulse 1.5s infinite; text-align: center; padding: 0 20px; }
         
@@ -1007,7 +1313,7 @@
             transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
-        .day-progress-text {
+        @keyframes dayProgressTextFadeIn {
             0% {
                 opacity: 0;
                 transform: translateY(20px);
@@ -1530,42 +1836,132 @@
     </div>
 
     <div id="auth-screen">
-        <div class="auth-card">
-            <h2 id="auth-title">Login</h2>
-            <div class="auth-input-container"><input type="text" id="username" class="auth-input" placeholder="Username"></div>
-            <div class="auth-input-container">
-                <input type="password" id="password" class="auth-input" placeholder="Password">
-                <button type="button" class="pass-toggle-btn" id="togglePassBtn" onclick="togglePassword()">Show</button>
-            </div>
-            <button id="authBtn" class="btn-login" onclick="handleAuth()">LOGIN</button>
-            <p id="auth-error" style="color:var(--overdue); margin-top:10px; font-size:12px;"></p>
-            <p id="forgot-pw-text" style="font-size:12px; margin-top:8px; color:var(--text);">
-                <span onclick="handleForgotPassword()" style="color:var(--primary); cursor:pointer;">Forgot password?</span>
-            </p>
-            <p id="forgot-pw-msg" style="font-size:12px; margin-top:6px; display:none;"></p>
 
-            <!-- Forgot password OTP + new password steps -->
-            <div id="forgotOtpSection" style="display:none; margin-top:10px;">
-                <input type="text" id="forgotOtpInput" class="auth-input"
-                    placeholder="Enter 6-digit OTP"
-                    style="letter-spacing:4px; text-align:center;">
-                <button class="btn-login" style="margin-top:8px;" onclick="verifyForgotOTP()">Verify OTP</button>
-                <p id="forgotOtpErr" style="color:var(--overdue); font-size:12px; margin-top:6px;"></p>
-            </div>
+        <!-- LEFT: Branding panel -->
+        <div class="auth-left">
+            <div class="auth-orb3"></div>
+            <div class="auth-particles" id="auth-particles"></div>
 
-            <div id="forgotNewPassSection" style="display:none; margin-top:10px;">
-                <div class="auth-input-container">
-                    <input type="password" id="forgotNewPass" class="auth-input" placeholder="New password (min 6 chars)">
+            <div class="auth-left-inner">
+                <div class="auth-brand">
+                    <div class="auth-brand-icon"><img src="icon-192.png" alt="Workflow Pro" style="width:100%;height:100%;border-radius:13px;object-fit:cover;"></div>
+                    <div class="auth-brand-name">Workflow Pro</div>
                 </div>
-                <div class="auth-input-container">
-                    <input type="password" id="forgotConfirmPass" class="auth-input" placeholder="Confirm new password">
-                </div>
-                <button class="btn-login" style="margin-top:8px;" onclick="saveForgotNewPassword()">Set New Password</button>
-                <p id="forgotPassErr" style="color:var(--overdue); font-size:12px; margin-top:6px;"></p>
-            </div>
 
-            <p id="toggle-text" style="font-size:12px; margin-top:10px; color:var(--text);"><span style='color:var(--text);'>New user?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span></p>
+                <div class="auth-hero-title">
+                    Your tasks,<br>
+                    <span>always on track.</span>
+                </div>
+                <div class="auth-hero-sub">
+                    Plan your day, track progress, and stay consistent — with smart reminders and a beautiful board that keeps you focused.
+                </div>
+
+                <!-- Feature pills -->
+                <div class="auth-features">
+                    <div class="auth-feature">
+                        <div class="auth-feature-icon" style="background:rgba(39,174,96,.15);">📋</div>
+                        <div class="auth-feature-text"><strong>Kanban Board</strong>Today, Week & Done views</div>
+                    </div>
+                    <div class="auth-feature">
+                        <div class="auth-feature-icon" style="background:rgba(46,204,113,.12);">📊</div>
+                        <div class="auth-feature-text"><strong>Analytics</strong>Weekly & monthly trends</div>
+                    </div>
+                    <div class="auth-feature">
+                        <div class="auth-feature-icon" style="background:rgba(0,230,118,.12);">⏰</div>
+                        <div class="auth-feature-text"><strong>Smart Reminders</strong>1-hour & 10-min alerts</div>
+                    </div>
+                    <div class="auth-feature">
+                        <div class="auth-feature-icon" style="background:rgba(124,58,237,.12);">✦</div>
+                        <div class="auth-feature-text"><strong>AI Assistant</strong>Goal-to-task roadmaps</div>
+                    </div>
+                </div>
+
+                <!-- Scrolling word strip -->
+                <div class="auth-code-strip">
+                    <div class="auth-code-track" id="auth-code-track"></div>
+                </div>
+            </div>
         </div>
+
+        <!-- RIGHT: Form panel -->
+        <div class="auth-right">
+            <div class="auth-card">
+                <div class="auth-form-logo"><img src="icon-192.png" alt="Workflow Pro" style="width:56px;height:56px;border-radius:14px;object-fit:cover;box-shadow:0 6px 20px rgba(0,0,0,0.3);"></div>
+                <div class="auth-form-title" id="auth-title">Welcome back</div>
+                <div class="auth-form-sub">Sign in to your Workflow Pro account</div>
+
+                <!-- Login / Sign Up tabs -->
+                <div class="auth-tabs">
+                    <button class="auth-tab active" id="tab-login"  onclick="setAuthTab('login')">Sign In</button>
+                    <button class="auth-tab"        id="tab-signup" onclick="setAuthTab('signup')">Create Account</button>
+                </div>
+
+                <!-- Google Sign-In -->
+                <button class="auth-google-btn" id="btn-google" onclick="authGoogle()">
+                    <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.2 6.5 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.2 6.5 29.4 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8H6.3C9.6 35.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C41.1 35.2 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
+                    Continue with Google
+                </button>
+
+                <div class="auth-divider">or</div>
+                <div class="auth-input-container">
+                    <label class="auth-field-label">Username</label>
+                    <span class="auth-input-icon">👤</span>
+                    <input type="text" id="username" class="auth-input" placeholder="your-username"
+                        onkeydown="if(event.key==='Enter') handleAuth()">
+                </div>
+
+                <!-- Password field -->
+                <div class="auth-input-container">
+                    <label class="auth-field-label">Password</label>
+                    <span class="auth-input-icon">🔒</span>
+                    <input type="password" id="password" class="auth-input with-toggle" placeholder="••••••••"
+                        onkeydown="if(event.key==='Enter') handleAuth()">
+                    <button type="button" class="pass-toggle-btn" id="togglePassBtn" onclick="togglePassword()">Show</button>
+                </div>
+
+                <button id="authBtn" class="btn-login" onclick="handleAuth()">Sign In →</button>
+
+                <p id="auth-error" style="color:#ff8a80; margin-top:10px; font-size:12px;"></p>
+
+                <p id="forgot-pw-text" style="font-size:12px; margin-top:10px; color:rgba(255,255,255,.38);">
+                    <span class="auth-link" onclick="handleForgotPassword()">Forgot password?</span>
+                </p>
+                <p id="forgot-pw-msg" style="font-size:12px; margin-top:6px; display:none;"></p>
+
+                <!-- Forgot password OTP step -->
+                <div id="forgotOtpSection" style="display:none; margin-top:10px;">
+                    <div class="auth-input-container">
+                        <label class="auth-field-label">Enter OTP</label>
+                        <span class="auth-input-icon">🔑</span>
+                        <input type="text" id="forgotOtpInput" class="auth-input"
+                            placeholder="6-digit OTP" style="letter-spacing:4px; text-align:center;">
+                    </div>
+                    <button class="btn-login" style="margin-top:4px;" onclick="verifyForgotOTP()">Verify OTP →</button>
+                    <p id="forgotOtpErr" style="color:#ff8a80; font-size:12px; margin-top:6px;"></p>
+                </div>
+
+                <!-- Forgot password new-pass step -->
+                <div id="forgotNewPassSection" style="display:none; margin-top:10px;">
+                    <div class="auth-input-container">
+                        <label class="auth-field-label">New Password</label>
+                        <span class="auth-input-icon">🔒</span>
+                        <input type="password" id="forgotNewPass" class="auth-input" placeholder="Min 6 characters">
+                    </div>
+                    <div class="auth-input-container">
+                        <label class="auth-field-label">Confirm Password</label>
+                        <span class="auth-input-icon">🔑</span>
+                        <input type="password" id="forgotConfirmPass" class="auth-input" placeholder="Repeat password">
+                    </div>
+                    <button class="btn-login" style="margin-top:4px;" onclick="saveForgotNewPassword()">Set New Password →</button>
+                    <p id="forgotPassErr" style="color:#ff8a80; font-size:12px; margin-top:6px;"></p>
+                </div>
+
+                <p id="toggle-text" style="font-size:12px; margin-top:14px; color:rgba(255,255,255,.38); text-align:center;">
+                    <span>New user?</span> <span class="auth-link" onclick="toggleAuthMode()">Create Account</span>
+                </p>
+            </div>
+        </div>
+
     </div>
 
     <div id="app-dashboard">
@@ -1952,7 +2348,7 @@
 
 <script type="module">
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, deleteUser, sendPasswordResetEmail } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut, updatePassword, reauthenticateWithCredential, EmailAuthProvider, deleteUser, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
 import { getDatabase, ref, set, get, onValue, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
 const firebaseConfig = {
@@ -2802,14 +3198,105 @@ window.handleAuth = async () => {
 
 window.toggleAuthMode = () => {
     isLoginMode = !isLoginMode;
-    document.getElementById('auth-title').innerText = isLoginMode ? "Login" : "Sign Up";
-    const forgotEl = document.getElementById('forgot-pw-text');
-    if (forgotEl) forgotEl.style.display = isLoginMode ? 'block' : 'none';
-    document.getElementById('authBtn').innerText     = isLoginMode ? "LOGIN" : "SIGN UP";
-    document.getElementById('toggle-text').innerHTML = isLoginMode
-        ? `<span style='color:var(--text);'>New user?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Sign Up</span>`
-        : `<span style='color:var(--text);'>Already have an account?</span> <span onclick="toggleAuthMode()" style="color:var(--primary); cursor:pointer; font-weight: 600;">Login</span>`;
+    _syncAuthUI();
 };
+
+window.setAuthTab = (mode) => {
+    isLoginMode = (mode === 'login');
+    _syncAuthUI();
+};
+
+function _syncAuthUI() {
+    const loginTab  = document.getElementById('tab-login');
+    const signupTab = document.getElementById('tab-signup');
+    const forgotEl  = document.getElementById('forgot-pw-text');
+
+    // tabs
+    if (loginTab)  loginTab.classList.toggle('active',  isLoginMode);
+    if (signupTab) signupTab.classList.toggle('active', !isLoginMode);
+
+    // title / button
+    document.getElementById('auth-title').innerText = isLoginMode ? 'Welcome back' : 'Create Account';
+    document.getElementById('authBtn').innerText     = isLoginMode ? 'Sign In →' : 'Create Account →';
+
+    // forgot password only shown on login
+    if (forgotEl) forgotEl.style.display = isLoginMode ? 'block' : 'none';
+
+    // bottom toggle hint
+    document.getElementById('toggle-text').innerHTML = isLoginMode
+        ? `<span>New user?</span> <span class="auth-link" onclick="toggleAuthMode()">Create Account</span>`
+        : `<span>Already have an account?</span> <span class="auth-link" onclick="toggleAuthMode()">Sign In</span>`;
+}
+
+// ── Google Sign-In ────────────────────────────────────────────────────────
+window.authGoogle = async function() {
+    const btn = document.getElementById('btn-google');
+    const errEl = document.getElementById('auth-error');
+    errEl.textContent = '';
+    if (btn) { btn.disabled = true; btn.textContent = 'Opening Google sign-in…'; }
+
+    try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        // onAuthStateChanged will handle the rest (show dashboard, load tasks)
+    } catch(e) {
+        if (e.code !== 'auth/popup-closed-by-user') {
+            errEl.textContent = e.code === 'auth/operation-not-allowed'
+                ? 'Google Sign-In is not enabled. Enable it in Firebase Console → Authentication → Sign-in Providers.'
+                : (e.message || 'Google sign-in failed. Please try again.');
+        }
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.6 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.2 6.5 29.4 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 16 19 13 24 13c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34.2 6.5 29.4 4 24 4 16.3 4 9.7 8.4 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.3 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-8H6.3C9.6 35.6 16.3 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.2-4.3 5.6l6.2 5.2C41.1 35.2 44 30 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg> Continue with Google`;
+        }
+    }
+};
+
+// ── Animate login page: particles + scrolling word strip ──────────────────
+(function initAuthAnimations() {
+    // Particles
+    const container = document.getElementById('auth-particles');
+    if (container) {
+        for (let i = 0; i < 18; i++) {
+            const p = document.createElement('div');
+            p.className = 'auth-particle';
+            const size = Math.random() * 4 + 2;
+            p.style.cssText = [
+                `width:${size}px`, `height:${size}px`,
+                `left:${Math.random()*100}%`,
+                `bottom:${Math.random()*20}%`,
+                `animation-duration:${8 + Math.random()*14}s`,
+                `animation-delay:${Math.random()*10}s`,
+                `opacity:0`
+            ].join(';');
+            container.appendChild(p);
+        }
+    }
+
+    // Scrolling word strip
+    const track = document.getElementById('auth-code-track');
+    if (track) {
+        const words = [
+            { text: '📋 Plan',      color: '#2ecc71' },
+            { text: '✅ Complete',  color: '#27ae60' },
+            { text: '🔁 Repeat',   color: '#00e676' },
+            { text: '⏰ Remind',   color: '#6ddb9a' },
+            { text: '📊 Track',    color: '#2ecc71' },
+            { text: '🎯 Focus',    color: '#27ae60' },
+            { text: '🚀 Ship',     color: '#00e676' },
+            { text: '✦ AI Goals', color: '#a78bfa' },
+        ];
+        // Double for seamless loop
+        [...words, ...words].forEach(w => {
+            const el = document.createElement('span');
+            el.className = 'auth-code-word';
+            el.style.color = w.color;
+            el.textContent = w.text;
+            track.appendChild(el);
+        });
+    }
+})();
 
 window.logout = () => signOut(auth);
 
