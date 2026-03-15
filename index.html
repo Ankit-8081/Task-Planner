@@ -1501,9 +1501,10 @@
         @media (max-width: 768px) {
             .cp-stats-row { grid-template-columns: repeat(2, 1fr); }
             .cp-header { flex-direction: column; align-items: flex-start; }
-            .cp-header-right { width: 100%; }
-            .cp-search { width: 100%; }
-            .cp-search-wrap { flex: 1; }
+            .cp-header-right { width: 100%; flex-direction: column; gap: 8px; }
+            .cp-search-wrap { width: 100%; }
+            .cp-search { width: 100%; box-sizing: border-box; }
+            .cp-clear-btn { width: 100%; justify-content: center; }
             .cp-date-range { flex-wrap: wrap; gap: 8px; }
             .cp-date-input { flex: 1; min-width: 120px; }
         }
@@ -1539,15 +1540,30 @@
             background: var(--card-bg);
             border-radius: 20px;
             padding: 20px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            box-shadow: var(--card-shadow);
             border: 2px solid var(--border);
             transition: var(--transition);
         }
         
         .day-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            box-shadow: var(--card-shadow-hover);
         }
+
+        /* Today gets a green glow border */
+        .day-card.is-today {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow), var(--card-shadow-hover);
+        }
+
+        /* Past days are subtly dimmed */
+        .day-card.is-past { opacity: 0.72; }
+
+        /* All tasks done — brighter green ring + border */
+        .day-card.all-done {
+            border-color: var(--secondary);
+        }
+        .day-card.all-done .day-progress-fill { stroke: var(--secondary); }
         
         .day-card-header {
             display: flex;
@@ -1567,6 +1583,10 @@
             color: var(--text-secondary);
             opacity: 0.7;
         }
+
+        /* Today's name + date in green */
+        .day-card.is-today .day-name { color: var(--primary); }
+        .day-card.is-today .day-date { color: var(--primary); opacity: .8; }
         
         .day-progress {
             position: relative;
@@ -1585,7 +1605,7 @@
         
         .day-progress-fill {
             stroke: var(--primary);
-            transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.3s;
         }
         
         @keyframes dayProgressTextFadeIn {
@@ -1651,6 +1671,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            border-left: 3px solid var(--primary);
         }
         
         .day-task-item.completed {
@@ -4604,7 +4625,7 @@ function renderWeeklyDashboard() {
     
     // Add navigation header
     const navHeader = document.createElement('div');
-    navHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 15px; background: var(--col-bg); border-radius: 12px;';
+    navHeader.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding: 12px 20px; background: var(--col-header); border-radius: 14px; box-shadow: var(--card-shadow);';
     
     const today = new Date();
     const startOfWeek = new Date(today);
@@ -4624,12 +4645,12 @@ function renderWeeklyDashboard() {
     const dateRange = `${startOfWeek.toLocaleDateString('en-US', {month: 'short', day: 'numeric'})} - ${endOfWeek.toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})}`;
     
     navHeader.innerHTML = `
-        <button onclick="changeWeek(-1)" style="background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold;">◀</button>
+        <button onclick="changeWeek(-1)" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.32)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">◀</button>
         <div style="text-align: center;">
-            <div style="font-size: 18px; font-weight: 600; color: var(--text);">${weekLabel}</div>
-            <div style="font-size: 13px; opacity: 0.7; color: var(--text); margin-top: 4px;">${dateRange}</div>
+            <div style="font-size: 18px; font-weight: 700; color: white;">${weekLabel}</div>
+            <div style="font-size: 13px; color: rgba(255,255,255,0.75); margin-top: 4px;">${dateRange}</div>
         </div>
-        <button onclick="changeWeek(1)" style="background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold;">▶</button>
+        <button onclick="changeWeek(1)" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-size: 18px; font-weight: bold; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.32)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">▶</button>
     `;
     
     container.appendChild(navHeader);
@@ -4653,7 +4674,16 @@ function renderWeeklyDashboard() {
             : dayTasks.filter(t => t.cat === currentCategory);
         
         const card = document.createElement('div');
-        card.className = 'day-card';
+
+        // Colour state classes
+        const todayStr = new Date().toLocaleDateString('en-CA');
+        const isToday  = dateStr === todayStr;
+        const isPast   = currentDay < new Date() && !isToday;
+        const allDone  = totalTasks > 0 && completedTasks === totalTasks;
+        card.className = 'day-card'
+            + (isToday ? ' is-today' : '')
+            + (isPast  ? ' is-past'  : '')
+            + (allDone ? ' all-done' : '');
         
         // Format date as DD/MM/YYYY
         const day = String(currentDay.getDate()).padStart(2, '0');
@@ -4694,13 +4724,18 @@ function renderWeeklyDashboard() {
             <div class="day-tasks-list" style="opacity: 0;">
                 ${filteredTasks.length === 0 
                     ? '<div style="text-align: center; padding: 20px; opacity: 0.5; font-size: 13px;">No tasks</div>' 
-                    : filteredTasks.map(task => `
-                        <div class="day-task-item ${task.completed ? 'completed' : ''}">
-                            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" style="accent-color: var(--primary);">
-                            <span>${task.name}</span>
-                            ${(task.startTime || task.time || task.endTime) ? `<span style="margin-left: auto; opacity: 0.6; font-size: 11px;">${(task.startTime || task.time) && task.endTime ? `${task.startTime || task.time} → ${task.endTime}` : (task.startTime || task.time) ? `start: ${task.startTime || task.time}` : `end: ${task.endTime}`}</span>` : ''}
-                        </div>
-                    `).join('')}
+                    : filteredTasks.map(task => {
+                            const catColor = { work:'#0984e3', home:'#6c5ce7', personal:'#00b894', urgent:'#d63031' };
+                            const col = catColor[task.cat] || 'var(--primary)';
+                            const timeStr = (task.startTime || task.time || task.endTime)
+                                ? `<span style="margin-left: auto; opacity: 0.6; font-size: 11px;">${(task.startTime || task.time) && task.endTime ? `${task.startTime || task.time} → ${task.endTime}` : (task.startTime || task.time) ? `start: ${task.startTime || task.time}` : `end: ${task.endTime}`}</span>`
+                                : '';
+                            return `<div class="day-task-item ${task.completed ? 'completed' : ''}" style="border-left-color:${col}">
+                                <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask('${task.id}')" style="accent-color:${col};">
+                                <span>${task.name}</span>
+                                ${timeStr}
+                            </div>`;
+                        }).join('')}
             </div>
         `;
         
