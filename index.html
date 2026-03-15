@@ -384,43 +384,59 @@
 
             #auth-screen {
                 background: linear-gradient(160deg, #071a0c 0%, #0e2d14 50%, #081a10 100%);
-                overflow-y: auto;
                 overflow-x: hidden;
+                overflow-y: auto;
+                width: 100vw;
+                max-width: 100%;
             }
 
             .auth-right {
-                width: 100%;
+                width: 100vw;
+                max-width: 100%;
                 min-height: 100dvh;
                 border-left: none;
-                padding: 48px 28px 40px;
+                padding: 48px 24px 40px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 background: transparent;
+                box-sizing: border-box;
             }
 
             .auth-card {
                 width: 100%;
-                max-width: 420px;
+                max-width: 100%;
+                box-sizing: border-box;
             }
 
-            /* slightly bigger touch targets for inputs */
-            .auth-input {
-                padding: 13px 14px 13px 44px;
-                font-size: 16px; /* prevents iOS auto-zoom */
+            /* prevent any child from overflowing */
+            .auth-tabs,
+            .auth-google-btn,
+            .auth-input-container,
+            .auth-input,
+            .btn-login,
+            #auth-error,
+            #forgot-pw-text,
+            #toggle-text {
+                max-width: 100%;
+                box-sizing: border-box;
             }
+
+            /* font-size 16px prevents iOS Safari auto-zoom on focus */
+            .auth-input { font-size: 16px; }
+
+            /* bigger tap targets */
+            .auth-input { padding: 13px 14px 13px 44px; }
             .auth-input-icon { height: 48px; }
             .auth-input.with-toggle { padding-right: 70px; }
             .pass-toggle-btn { height: 48px; }
-
-            /* slightly bigger buttons */
             .auth-google-btn { padding: 13px; }
             .btn-login { padding: 14px; font-size: 1rem; }
         }
 
         /* very small phones */
         @media (max-width: 360px) {
-            .auth-right { padding: 36px 20px 32px; }
+            .auth-right { padding: 36px 16px 32px; }
         }
         #splash-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; transition: 0.8s; }
         #splash-screen h1 { font-size: 2.5rem; animation: pulse 1.5s infinite; text-align: center; padding: 0 20px; }
