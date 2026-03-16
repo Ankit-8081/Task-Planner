@@ -2794,6 +2794,43 @@ let userSettings = {
     defaultTaskTime: ''
 };
 
+// ── Shared streak calculator ─────────────────────────────────────────
+// Returns the current consecutive streak of days where ALL tasks were completed.
+// Days with no tasks are skipped (don't break the streak).
+// Today is counted only if fully complete, otherwise skipped (day not over yet).
+function calcStreak() {
+    const todayStr = getTodayStr();
+
+    // Build date → {total, done} map from all tasks
+    const map = {};
+    allTasks.forEach(t => {
+        if (!t.date) return;
+        if (!map[t.date]) map[t.date] = { total: 0, done: 0 };
+        map[t.date].total++;
+        if (t.completed) map[t.date].done++;
+    });
+
+    let streak = 0;
+    const d = new Date();
+    for (let i = 0; i < 365; i++) {
+        const key = d.toLocaleDateString('en-CA');
+        const day = map[key];
+
+        if (day && day.total > 0) {
+            if (day.done === day.total) {
+                streak++;                          // perfect day — count it
+            } else if (key !== todayStr) {
+                break;                             // past day not 100% — streak ends
+            }
+            // today incomplete → skip, keep going back
+        }
+        // no tasks that day → skip (don't break streak)
+
+        d.setDate(d.getDate() - 1);
+    }
+    return streak;
+}
+
 // =====================================================================
 // NOTIFICATION SYSTEM
 // =====================================================================
@@ -3852,21 +3889,10 @@ function populateProfileUI() {
             dateMap[t.date].total++;
         }
     });
-    let streak = 0;
-    let d = new Date(); d.setDate(d.getDate()-1);
-    while (true) {
-        const key = d.toISOString().slice(0,10);
-        const day = dateMap[key];
-        if (day && day.total > 0 && day.done === day.total) { streak++; d.setDate(d.getDate()-1); }
-        else break;
-    }
-    // Count today too if fully done
-    const todayDay = dateMap[today];
-    if (todayDay && todayDay.total > 0 && todayDay.done === todayDay.total) streak++;
-
     const statTotal  = document.getElementById('profileStatTotal');
     const statDone   = document.getElementById('profileStatDone');
     const statStreak = document.getElementById('profileStatStreak');
+    const streak     = calcStreak();
     if (statTotal)  statTotal.textContent  = total;
     if (statDone)   statDone.textContent   = done;
     if (statStreak) statStreak.textContent = streak + (streak === 1 ? ' day' : ' days');
@@ -5209,76 +5235,30 @@ function renderTrendsGraph() {
         }
     }
     
-    // Calculate consecutive streak - ACROSS ALL TIME (not just this month!)
-    let consecutiveStreak = 0;
-    let bestStreak = 0;
+    // Calculate consecutive streak using shared function (same logic everywhere)
+    const consecutiveStreak = calcStreak();
+    let bestStreak = consecutiveStreak;
     
-    // Get all tasks sorted by date (newest first)
-    const allTasksSorted = [...allTasks].sort((a, b) => b.date.localeCompare(a.date));
-    
-    // Build a map of date -> completion percentage
-    const dateCompletionMap = {};
-    allTasksSorted.forEach(task => {
-        if (!dateCompletionMap[task.date]) {
-            const dateTasks = allTasks.filter(t => t.date === task.date);
-            const total = dateTasks.length;
-            const completed = dateTasks.filter(t => t.completed).length;
-            dateCompletionMap[task.date] = {
-                percentage: total > 0 ? (completed / total) * 100 : 0,
-                total: total
-            };
-        }
+    // Calculate best streak ACROSS ALL TIME using same shared logic
+    // (walk all unique dates and find the longest consecutive run)
+    const allUniqueDates = [...new Set(allTasks.map(t => t.date).filter(Boolean))].sort();
+    const dateMap2 = {};
+    allTasks.forEach(t => {
+        if (!t.date) return;
+        if (!dateMap2[t.date]) dateMap2[t.date] = { total:0, done:0 };
+        dateMap2[t.date].total++;
+        if (t.completed) dateMap2[t.date].done++;
     });
-    
-    // Calculate current streak starting from today going backwards
-    const todayStr = today.toLocaleDateString('en-CA');
-    let checkDate = new Date(today);
-    let foundIncomplete = false;
-    
-    while (!foundIncomplete) {
-        const dateStr = checkDate.toLocaleDateString('en-CA');
-        const dateData = dateCompletionMap[dateStr];
-        
-        // Check if this is today and it's incomplete
-        const isTodayCheck = dateStr === todayStr;
-        
-        if (dateData && dateData.total > 0) {
-            if (dateData.percentage === 100) {
-                consecutiveStreak++;
-            } else if (!isTodayCheck) {
-                // Past day with <100%, streak ends
-                foundIncomplete = true;
-                break;
-            } else {
-                // Today is incomplete, skip it (day not over yet)
-                checkDate.setDate(checkDate.getDate() - 1);
-                continue;
-            }
-        }
-        // Days with no tasks don't break the streak
-        
-        // Go to previous day
-        checkDate.setDate(checkDate.getDate() - 1);
-        
-        // Safety limit: don't go back more than 365 days
-        const daysDiff = Math.floor((today - checkDate) / (1000 * 60 * 60 * 24));
-        if (daysDiff > 365) break;
-    }
-    
-    // Calculate best streak ACROSS ALL TIME (not just displayed month)
     let currentStreakCount = 0;
-    const allDates = Object.keys(dateCompletionMap).sort(); // oldest → newest
-    for (const dateStr of allDates) {
-        const d = dateCompletionMap[dateStr];
-        if (d.total > 0 && d.percentage === 100) {
+    for (const dateStr of allUniqueDates) {
+        const d = dateMap2[dateStr];
+        if (d.total > 0 && d.done === d.total) {
             currentStreakCount++;
             if (currentStreakCount > bestStreak) bestStreak = currentStreakCount;
         } else if (d.total > 0) {
             currentStreakCount = 0;
         }
     }
-    // Current streak is always at least as good as best
-    if (consecutiveStreak > bestStreak) bestStreak = consecutiveStreak;
     
     // Update stats display
     document.getElementById('avgCompletion').textContent = Math.round(avgCompletion) + '%';
