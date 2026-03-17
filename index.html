@@ -3149,6 +3149,7 @@ function updateMissedNotificationIcon() {
         countBadge.textContent = missedNotifications.length;
     } else {
         icon.classList.remove('has-missed');
+        countBadge.textContent = '';
     }
 }
 
@@ -5612,7 +5613,11 @@ function onTouchStart(e) {
         target.tagName === 'TEXTAREA' ||
         target.tagName === 'SELECT' ||
         target.closest('button') ||
-        target.closest('canvas')) {
+        target.closest('canvas') ||
+        target.closest('.ai-panel') ||
+        target.closest('.modal') ||
+        target.closest('.verify-popup-overlay') ||
+        target.closest('#auth-screen')) {
         return;
     }
     
@@ -5885,9 +5890,14 @@ window.sendAIMessage = async function() {
 
     aiHistory.push({ role: 'user', content: userContent });
 
-    // Clear image after sending
+    // Clear image after sending — track whether an image was included
     const hadImage = !!aiPendingImage;
     removeAIImage();
+
+    // If only an image was sent with no text, append a note to the system context
+    if (hadImage && !text) {
+        aiHistory[aiHistory.length - 1].content += '\n[User sent an image with no additional text — please analyse it and suggest tasks.]';
+    }
 
     setAILoading(true);
     const typingId = appendAIMessage('ai', '…', true);
@@ -5923,24 +5933,23 @@ window.sendAIMessage = async function() {
         const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
         if (!raw) throw new Error('Empty response from Gemini');
 
-        // Add assistant reply to history (keep Anthropic format internally)
+        // Add assistant reply to history (Gemini/multi-turn format)
         aiHistory.push({ role: 'assistant', content: raw });
 
         removeAIMessage(typingId);
 
-        // Extract JSON from response (handles tasks, filter, and action types)
+        // Extract the first complete JSON object whose "type" is tasks/filter/action.
+        // Uses bracket counting so nested objects/arrays are handled correctly.
         let parsed = null;
-        const jsonMatch = raw.match(/\{"type"\s*:\s*"(tasks|filter|action)"[\s\S]*?\}/);
-        if (jsonMatch) {
-            let jsonStr = raw.slice(raw.indexOf(jsonMatch[0]));
-            try {
-                parsed = JSON.parse(jsonStr);
-            } catch(e) {
-                const lastComma = jsonStr.lastIndexOf('},{"name"');
-                if (lastComma !== -1) {
-                    jsonStr = jsonStr.slice(0, lastComma + 1) + ']}';
-                    try { parsed = JSON.parse(jsonStr); } catch(e2) { parsed = null; }
-                }
+        const typeIdx = raw.search(/\{\s*"type"\s*:\s*"(tasks|filter|action)"/);
+        if (typeIdx !== -1) {
+            let depth = 0, start = -1;
+            for (let i = typeIdx; i < raw.length; i++) {
+                if (raw[i] === '{') { if (start === -1) start = i; depth++; }
+                else if (raw[i] === '}') { depth--; if (depth === 0 && start !== -1) {
+                    try { parsed = JSON.parse(raw.slice(start, i + 1)); } catch(e) { parsed = null; }
+                    break;
+                }}
             }
         }
 
@@ -6216,7 +6225,7 @@ function appendAIMessage(role, html, isTyping = false) {
             <div class="ai-thinking">
                 <div class="ai-thinking-icon">
                     <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <circle cx="16" cy="16" r="14" fill="var(--bg-card)"/>
+                        <circle cx="16" cy="16" r="14" fill="var(--card-bg)"/>
                         <text x="16" y="21" text-anchor="middle" font-size="14" fill="var(--primary)">✦</text>
                     </svg>
                     <div class="ai-thinking-ring"></div>
@@ -6287,7 +6296,7 @@ window.removeAIPendingTask = function(index) {
     aiHistory.push({ role: 'assistant', content: 'Updated the list.' });
 };
 
-window.confirmAddAITasks = function() {
+window.confirmAddAITasks = async function() {
     if (!currentUserId) {
         appendAIMessage('ai', '⚠️ Please sign in to save tasks.');
         return;
@@ -6295,23 +6304,31 @@ window.confirmAddAITasks = function() {
     const wrap = document.getElementById('ai-task-preview-wrap');
     if (wrap) wrap.remove();
 
-    let saved = 0;
-    aiPendingTasks.forEach(task => {
+    let saved = 0, errors = 0;
+    for (const task of aiPendingTasks) {
         const taskId = Date.now().toString() + Math.random().toString(36).slice(2,6);
-        set(ref(db, `users/${currentUserId}/tasks/${taskId}`), {
-            name:       task.name,
-            date:       task.date,
-            cat:        task.cat        || 'personal',
-            startTime:  task.startTime  || null,
-            endTime:    task.endTime    || null,
-            recur:      task.recur      || null,
-            completed:  false,
-            completedAt: null
-        });
-        saved++;
-    });
+        try {
+            await set(ref(db, `users/${currentUserId}/tasks/${taskId}`), {
+                name:       task.name,
+                date:       task.date,
+                cat:        task.cat        || 'personal',
+                startTime:  task.startTime  || null,
+                endTime:    task.endTime    || null,
+                recur:      task.recur      || null,
+                completed:  false,
+                completedAt: null
+            });
+            saved++;
+        } catch(e) {
+            console.error('Failed to save AI task:', task, e);
+            errors++;
+        }
+    }
 
-    appendAIMessage('ai', `✅ Added ${saved} task${saved > 1 ? 's' : ''} to your board! You can see and edit them in the task list.`);
+    const summary = errors === 0
+        ? `✅ Added ${saved} task${saved > 1 ? 's' : ''} to your board! You can see and edit them in the task list.`
+        : `⚠️ ${saved} task${saved !== 1 ? 's' : ''} saved, ${errors} failed. Check console for details.`;
+    appendAIMessage('ai', summary);
     aiHistory.push({ role: 'assistant', content: `Added ${saved} tasks successfully.` });
     aiPendingTasks = [];
 };
