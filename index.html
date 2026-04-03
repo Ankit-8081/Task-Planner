@@ -2188,6 +2188,79 @@
             font-size: 11px; color: var(--overdue);
             font-weight: 600; margin-left: 6px;
         }
+
+        /* ══ DELETE ACCOUNT OTP MODAL ══════════════════════════════════ */
+        .delete-modal-overlay {
+            display: none;
+            position: fixed; inset: 0; z-index: 9000;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            align-items: center; justify-content: center;
+        }
+        .delete-modal-overlay.show { display: flex; }
+
+        .delete-modal {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 32px 28px 24px;
+            width: min(420px, 92vw);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            animation: delModalIn 0.25s ease;
+        }
+        @keyframes delModalIn {
+            from { transform: translateY(24px); opacity: 0; }
+            to   { transform: translateY(0);    opacity: 1; }
+        }
+        .delete-modal-icon { font-size: 40px; text-align: center; margin-bottom: 8px; }
+        .delete-modal h3 {
+            margin: 0 0 6px; font-size: 20px; text-align: center; color: var(--text);
+        }
+        .delete-modal-sub {
+            text-align: center; color: var(--text-secondary);
+            font-size: 13px; margin-bottom: 20px; line-height: 1.6;
+        }
+        .delete-modal-sub strong { color: var(--text); }
+
+        .delete-otp-input {
+            width: 100%; box-sizing: border-box;
+            padding: 14px; border-radius: 12px;
+            border: 1.5px solid var(--border);
+            background: var(--bg-main); color: var(--text);
+            font-size: 26px; font-family: 'Poppins', monospace;
+            font-weight: 700; text-align: center; letter-spacing: 10px;
+            outline: none; transition: border-color 0.2s;
+            margin-bottom: 6px;
+        }
+        .delete-otp-input:focus { border-color: var(--overdue); }
+
+        .delete-otp-err {
+            color: var(--overdue); font-size: 12px;
+            text-align: center; min-height: 18px; margin-bottom: 14px;
+        }
+        .delete-modal-actions { display: flex; gap: 10px; }
+        .delete-modal-actions button {
+            flex: 1; padding: 13px; border-radius: 12px;
+            font-size: 14px; font-weight: 600; font-family: 'Poppins', sans-serif;
+            cursor: pointer; border: none; transition: 0.2s;
+        }
+        .btn-delete-cancel {
+            background: var(--col-bg); color: var(--text-secondary);
+        }
+        .btn-delete-cancel:hover { background: var(--border); }
+        .btn-delete-confirm { background: var(--overdue); color: white; }
+        .btn-delete-confirm:hover { background: #c0392b; }
+        .btn-delete-confirm:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .delete-resend-row {
+            text-align: center; margin-top: 14px;
+            font-size: 12px; color: var(--text-secondary);
+        }
+        .delete-resend-link {
+            color: var(--primary); cursor: pointer;
+            font-weight: 600; text-decoration: underline; margin-left: 4px;
+        }
+        .delete-resend-link:hover { opacity: 0.8; }
     </style>
     <script src="config.js"></script>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
@@ -4049,23 +4122,167 @@ function confirmLogout() {
 }
 window.confirmLogout = confirmLogout;
 
+// ── DELETE ACCOUNT via OTP ────────────────────────────────────────────────────
+// OTP is generated + emailed CLIENT-SIDE (reuses existing EmailJS browser SDK).
+// Only the SHA-256 hash is stored in Firebase. The Cloud Function only does
+// hash-comparison + account deletion — no EmailJS key needed server-side.
+
+const CF_BASE = 'https://asia-southeast1-task-list-tracker-e80d4.cloudfunctions.net';
+
+// SHA-256 using Web Crypto API (available in all modern browsers)
+async function sha256hex(str) {
+    const buf  = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Resolve which real email address to send the OTP to
+async function resolveDeleteEmail() {
+    const user = auth.currentUser;
+    const raw  = user.email || '';
+
+    // Google / real-email users → use their email directly
+    if (!raw.endsWith('@workflowpro.app') && !raw.endsWith('@missioncontrol.com')) {
+        return { email: raw, name: user.displayName || raw.split('@')[0] };
+    }
+
+    // App-username users → must have a verified recovery email
+    const snap = await get(ref(db, `users/${currentUserId}/recoveryEmail`));
+    const rec  = snap.val();
+    if (!rec || !rec.verified || !rec.email) {
+        throw new Error('No verified recovery email found.\nPlease add one in Profile → Account first.');
+    }
+    return { email: rec.email, name: raw.replace(/@workflowpro\.app|@missioncontrol\.com/, '') };
+}
+
+// Core send logic (used by both first-send and resend)
+async function _sendDeleteOtp() {
+    const { email, name } = await resolveDeleteEmail();
+
+    // Generate 6-digit OTP
+    const otp     = Math.floor(100000 + Math.random() * 900000).toString();
+    const hash    = await sha256hex(otp);
+    const expiry  = Date.now() + 10 * 60 * 1000; // 10 min
+
+    // Store ONLY the hash in Firebase — never the raw OTP
+    await set(ref(db, `deleteOtpRequests/${currentUserId}`), { otpHash: hash, expiry });
+
+    // Send OTP via the EmailJS browser SDK (already initialised at page top)
+    const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+    await emailjs.send('service_bteypnw', 'template_gkikd99', {
+        to_email: email,
+        username: name,
+        otp,
+        time: timeStr
+    });
+
+    // Return masked email for display
+    return email.replace(/^(.{2})(.+)(@.+)$/, (_, a, b, c) => a + '****' + c);
+}
+
+// Step 1 — user clicks "Delete Account"
 async function confirmDeleteAccount() {
-    const sure = confirm('⚠️ Delete your account? This cannot be undone. All your tasks will be lost.');
+    const sure = confirm(
+        '⚠️ Delete your account?\n\n' +
+        'This CANNOT be undone. All your tasks and data will be permanently erased.\n\n' +
+        'An OTP will be sent to your email to confirm.'
+    );
     if (!sure) return;
-    const pass = prompt('Enter your password to confirm:');
-    if (!pass) return;
+
+    if (!auth.currentUser) { alert('Not signed in.'); return; }
+
+    const deleteBtn = document.querySelector('.profile-danger-btn:last-child');
+    if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = 'Sending OTP…'; }
+
     try {
-        const user = auth.currentUser;
-        const credential = EmailAuthProvider.credential(user.email, pass);
-        await reauthenticateWithCredential(user, credential);
-        // Delete all user data
-        await remove(ref(db, `users/${currentUserId}`));
-        await deleteUser(user);
+        const maskedEmail = await _sendDeleteOtp();
+
+        // Show modal
+        document.getElementById('deleteOtpEmail').textContent = maskedEmail;
+        document.getElementById('deleteOtpInput').value       = '';
+        document.getElementById('deleteOtpErr').textContent   = '';
+        document.getElementById('btnDeleteConfirm').disabled  = false;
+        document.getElementById('deleteOtpModal').classList.add('show');
+        setTimeout(() => document.getElementById('deleteOtpInput').focus(), 120);
+
     } catch(e) {
-        alert(e.code === 'auth/wrong-password' ? 'Wrong password. Account not deleted.' : e.message);
+        alert('Error: ' + e.message);
+    } finally {
+        if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = '🗑️ Delete Account'; }
     }
 }
 window.confirmDeleteAccount = confirmDeleteAccount;
+
+// Step 2 — user submits the OTP → Cloud Function verifies hash + deletes account
+window.submitDeleteOtp = async function() {
+    const otp   = document.getElementById('deleteOtpInput').value.trim();
+    const errEl = document.getElementById('deleteOtpErr');
+    const btn   = document.getElementById('btnDeleteConfirm');
+
+    errEl.textContent = '';
+    if (!otp || otp.length !== 6) { errEl.textContent = 'Enter the 6-digit OTP.'; return; }
+
+    const user = auth.currentUser;
+    if (!user) { errEl.textContent = 'Session expired. Please sign in again.'; return; }
+
+    btn.disabled    = true;
+    btn.textContent = 'Deleting…';
+
+    try {
+        const idToken = await user.getIdToken();
+        const resp    = await fetch(`${CF_BASE}/verifyDeleteOtp`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
+            body:    JSON.stringify({ otp })
+        });
+        const data = await resp.json();
+
+        if (!resp.ok) {
+            errEl.textContent = data.error || 'Incorrect OTP. Please try again.';
+            btn.disabled    = false;
+            btn.textContent = 'Delete Forever';
+            return;
+        }
+
+        // Server deleted everything — sign out locally
+        closeDeleteOtpModal();
+        await signOut(auth);
+        alert('Your account has been permanently deleted.');
+
+    } catch(e) {
+        errEl.textContent = 'Network error: ' + e.message;
+        btn.disabled    = false;
+        btn.textContent = 'Delete Forever';
+    }
+};
+
+// Resend — regenerates OTP, stores new hash, resends email
+window.resendDeleteOtp = async function() {
+    const link = document.getElementById('deleteResendLink');
+    const err  = document.getElementById('deleteOtpErr');
+    link.style.pointerEvents = 'none';
+    link.textContent         = 'Sending…';
+    err.textContent          = '';
+
+    try {
+        const maskedEmail = await _sendDeleteOtp();
+        document.getElementById('deleteOtpEmail').textContent = maskedEmail;
+        document.getElementById('deleteOtpInput').value       = '';
+        err.style.color = 'var(--primary)';
+        err.textContent = '✅ New OTP sent to ' + maskedEmail;
+        setTimeout(() => { err.textContent = ''; err.style.color = 'var(--overdue)'; }, 4000);
+    } catch(e) {
+        err.textContent = 'Error: ' + e.message;
+    } finally {
+        link.style.pointerEvents = '';
+        link.textContent         = 'Resend OTP';
+    }
+};
+
+window.closeDeleteOtpModal = function() {
+    document.getElementById('deleteOtpModal').classList.remove('show');
+    document.getElementById('deleteOtpInput').value     = '';
+    document.getElementById('deleteOtpErr').textContent = '';
+};
 
 onAuthStateChanged(auth, (user) => {
     if (user) {
@@ -5450,6 +5667,14 @@ document.addEventListener('DOMContentLoaded', () => {
         // Initial update
         setTimeout(updateTrendsScrollIndicator, 500);
     }
+
+    // Close delete-OTP modal when clicking the dark overlay
+    const delOverlay = document.getElementById('deleteOtpModal');
+    if (delOverlay) {
+        delOverlay.addEventListener('click', function(e) {
+            if (e.target === this) closeDeleteOtpModal();
+        });
+    }
 });
 
 // =====================================================================
@@ -6508,6 +6733,34 @@ function loadRecoveryEmailBadge() {
 }
 
 </script>
+
+    <!-- Delete Account OTP Modal -->
+    <div id="deleteOtpModal" class="delete-modal-overlay">
+        <div class="delete-modal">
+            <div class="delete-modal-icon">🗑️</div>
+            <h3>Delete Account</h3>
+            <p class="delete-modal-sub">
+                A 6-digit OTP has been sent to<br>
+                <strong id="deleteOtpEmail">your email</strong>.<br>
+                Enter it below to permanently delete your account.
+            </p>
+            <input
+                type="text" id="deleteOtpInput" class="delete-otp-input"
+                placeholder="— — — — — —" maxlength="6" inputmode="numeric"
+                autocomplete="one-time-code"
+                oninput="this.value=this.value.replace(/\D/g,'')"
+            >
+            <p class="delete-otp-err" id="deleteOtpErr"></p>
+            <div class="delete-modal-actions">
+                <button class="btn-delete-cancel" onclick="closeDeleteOtpModal()">Cancel</button>
+                <button class="btn-delete-confirm" id="btnDeleteConfirm" onclick="submitDeleteOtp()">Delete Forever</button>
+            </div>
+            <div class="delete-resend-row">
+                Didn&#39;t receive it?
+                <span class="delete-resend-link" id="deleteResendLink" onclick="resendDeleteOtp()">Resend OTP</span>
+            </div>
+        </div>
+    </div>
 
     <!-- ═══════════════════════════════════════
          AI ASSISTANT FAB + PANEL
