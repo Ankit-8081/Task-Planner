@@ -3,12 +3,12 @@
   "name": "Workflow Pro",
   "icons": [
     {
-      "src": "icon-192.png",
+      "src": "icon-192.png?v=2",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "icon-512.png",
+      "src": "icon-512.png?v=2",
       "type": "image/png",
       "sizes": "512x512"
     }
