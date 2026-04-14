@@ -3,7 +3,7 @@
 
 **Workflow Pro** is a next-generation task management application built with a sleek, modern aesthetic. Built on a robust offline-first architecture with Firebase cloud synchronization, **real-time push notifications**, and an **AI-powered task assistant**, it delivers seamless productivity wrapped in a fluid, animated UI.
 
-**Live Deployment** → [Ankit-8081.github.io/Task-Planner/](https://ankit-8081.github.io/Task-Planner/)
+**Live Deployment** → [workflowpro-alpha.vercel.app/](https://workflowpro-alpha.vercel.app/)
 
 ---
 
