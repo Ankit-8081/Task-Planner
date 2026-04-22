@@ -5459,7 +5459,9 @@ function renderTrendsGraph() {
     
     // Calculate best streak ACROSS ALL TIME using same shared logic
     // (walk all unique dates and find the longest consecutive run)
-    const allUniqueDates = [...new Set(allTasks.map(t => t.date).filter(Boolean))].sort();
+    // Exclude future dates — best streak should only grow day by day, not when future tasks are ticked
+    const todayStr = new Date().toISOString().split('T')[0];
+    const allUniqueDates = [...new Set(allTasks.map(t => t.date).filter(Boolean))].sort().filter(d => d <= todayStr);
     const dateMap2 = {};
     allTasks.forEach(t => {
         if (!t.date) return;
